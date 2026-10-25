@@ -118,18 +118,17 @@
       </dl>
     </section>
 
-    <!-- SPEED + LOCAL -->
-    <section class="speed" id="speed" aria-labelledby="speed-title">
+    <!-- (a) 2x faster than Wispr Flow -->
+    <section class="band" id="speed" aria-labelledby="speed-title">
       <div class="wrap">
-        <h2 id="speed-title" class="speed__title">Local is faster.</h2>
-        <p class="speed__lead">There’s no round trip to a server. MurmurBee pastes your words a median 0.31&nbsp;seconds after you let go, about twice as fast as Wispr Flow on the same&nbsp;Mac.</p>
-
-        <!-- 1. Latency race -->
+        <header class="band__head">
+          <p class="band__num" aria-hidden="true">2<span>×</span></p>
+          <div>
+            <h2 id="speed-title" class="band__title">Twice as fast as Wispr&nbsp;Flow.</h2>
+            <p class="band__lead">No round trip to a server, so your words land the moment you let&nbsp;go.</p>
+          </div>
+        </header>
         <figure class="race" data-race>
-          <figcaption class="race__head">
-            <span class="race__label">Key release to text pasted, median</span>
-            <span class="race__big" aria-hidden="true">2<span>×</span></span>
-          </figcaption>
           <div class="race__chart" role="img" aria-label="Bar chart: MurmurBee 0.31 seconds, Wispr Flow 0.65 seconds, on a 0 to 1 second scale.">
             <div class="race__axis" aria-hidden="true">
               <span style="--at:0">0</span><span style="--at:.25">0.25</span><span style="--at:.5">0.5</span><span style="--at:.75">0.75</span><span style="--at:1">1&nbsp;s</span>
@@ -145,29 +144,22 @@
               <span class="race__val">0.65&nbsp;s</span>
             </div>
           </div>
-
-          <div class="split">
-            <p class="split__title">Where MurmurBee’s time goes, in a typical dictation</p>
-            <div class="split__bar" aria-hidden="true">
-              <span class="split__seg split__seg--asr" style="--w:90"></span>
-              <span class="split__seg split__seg--llm" style="--w:140"></span>
-              <span class="split__seg split__seg--paste" style="--w:60"></span>
-            </div>
-            <ul class="split__legend">
-              <li><i class="k k--asr"></i>~90&nbsp;ms finishing speech recognition</li>
-              <li><i class="k k--llm"></i>~140&nbsp;ms cleanup</li>
-              <li><i class="k k--paste"></i>paste</li>
-            </ul>
-            <p class="split__note">Earlier speech is recognised while you’re still talking, so the wait barely grows with length. In one test, a 30&#8209;second dictation pasted in 112&nbsp;ms.</p>
-          </div>
+          <figcaption class="band__caption">Median time from key release to text, MacBook Air&nbsp;M4.</figcaption>
         </figure>
+      </div>
+    </section>
 
-        <!-- 2. Speaking vs typing -->
+    <!-- (b) 3x faster than typing -->
+    <section class="band band--raised" aria-labelledby="wpm-title">
+      <div class="wrap">
+        <header class="band__head">
+          <p class="band__num" aria-hidden="true">3<span>×</span></p>
+          <div>
+            <h2 id="wpm-title" class="band__title">Three times faster than&nbsp;typing.</h2>
+            <p class="band__lead">Most people type about 40 words a minute and speak&nbsp;120+.</p>
+          </div>
+        </header>
         <figure class="wpm" data-wpm>
-          <figcaption class="wpm__head">
-            <span class="race__label">Words per minute</span>
-            <span class="race__big" aria-hidden="true">3<span>×</span></span>
-          </figcaption>
           <div class="wpm__rows" role="img" aria-label="Typing at about 40 words per minute versus speaking at about 120 words per minute: three to one.">
             <div class="wpm__row">
               <span class="wpm__name">Typing</span>
@@ -180,15 +172,22 @@
               <span class="wpm__val">120+</span>
             </div>
           </div>
-          <p class="split__note">Most people type around 40 words a minute and speak around 120+. MurmurBee’s maker averages 122&nbsp;wpm across 759&nbsp;dictations.</p>
+          <figcaption class="band__caption">Words per minute.</figcaption>
         </figure>
+      </div>
+    </section>
 
-        <!-- 3. Your Mac boundary -->
+    <!-- (c) 0 bytes: your Mac -->
+    <section class="band" aria-labelledby="local-title">
+      <div class="wrap">
+        <header class="band__head">
+          <p class="band__num band__num--word" aria-hidden="true">0&nbsp;bytes</p>
+          <div>
+            <h2 id="local-title" class="band__title">Nothing goes to the&nbsp;cloud.</h2>
+            <p class="band__lead">Speech and cleanup both run on your Mac, even&nbsp;offline.</p>
+          </div>
+        </header>
         <figure class="mac">
-          <figcaption class="mac__head">
-            <span class="mac__stat">0&nbsp;bytes</span>
-            <span class="mac__sub">of audio or text leave your Mac. No account, no server. After a one&#8209;time model download, it works offline.</span>
-          </figcaption>
           <div class="mac__diagram">
             <div class="mac__box">
               <span class="mac__label">Your Mac</span>
@@ -200,7 +199,7 @@
               </ol>
               <span class="mac__chip">Apple Neural Engine + GPU</span>
             </div>
-            <div class="mac__cloud" aria-label="The cloud is not used">
+            <div class="mac__cloud">
               <svg viewBox="0 0 120 80" aria-hidden="true">
                 <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round"/>
                 <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2" stroke-linecap="round"/>
@@ -209,19 +208,20 @@
             </div>
           </div>
         </figure>
+      </div>
+    </section>
 
+    <!-- (d) accuracy -->
+    <section class="band band--raised" aria-labelledby="acc-title">
+      <div class="wrap">
         <div class="acc">
           <div class="acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
           <div class="acc__text">
-            <h3 class="acc__title">Accuracy close to the best cloud dictation.</h3>
-            <p>Both get about 97–98 of every 100 words right. Your dictionary, the names on screen and what it learns from your edits do the rest.</p>
+            <h2 id="acc-title" class="band__title">Accuracy close to the best cloud&nbsp;dictation.</h2>
+            <p class="band__lead">Both get about 97–98 of every 100 words&nbsp;right.</p>
           </div>
         </div>
-
-        <div class="speed__notes">
-          <p>Measured on a MacBook Air M4 (32&nbsp;GB). MurmurBee: median of 19 real dictations, 90th percentile 0.75&nbsp;s. Wispr Flow figure from its own logs of dictations on the same Mac. Your numbers will vary.</p>
-          <p>Speech recognition on a 10&#8209;clip test: 96.8 vs 98.1 words correct per 100; your dictionary, on&#8209;screen context and learning from your edits close the gap further.</p>
-        </div>
+        <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How we measured this <span aria-hidden="true">→</span></a></p>
       </div>
     </section>
 
