@@ -1,11 +1,11 @@
 import AppKit
 import FluidAudio
 
-// Installs a cleanup model package the way first run does:  MurmurBee --fetch-model <url> [sha256] [name]
-if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--fetch-model" {
+// Installs a cleanup model package the way first run does:  MurmurBee --fetch-model <url> <sha256> [name]
+if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--fetch-model" {
     let a = CommandLine.arguments
     let remote = ModelStore.Remote(name: a.count > 4 ? a[4] : ModelStore.general.name, url: URL(string: a[2])!,
-                                   sha256: a.count > 3 ? a[3] : "")
+                                   sha256: a[3])
     Task {
         do {
             let dir = try await ModelStore.download(remote) { p in print(String(format: "%.0f%%", p * 100)) }

@@ -14,14 +14,19 @@ enum ModelStore {
     static var directory: URL { Store.directory.appendingPathComponent("models") }
 
     /// The general cleanup model, trained only on synthetic data, published as a GitHub release asset.
-    /// `defaults write com.kaigen.murmurbee modelURL <url>` (and modelSHA256) points at another build for testing.
+    /// The checksum is pinned here and always verified, so a swapped or tampered asset is rejected.
+    static let generalSHA256 = ""  // set when models-v1 is published; until then the download fails closed
     static var general: Remote {
+        var url = URL(string: "https://github.com/kai-kaushik/murmurbee/releases/download/models-v1/murmurbee-cleanup-v1.zip")!
+        var sha = generalSHA256
+        #if DEBUG
+        // Debug builds only: `defaults write com.kaigen.murmurbee modelURL <url>` (+ modelSHA256) to test another package.
         let d = UserDefaults.standard
-        return Remote(
-            name: "murmurbee-cleanup-v1",
-            url: d.string(forKey: "modelURL").flatMap(URL.init(string:))
-                ?? URL(string: "https://github.com/kai-kaushik/murmurbee/releases/download/models-v1/murmurbee-cleanup-v1.zip")!,
-            sha256: d.string(forKey: "modelSHA256") ?? "")
+        if let u = d.string(forKey: "modelURL").flatMap(URL.init(string:)), let h = d.string(forKey: "modelSHA256") {
+            url = u; sha = h
+        }
+        #endif
+        return Remote(name: "murmurbee-cleanup-v1", url: url, sha256: sha)
     }
 
     /// The installed model with the highest rank, or nil if none is installed.
@@ -43,9 +48,10 @@ enum ModelStore {
     }
 
     enum DownloadError: LocalizedError {
-        case checksum, unzip, missing
+        case noChecksum, checksum, unzip, missing
         var errorDescription: String? {
             switch self {
+            case .noChecksum: "no published checksum for this model yet"
             case .checksum: "the download was corrupted (checksum mismatch)"
             case .unzip: "the download couldn't be unpacked"
             case .missing: "the download didn't contain a model"
@@ -55,12 +61,13 @@ enum ModelStore {
 
     /// Downloads, verifies and unpacks `remote` into the models folder. `progress` gets 0…1.
     static func download(_ remote: Remote, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
+        guard remote.sha256.count == 64 else { throw DownloadError.noChecksum }  // never install unverified code
         let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         let zip = try await Downloader(progress: progress).fetch(remote.url)
         defer { try? fm.removeItem(at: zip) }
 
-        if !remote.sha256.isEmpty, try sha256(of: zip) != remote.sha256.lowercased() { throw DownloadError.checksum }
+        if try sha256(of: zip) != remote.sha256.lowercased() { throw DownloadError.checksum }
 
         // Unpack next to the final location, then move into place so a half-written model is never picked up.
         let staging = directory.appendingPathComponent(".staging-\(UUID().uuidString)")
