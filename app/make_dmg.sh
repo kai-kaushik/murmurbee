@@ -9,15 +9,13 @@ cd "${0:A:h}"
 APP="build.noindex/MurmurBee.app"
 [[ -d "$APP" ]] || { echo "Run ./build.sh first"; exit 1; }
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP/Contents/Info.plist")
-STAGE=build.noindex/dmg-stage
 DMG="build.noindex/MurmurBee-$VERSION.dmg"
 
-rm -rf "$STAGE" "$DMG"
-mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "MurmurBee" -srcfolder "$STAGE" -ov -format UDZO "$DMG" -quiet
-rm -rf "$STAGE"
+rm -f "$DMG"
+# Window layout and background via dmgbuild (writes the Finder layout directly; no Finder scripting).
+uv run --quiet --no-project --with dmgbuild dmgbuild -s dmg_settings.py \
+  -D app="$APP" -D icon=Resources/brand/AppIcon.icns -D background=Resources/dmg/background.tiff \
+  "MurmurBee" "$DMG"
 
 IDENTITY=$(security find-identity -p codesigning | awk '/"Local Flow Dev"/{print $2; exit}')
 [[ -n "$IDENTITY" ]] && codesign --force --sign "$IDENTITY" "$DMG"
