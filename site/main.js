@@ -159,12 +159,24 @@
       line.appendChild(w);
       nodes.push({ el: w, tok: tok });
     });
+    fitOneLine();
     // desktop: lock to the raw (longest) sentence so nothing below moves;
     // phones: ease the height between raw and clean so there is no big empty gap
     fitHeight(built && isNarrow());
     built = true;
   }
   var built = false;
+
+  // Desktop: the whole spoken sentence sits on one line, shrinking to fit, so nothing reflows as it's cleaned.
+  function fitOneLine() {
+    line.style.fontSize = "";
+    if (isNarrow()) { line.style.whiteSpace = ""; return; }
+    line.style.whiteSpace = "nowrap";
+    var need = line.scrollWidth, have = line.clientWidth;
+    if (need > have) {
+      line.style.fontSize = (parseFloat(getComputedStyle(line).fontSize) * have / need * 0.98) + "px";
+    }
+  }
   function isNarrow() { return window.innerWidth < 640; }
   function fitHeight(animate) {
     var cur = line.offsetHeight;
