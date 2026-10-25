@@ -6,8 +6,6 @@ cd "${0:A:h}"
 
 DD=build.noindex/dd  # .noindex keeps Spotlight from listing a second copy of the app
 APP="build.noindex/MurmurBee.app"
-MODEL_SRC=../models/qwen35-0.8b-kai-v1
-MODEL_DST="$HOME/Library/Application Support/MurmurBee/models/qwen35-0.8b-kai-v1"
 
 xcodebuild -scheme MurmurBee -configuration Release -destination 'platform=macOS,arch=arm64' \
   -derivedDataPath "$DD" -skipMacroValidation -skipPackagePluginValidation build -quiet
@@ -24,8 +22,6 @@ cp -R Resources/sounds "$APP/Contents/Resources/sounds"
 cp -R Resources/brand "$APP/Contents/Resources/brand"
 cp Resources/brand/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/fonts "$APP/Contents/Resources/fonts"
-# Seed for ~/Library/Application Support/MurmurBee/dictionary.txt (first run only), from the Wispr dictionary.
-[[ -f ../data/vocab.txt ]] && cp ../data/vocab.txt "$APP/Contents/Resources/dictionary-seed.txt"
 # MLX also looks for its metallib next to the binary.
 METALLIB=$(find "$PRODUCTS" -name "default.metallib" -path "*mlx*" | head -1)
 [[ -n "$METALLIB" ]] && cp "$METALLIB" "$APP/Contents/MacOS/mlx.metallib"
@@ -46,9 +42,6 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>NSMicrophoneUsageDescription</key><string>MurmurBee listens while you hold the dictation key and transcribes on this Mac.</string>
 </dict></plist>
 PLIST
-
-mkdir -p "${MODEL_DST:h}"
-[[ -d "$MODEL_DST" ]] || cp -R "$MODEL_SRC" "$MODEL_DST"
 
 # Stable self-signed identity, so macOS permissions survive rebuilds (falls back to ad-hoc).
 IDENTITY=$(security find-identity -p codesigning | awk '/"Local Flow Dev"/{print $2; exit}')

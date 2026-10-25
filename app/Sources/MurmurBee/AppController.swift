@@ -27,15 +27,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private enum KeyState { case idle, holding(Date), tapPending, latched, ignoreUp }
     private var keyState = KeyState.idle
 
-    /// The newest cleanup model installed (v3, then v2, then v1).
-    static let modelDir: URL = {
-        let models = Store.directory.appendingPathComponent("models")
-        for name in ["qwen35-0.8b-kai-v3", "qwen35-0.8b-kai-v2", "qwen35-0.8b-kai-v1"] {
-            let dir = models.appendingPathComponent(name)
-            if FileManager.default.fileExists(atPath: dir.path) { return dir }
-        }
-        return models.appendingPathComponent("qwen35-0.8b-kai-v1")
-    }()
+    /// The best cleanup model installed (see ModelStore), for the command-line modes.
+    static var modelDir: URL? { ModelStore.best() }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.autosaveName = "MurmurBeeStatusItem"  // remembers its spot if you ⌘-drag it
@@ -69,26 +62,45 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             showSetup()
         }
 
-        Task {
-            do {
-                let t = Date()
-                permissions.modelStatus = "Loading speech model…"
-                try await transcriber.load()
-                permissions.modelStatus = "Loading cleanup model…"
-                try await cleaner.load(from: Self.modelDir)
-                ready = true
-                status = String(format: "Ready · models loaded in %.0fs", Date().timeIntervalSince(t))
-                permissions.modelStatus = "Ready (\(await cleaner.origin))"
-                permissions.modelsReady = true
-                if permissions.allGranted && hotkey.isListening {
-                    pill.flash("MurmurBee ready · hold \(settings.holdKey.rawValue)", seconds: 3)
-                }
-            } catch {
-                status = "Model load failed: \(error.localizedDescription)"
-                permissions.modelStatus = status
-            }
+        Task { await loadModels() }
+    }
+
+    /// Speech model first (FluidAudio fetches it on first run), then the cleanup model: the best one installed,
+    /// or the general one downloaded on first run. Without a cleanup model, dictation still works with the raw transcript.
+    private func loadModels() async {
+        let t = Date()
+        do {
+            permissions.modelStatus = "Loading speech model…"
+            try await transcriber.load()
+        } catch {
+            status = "Speech model failed to load: \(error.localizedDescription)"
+            permissions.modelStatus = status
             rebuildMenu()
+            return
         }
+        do {
+            var dir = ModelStore.best()
+            if dir == nil {
+                permissions.modelStatus = "Downloading cleanup model…"
+                dir = try await ModelStore.download(ModelStore.general) { p in
+                    Task { @MainActor [weak self] in
+                        self?.permissions.modelStatus = String(format: "Downloading cleanup model… %.0f%%", p * 100)
+                    }
+                }
+            }
+            permissions.modelStatus = "Loading cleanup model…"
+            try await cleaner.load(from: dir!)
+            permissions.modelStatus = "Ready (\(await cleaner.origin))"
+        } catch {
+            permissions.modelStatus = "Ready without cleanup: \(error.localizedDescription)"
+        }
+        ready = true
+        status = String(format: "Ready · models loaded in %.0fs", Date().timeIntervalSince(t))
+        permissions.modelsReady = true
+        if permissions.allGranted && hotkey.isListening {
+            pill.flash("MurmurBee ready · hold \(settings.holdKey.rawValue)", seconds: 3)
+        }
+        rebuildMenu()
     }
 
     /// Opening the app again (Finder, Spotlight, Dock) pops the menu up at the cursor,

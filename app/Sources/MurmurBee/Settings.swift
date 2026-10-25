@@ -23,7 +23,7 @@ final class Settings {
     var playSounds: Bool {
         didSet { d.set(playSounds, forKey: "playSounds") }
     }
-    /// The name you sign emails with ("Regards, Kai"). Empty = your macOS account name.
+    /// The name you sign emails with ("Regards, Sam"). Empty = your macOS account name.
     var signName: String {
         didSet { d.set(signName, forKey: "signName") }
     }

@@ -18,7 +18,7 @@ enum PostEdit {
         return Set(text.split(separator: "\n").map { $0.lowercased() })
     }()
 
-    /// "Samm" → "Sam" when Sam is in the hints: replace a capitalised word that isn't an English word with
+    /// "Priyanca" → "Priyanka" when Priyanka is in the hints: replace a capitalised word that isn't an English word with
     /// the hint it closely resembles. Real words and dissimilar names ("Vikram") are left alone.
     static func snapNames(_ text: String, vocab: [String]) -> String {
         let names = vocab.filter { $0.first?.isUppercase == true && !$0.contains(" ") && $0.count >= 3 }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Learns from what the user changes after a paste: finds the inserted span in the field's later contents,
-/// diffs it word by word, and turns name corrections ("Sem" → "Sam") into dictionary entries.
+/// diffs it word by word, and turns name corrections ("Priyanca" → "Priyanka") into dictionary entries.
 /// Swift port of scripts/learn.py, run live so corrections take effect on the next dictation.
 enum EditLearner {
     /// The inserted text as it reads now, located by the unchanged text around it right after pasting.

@@ -12,7 +12,7 @@ enum Snapshots {
         p.modelStatus = "Loading cleanup model…"
         save(SetupView(permissions: p, settings: .shared, relaunch: {}, done: {}), "setup", dir)
         p.modelsReady = true
-        p.modelStatus = "Ready (qwen35-0.8b-kai-v1)"
+        p.modelStatus = "Ready (murmurbee-cleanup-v1)"
         save(SettingsView(settings: .shared, permissions: p, deleteHistory: {}), "settings", dir)
         // Flow bar states, on a light desktop-ish backdrop.
         let states: [(String, PillModel.State, Bool, PillModel.Edge, String?)] = [

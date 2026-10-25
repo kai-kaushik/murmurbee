@@ -1,6 +1,21 @@
 import AppKit
 import FluidAudio
 
+// Installs a cleanup model package the way first run does:  MurmurBee --fetch-model <url> [sha256] [name]
+if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--fetch-model" {
+    let a = CommandLine.arguments
+    let remote = ModelStore.Remote(name: a.count > 4 ? a[4] : ModelStore.general.name, url: URL(string: a[2])!,
+                                   sha256: a.count > 3 ? a[3] : "")
+    Task {
+        do {
+            let dir = try await ModelStore.download(remote) { p in print(String(format: "%.0f%%", p * 100)) }
+            print("installed \(dir.path), rank \(ModelStore.rank(of: dir)); best now \(ModelStore.best()?.lastPathComponent ?? "none")")
+            exit(0)
+        } catch { print("failed: \(error.localizedDescription)"); exit(1) }
+    }
+    RunLoop.main.run()
+}
+
 // Headless check of both engines inside the real bundle:  MurmurBee --selftest <file.wav>
 if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--selftest" {
     let url = URL(fileURLWithPath: CommandLine.arguments[2])
@@ -11,7 +26,8 @@ if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--selftest" {
             try await transcriber.load()
             print(String(format: "parakeet loaded %.1fs", Date().timeIntervalSince(t)))
             t = Date()
-            try await cleaner.load(from: AppController.modelDir)
+            guard let dir = AppController.modelDir else { print("No cleanup model installed in \(ModelStore.directory.path)"); exit(1) }
+            try await cleaner.load(from: dir)
             print(String(format: "cleaner loaded %.1fs", Date().timeIntervalSince(t)))
             let samples = try AudioConverter().resampleAudioFile(url)
             t = Date()
@@ -35,7 +51,8 @@ if CommandLine.arguments.count >= 6, CommandLine.arguments[1] == "--clean-text" 
     let a = CommandLine.arguments
     let cleaner = Cleaner()
     Task {
-        try await cleaner.load(from: AppController.modelDir)
+        guard let dir = AppController.modelDir else { print("No cleanup model installed in \(ModelStore.directory.path)"); exit(1) }
+        try await cleaner.load(from: dir)
         let vocab = a[4].split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) } + PostEdit.userNames
         let (out, path) = await cleaner.clean(a[5], appName: a[2], appType: a[3], vocab: vocab)
         let final = PostEdit.fixSignoff(PostEdit.snapNames(out, vocab: vocab), appType: a[3])
@@ -47,10 +64,10 @@ if CommandLine.arguments.count >= 6, CommandLine.arguments[1] == "--clean-text" 
 
 // Prints a fixed prompt v3 so it can be diffed against scripts/prompt_v3.py (train/serve parity):
 if CommandLine.arguments.count >= 2, CommandLine.arguments[1] == "--prompt-check" {
-    let ctx = PromptContext(user: "Kai Kaushik", locale: "en-GB", tz: "UTC+00:00", time: "Sun 25 Oct 2026 10:30",
+    let ctx = PromptContext(user: "Sam Rivera", locale: "en-GB", tz: "UTC+00:00", time: "Sun 25 Oct 2026 10:30",
                             url: "mail.google.com/mail", selected: "old text", after: " and the rest")
     print(PromptV3.userMessage(appName: "Gmail", appType: "email", raw: " hello mr vickas ",
-                               vocab: ["Sam", "Kai Kaushik"], before: "Hi,\n\n", ctx: ctx), terminator: "")
+                               vocab: ["Priyanka", "Sam Rivera"], before: "Hi,\n\n", ctx: ctx), terminator: "")
     exit(0)
 }
 

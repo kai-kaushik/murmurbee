@@ -130,7 +130,7 @@ enum PromptV2 {
     }
 }
 
-/// The fine-tuned cleanup model (Qwen3.5-0.8B + Kai's LoRA, fused), prompted exactly as it was trained.
+/// The fine-tuned cleanup model (Qwen3.5-0.8B + a LoRA, fused), prompted exactly as it was trained.
 /// A model directory containing localflow.json {"prompt": "v2"} gets prompt v2 (vocab + before-context).
 actor Cleaner {
     static let system = "Clean up this dictated transcript. Output only the cleaned text."
@@ -253,7 +253,7 @@ actor Cleaner {
     /// Validator: reject replies, summaries and loops; fall back to the raw transcript.
     static func isPlausible(_ out: String, for raw: String) -> Bool {
         guard !out.isEmpty, !isLooping(out) else { return false }
-        // Count words across spaces *and* newlines: "Regards,\nKai" is two words, not one.
+        // Count words across spaces *and* newlines: "Regards,\nSam" is two words, not one.
         let words = { (t: String) in t.split(whereSeparator: \.isWhitespace).count }
         let ratio = Double(words(out)) / Double(max(words(raw), 1))
         // A self-correction legitimately shortens the text ("at 8:30, sorry, make that 10:30" → "at 10:30").
