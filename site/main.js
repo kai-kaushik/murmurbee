@@ -55,69 +55,160 @@
     grid.appendChild(frag);
   }
 
-  /* ---------- Hero scene: dictating into Mail ---------- */
+  /* ---------- Hero demo: one spoken sentence, cleaned up in place ---------- */
+  var line = document.querySelector("[data-say]");
   var bar = document.querySelector("[data-demo-bar]");
-  var field = document.querySelector("[data-demo-text]");
+  var say = document.querySelector(".say");
 
-  var WORDS = ["um", "so", "can", "we", "move", "the", "sync", "to", "tuesday,", "sorry,", "wednesday", "at", "3"];
-  var CUT = { 0: 1, 1: 1, 8: 1, 9: 1 };
-  var CLEAN = "Can we move the sync to Wednesday at 3?";
-
+  var TOKENS = [
+    { words: ["Um,", "so"], tip: "Removes unneeded words", dir: "up" },
+    { words: ["can"], cap: "C" },
+    { words: ["we"] },
+    { words: ["move,"], tip: "Delivers intent", dir: "down" },
+    { words: ["sync"] }, { words: ["the"] }, { words: ["meeting"] }, { words: ["to"] },
+    { words: ["tuesday,", "sorry,"], tip: "Corrects your mistakes", dir: "up" },
+    { words: ["wednesday?"], cap: "W" }
+  ];
+  var nodes = [], subs = [], caps = [];
   var timers = [];
   var demoRunning = false;
   function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
   function clearTimers() { timers.forEach(clearTimeout); timers = []; }
-  function setBar(state) { bar.className = "fbar" + (state ? " is-" + state : ""); }
+  function setBar(state) { if (bar) bar.className = "fbar" + (state ? " is-" + state : ""); }
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
-  function renderRaw(n, cut) {
-    field.className = "dictation__text is-raw";
-    field.textContent = "";
-    for (var i = 0; i < n; i++) {
-      var el = document.createElement(cut && CUT[i] ? "s" : "span");
-      el.textContent = WORDS[i];
-      field.appendChild(el);
-      if (i < n - 1) field.appendChild(document.createTextNode(" "));
-    }
+  function build() {
+    line.textContent = "";
+    line.classList.remove("is-fading");
+    nodes = []; subs = []; caps = [];
+    TOKENS.forEach(function (tok) {
+      var w = el("span", "w");
+      tok.words.forEach(function (word, i) {
+        if (i) w.appendChild(document.createTextNode(" "));
+        var sub = el("span", "ww");
+        if (tok.cap && i === 0) {
+          var cap = el("span", "cap");
+          cap.appendChild(el("i", "cap__base", word.charAt(0)));
+          cap.appendChild(el("i", "cap__alt", tok.cap));
+          sub.appendChild(cap);
+          sub.appendChild(document.createTextNode(word.slice(1)));
+          caps.push(cap);
+        } else {
+          sub.textContent = word;
+        }
+        w.appendChild(sub);
+        subs.push(sub);
+      });
+      line.appendChild(w);
+      nodes.push({ el: w, tok: tok });
+    });
+    // desktop: lock to the raw (longest) sentence so nothing below moves;
+    // phones: ease the height between raw and clean so there is no big empty gap
+    fitHeight(built && isNarrow());
+    built = true;
   }
-  function renderClean() {
-    field.className = "dictation__text";
-    field.textContent = CLEAN;
-    void field.offsetWidth;
-    field.classList.add("is-clean");
+  var built = false;
+  function isNarrow() { return window.innerWidth < 640; }
+  function fitHeight(animate) {
+    var cur = line.offsetHeight;
+    line.style.transition = "none";
+    line.style.minHeight = "0px";
+    var nat = line.offsetHeight;
+    if (!animate) { line.style.minHeight = nat + "px"; void line.offsetWidth; line.style.transition = ""; return; }
+    line.style.minHeight = cur + "px";
+    void line.offsetWidth;
+    line.style.transition = "";
+    line.style.minHeight = nat + "px";
+  }
+
+  function strike(n) {
+    // above on the first line, below elsewhere (and always below on phones), so bubbles never collide
+    var firstLine = n.el.offsetTop <= nodes[0].el.offsetTop + 4;
+    var dir = (window.innerWidth >= 640 && firstLine) ? "up" : "down";
+    n.dir = dir;
+    n.el.classList.add("is-struck");
+    var tip = el("span", "tip tip--" + dir, n.tok.tip);
+    n.el.appendChild(tip);
+    var lr = line.getBoundingClientRect(), tr = tip.getBoundingClientRect();
+    if (tr.right > lr.right) tip.classList.add("tip--end");
+    requestAnimationFrame(function () { tip.classList.add("is-on"); });
+  }
+
+  function settle(animate) {
+    var kept = nodes.filter(function (n) { return !n.tok.tip; });
+    var first = kept.map(function (n) { return n.el.getBoundingClientRect(); });
+    nodes.forEach(function (n) { if (n.tok.tip) n.el.classList.add("is-gone"); });
+    caps.forEach(function (c) { c.classList.add("is-up"); });
+    if (!animate) return;
+    kept.forEach(function (n, i) {
+      var last = n.el.getBoundingClientRect();
+      n.el.style.transition = "none";
+      n.el.style.transform = "translate(" + (first[i].left - last.left) + "px," + (first[i].top - last.top) + "px)";
+    });
+    void line.offsetWidth;
+    kept.forEach(function (n) {
+      n.el.style.transition = "";
+      n.el.classList.add("is-settle");
+      n.el.style.transform = "";
+    });
+    if (isNarrow()) fitHeight(true);
   }
 
   function cycle() {
     if (!demoRunning) return;
+    build();
     setBar("");
-    field.textContent = "";
-    var t = 1400;
+    var t = 700;
     later(function () { setBar("listening"); }, t);
+    t += 400;
+    subs.forEach(function (sub, k) { later(function () { sub.classList.add("is-on"); }, t + k * 300); });
+    t += subs.length * 300 + 400;
+    later(function () { setBar("finishing"); }, t);
+    t += 300;
+    var cuts = nodes.filter(function (n) { return n.tok.tip; });
+    cuts.forEach(function (n, j) { later(function () { strike(n); }, t + j * 850); });
+    t += cuts.length * 850 + 900;
+    later(function () { cuts.forEach(function (n) { n.el.classList.add("is-out", n.dir === "up" ? "tip-up" : "tip-down"); }); }, t);
     t += 500;
-    WORDS.forEach(function (_, i) { later(function () { renderRaw(i + 1, false); }, t + i * 300); });
-    t += WORDS.length * 300 + 500;
-    later(function () { setBar("finishing"); renderRaw(WORDS.length, true); }, t);
+    later(function () { settle(true); }, t);
     t += 900;
-    later(function () { setBar(""); renderClean(); }, t);
-    t += 4200;
+    later(function () { setBar(""); }, t);
+    t += 3200;
+    later(function () { line.classList.add("is-fading"); }, t);
+    t += 600;
     later(cycle, t);
   }
   function startDemo() { if (demoRunning) return; demoRunning = true; cycle(); }
   function stopDemo() { demoRunning = false; clearTimers(); }
 
-  if (bar && field) {
-    var scene = document.querySelector(".scene");
+  function showStatic() {
+    build();
+    subs.forEach(function (s2) { s2.classList.add("is-on"); });
+    settle(false);
+    fitHeight(false);
+    var before = el("p", "say__before");
+    before.innerHTML = "<s>Um, so</s> can we <s>move,</s> sync the meeting to <s>tuesday, sorry,</s> wednesday?";
+    line.parentNode.insertBefore(before, line);
+  }
+
+  if (line && say) {
     if (reduced) {
-      renderClean();
+      showStatic();
     } else if ("IntersectionObserver" in window) {
+      var sayVisible = false;
       new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) { e.isIntersecting ? startDemo() : stopDemo(); });
-      }, { threshold: 0.3 }).observe(scene);
+        entries.forEach(function (e) { sayVisible = e.isIntersecting; sayVisible ? startDemo() : stopDemo(); });
+      }, { threshold: 0.3 }).observe(say);
       document.addEventListener("visibilitychange", function () {
         if (document.hidden) stopDemo();
-        else {
-          var r = scene.getBoundingClientRect();
-          if (r.bottom > 0 && r.top < window.innerHeight) startDemo();
-        }
+        else if (sayVisible) startDemo();
+      });
+      var lastW = window.innerWidth, sayResize;
+      window.addEventListener("resize", function () {
+        if (window.innerWidth === lastW) return;
+        lastW = window.innerWidth;
+        clearTimeout(sayResize);
+        sayResize = setTimeout(function () { if (demoRunning) { stopDemo(); startDemo(); } }, 200);
       });
     } else {
       startDemo();

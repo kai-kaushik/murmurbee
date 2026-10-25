@@ -63,39 +63,22 @@
         </div>
       </div>
 
-      <!-- A believable moment on a Mac: dictating into a Mail reply -->
-      <figure class="wrap scene" aria-labelledby="scene-caption">
-        <div class="screen" aria-hidden="true">
-          <div class="menubar">
-            <svg class="menubar__apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.39-.92-2.41-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.9-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.77-.96 2.81 1.02.08 2.06-.52 2.69-1.28z"/></svg>
-            <b>Mail</b><span>File</span><span>Edit</span><span class="menubar__opt">View</span><span class="menubar__opt">Message</span><span class="menubar__opt">Window</span>
-            <span class="menubar__right">Wed 14:32</span>
-          </div>
-
-          <div class="mailwin">
-            <div class="mailwin__bar">
-              <span class="lights"><i></i><i></i><i></i></span>
-              <span class="mailwin__title">Re: Design sync</span>
-              <svg class="mailwin__send" viewBox="0 0 24 24"><path d="M3.5 11.6 20 4l-6.4 16.5-2.6-6.9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <!-- Demo: one spoken sentence, cleaned up in place -->
+      <figure class="wrap say" aria-labelledby="say-caption">
+        <div class="say__stage" aria-hidden="true">
+          <p class="say__line" data-say></p>
+          <div class="say__bar">
+            <img class="say__bee" src="assets/murmurbee-bee.svg" alt="" width="40" height="39">
+            <div class="fbar" data-demo-bar>
+              <i class="fbar__rec"></i>
+              <span class="fbar__wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="fbar__dots"><i></i><i></i><i></i></span>
             </div>
-            <div class="mailwin__field"><span>To:</span> Siobhan Byrne</div>
-            <div class="mailwin__field"><span>Subject:</span> Re: Design sync</div>
-            <div class="mailwin__body">
-              <p>Hi Siobhan,</p>
-              <p class="dictation"><span class="dictation__text" data-demo-text></span><span class="caret"></span></p>
-              <p class="mailwin__quote">On Tue, Siobhan Byrne wrote:<br>Tuesday is packed for me. Any chance we shift the sync?</p>
-            </div>
-          </div>
-
-          <div class="fbar" data-demo-bar>
-            <i class="fbar__rec"></i>
-            <span class="fbar__wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="fbar__dots"><i></i><i></i><i></i></span>
           </div>
         </div>
-        <figcaption id="scene-caption" class="scene__caption">
-          Hold <kbd>right&nbsp;⌥</kbd> or <kbd>fn</kbd> in any app and say it however it comes out. Let go, and the tidy version lands at your cursor.
-          <span class="sr-only">In the example, “um so can we move the sync to tuesday, sorry, wednesday at 3” becomes “Can we move the sync to Wednesday at 3?”</span>
+        <figcaption id="say-caption" class="say__caption">
+          Works in every app. Hold <kbd>right&nbsp;⌥</kbd> or <kbd>fn</kbd>, say it however it comes out, and let go.
+          <span class="sr-only">In the example, “Um, so can we move, sync the meeting to tuesday, sorry, wednesday?” becomes “Can we sync the meeting to Wednesday?”</span>
         </figcaption>
       </figure>
     </section>
@@ -138,7 +121,7 @@
             </div>
             <div class="race__row">
               <span class="race__name">MurmurBee</span>
-              <span class="race__track"><span class="race__bar race__bar--us" style="--v:.31"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
+              <span class="race__track"><span class="race__bar race__bar--mb" style="--v:.31"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
               <span class="race__val">0.31&nbsp;s</span>
             </div>
             <div class="race__row">
@@ -215,14 +198,14 @@
     <!-- Accuracy -->
     <section class="band band--raised" aria-labelledby="acc-title">
       <div class="wrap">
-        <header class="band__head band__head--solo">
-          <div class="band__hero acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
+        <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="acc-title" class="band__title">Accuracy close to the best cloud&nbsp;dictation.</h2>
             <p class="band__lead">Both get about 97–98 of every 100 words&nbsp;right.</p>
-            <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How we measured this <span aria-hidden="true">→</span></a></p>
+            <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How I measured this <span aria-hidden="true">→</span></a></p>
           </div>
         </header>
+        <div class="band__visual acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
       </div>
     </section>
 
@@ -239,7 +222,7 @@
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="clean-title" class="band__title">Cleans up as you&nbsp;speak.</h2>
-            <p class="band__lead">Fillers go, self&#8209;corrections are followed, and lists come out as&nbsp;lists.</p>
+            <p class="band__lead">It trims the words you didn’t mean to say, follows your corrections, and turns lists into&nbsp;lists.</p>
           </div>
         </header>
         <div class="band__visual specimen">
@@ -349,7 +332,7 @@
             <li class="step">
               <span class="step__num" aria-hidden="true">3</span>
               <h3 class="step__title">A tiny local model polishes it</h3>
-              <p>A small language model tidies fillers and corrections, formats the text, and pastes it where your cursor is.</p>
+              <p>A small language model trims unneeded words, follows your corrections, formats the text, and pastes it where your cursor is.</p>
             </li>
           </ol>
         </div>
@@ -374,7 +357,7 @@
           </li>
           <li>
             <h3>Open source, so you can check</h3>
-            <p>Every line is on GitHub. Don’t take our word for it: <a href="https://github.com/kai-kaushik/murmurbee" rel="noopener">read the code</a>.</p>
+            <p>Every line is on GitHub. Don’t take my word for it: <a href="https://github.com/kai-kaushik/murmurbee" rel="noopener">read the code</a>.</p>
           </li>
         </ul>
       </div>
@@ -401,7 +384,7 @@
           </details>
           <details>
             <summary>How is it different from Wispr Flow?</summary>
-            <p>MurmurBee is fully local: speech recognition and cleanup both run on your Mac, so nothing goes to a server. It’s also free, open source, and learns your vocabulary on your Mac rather than in the cloud. In our measurements on the same Mac, it was about twice as fast from key release to text.</p>
+            <p>MurmurBee is fully local: speech recognition and cleanup both run on your Mac, so nothing goes to a server. It’s also free, open source, and learns your vocabulary on your Mac rather than in the cloud. In my measurements on the same Mac, it was about twice as fast from key release to text.</p>
           </details>
           <details>
             <summary>Does it need an internet connection?</summary>
