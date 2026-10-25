@@ -113,7 +113,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Clicking the Dock icon (or opening the app again) brings up the main window.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag { showHub(hub.pane) }
+        if !flag { showHub(.history) }
         return true
     }
 
@@ -347,7 +347,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openHub() { showHub(.history) }
 
     private func showHub(_ pane: HubModel.Pane) {
-        hub.pane = pane
+        hub.show(pane)
         windows.show("hub", title: "MurmurBee", resizable: true) {
             HubView(model: hub, store: store, settings: settings, permissions: permissions,
                     deleteHistory: { [weak self] in

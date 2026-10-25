@@ -1,23 +1,42 @@
 import AppKit
 import SwiftUI
 
-/// The main window: your dictation history (search, copy), dictionary and settings. Opens from the Dock.
+/// The main window (opens from the Dock): history first, then the dictionary. Settings is a sheet.
 @MainActor
 @Observable
 final class HubModel {
     enum Pane: String, CaseIterable, Identifiable {
-        case history = "History", dictionary = "Dictionary", settings = "Settings", privacy = "Privacy"
+        case history = "Home", dictionary = "Dictionary", settings = "Settings", privacy = "Privacy"
         var id: String { rawValue }
         var icon: String {
             switch self {
-            case .history: "clock.arrow.circlepath"
+            case .history: "house"
             case .dictionary: "character.book.closed"
             case .settings: "gearshape"
             case .privacy: "lock"
             }
         }
     }
+    /// The page in the window: Home or Dictionary.
     var pane: Pane = .history
+    /// Settings opens as a sheet over the window, on General or Privacy.
+    var settingsPane: Pane?
+    var toast: String?
+
+    func show(_ p: Pane) {
+        switch p {
+        case .history, .dictionary: pane = p; settingsPane = nil
+        case .settings, .privacy: settingsPane = p
+        }
+    }
+
+    func flash(_ text: String) {
+        toast = text
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.4))
+            if toast == text { toast = nil }
+        }
+    }
 }
 
 struct HubView: View {
@@ -30,101 +49,174 @@ struct HubView: View {
     var body: some View {
         HStack(spacing: 0) {
             sidebar
-            Rectangle().fill(Brand.border).frame(width: 1)
             Group {
                 switch model.pane {
-                case .history: HistoryPane(store: store)
-                case .dictionary: DictionaryTab()
-                case .settings: GeneralTab(settings: settings, permissions: permissions)
-                case .privacy: PrivacyTab(settings: settings, deleteHistory: deleteHistory)
+                case .dictionary: DictionaryPane(model: model)
+                default: HomePane(model: model, store: store, settings: settings)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Brand.night)
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: 14,
+                                              bottomTrailingRadius: 14, topTrailingRadius: 20))
+            .overlay(UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: 14,
+                                            bottomTrailingRadius: 14, topTrailingRadius: 20).stroke(Brand.border))
+            .padding(.top, 40).padding(.trailing, 8).padding(.bottom, 8)
         }
-        .frame(minWidth: 780, minHeight: 520)
+        .background(Brand.surface)
+        .overlay(alignment: .bottomTrailing) {
+            if let toast = model.toast {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Brand.honey)
+                    Text(toast).font(.system(size: 13))
+                }
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Brand.raised))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.border))
+                .shadow(color: .black.opacity(0.35), radius: 14, y: 6)
+                .padding(24)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: model.toast)
+        .sheet(item: $model.settingsPane) { pane in
+            SettingsSheet(initial: pane, settings: settings, permissions: permissions,
+                          deleteHistory: deleteHistory, close: { model.settingsPane = nil })
+        }
+        .frame(minWidth: 820, minHeight: 540)
         .brandWindow()
     }
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                if let bee = Brand.bee { Image(nsImage: bee).resizable().interpolation(.high).frame(width: 28, height: 28) }
-                Wordmark(size: 18)
+                if let bee = Brand.bee { Image(nsImage: bee).resizable().interpolation(.high).frame(width: 26, height: 26) }
+                Wordmark(size: 17)
             }
-            .padding(.horizontal, 10).padding(.top, 34).padding(.bottom, 18)  // clears the traffic lights
-            ForEach(HubModel.Pane.allCases) { p in
-                Button { model.pane = p } label: {
-                    Label(p.rawValue, systemImage: p.icon)
-                        .font(.system(size: 13, weight: model.pane == p ? .semibold : .regular))
-                        .foregroundStyle(model.pane == p ? Brand.linen : Brand.sand)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 10).padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(model.pane == p ? Brand.raised : .clear))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
+            .padding(.horizontal, 8).padding(.top, 46).padding(.bottom, 16)  // below the traffic lights
+            navItem(.history)
+            navItem(.dictionary)
             Spacer()
-            Text("Hold \(settings.holdKey.rawValue) to talk")
-                .font(.caption).foregroundStyle(Brand.sand)
-                .padding(10)
+            Rectangle().fill(Brand.border).frame(height: 1).padding(.vertical, 8)
+            navButton("Settings", "gearshape") { model.show(.settings) }
+            navButton("Help", "questionmark.circle") {
+                NSWorkspace.shared.open(URL(string: "https://github.com/kai-kaushik/murmurbee#readme")!)
+            }
         }
-        .padding(.horizontal, 10).padding(.bottom, 6)
-        .frame(width: 210)
-        .background(Brand.surface)
+        .padding(.horizontal, 12).padding(.bottom, 14)
+        .frame(width: 216)
+    }
+
+    private func navItem(_ p: HubModel.Pane) -> some View {
+        navButton(p.rawValue, p.icon, active: model.pane == p) { model.show(p) }
+    }
+
+    private func navButton(_ title: String, _ icon: String, active: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon).frame(width: 20)
+                Text(title)
+            }
+            .font(.system(size: 14, weight: active ? .semibold : .medium))
+            .foregroundStyle(active ? Brand.linen : Brand.sand)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(RoundedRectangle(cornerRadius: 7).fill(active ? Brand.raised : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
-// MARK: - History
+// MARK: - Page shell
 
-private struct HistoryPane: View {
+private struct PageHeader<Trailing: View>: View {
+    let title: String
+    var subtitle: String?
+    @ViewBuilder var trailing: Trailing
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(Brand.sora(24)).foregroundStyle(Brand.linen)
+                if let subtitle { Text(subtitle).font(.system(size: 13)).foregroundStyle(Brand.sand) }
+            }
+            Spacer()
+            trailing
+        }
+    }
+}
+
+private struct SearchField: View {
+    let prompt: String
+    @Binding var text: String
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Brand.sand)
+            TextField(prompt, text: $text).textFieldStyle(.plain).font(.system(size: 13))
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 9).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(Brand.border))
+        .frame(width: 240)
+    }
+}
+
+/// A key cap like the ones on the website.
+private struct KeyCap: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .lineLimit(1).fixedSize()
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Brand.raised))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Brand.border))
+    }
+}
+
+// MARK: - Home (history)
+
+private struct HomePane: View {
+    let model: HubModel
     let store: Store
+    let settings: Settings
     @State private var items: [HistoryItem] = []
+    @State private var all: [HistoryItem] = []
     @State private var search = ""
-    @State private var copied: Int64?
+
+    private var firstName: String {
+        let n = settings.signName.isEmpty ? NSFullUserName() : settings.signName
+        return n.split(separator: " ").first.map(String.init) ?? ""
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("History").font(Brand.sora(26))
-                Spacer()
-                TextField("Search", text: $search)
-                    .textFieldStyle(.plain)
-                    .padding(.horizontal, 12).padding(.vertical, 7)
-                    .background(Capsule().fill(Brand.raised))
-                    .overlay(Capsule().stroke(Brand.border))
-                    .frame(width: 240)
+            PageHeader(title: all.isEmpty ? "Hi \(firstName), let’s get talking" : "Welcome back, \(firstName)") {
+                SearchField(prompt: "Search past dictations", text: $search)
             }
-            .padding(.horizontal, 28).padding(.top, 40)
+            .padding(.horizontal, 36).padding(.top, 30).padding(.bottom, 18)
 
-            if !items.isEmpty && search.isEmpty { stats.padding(.horizontal, 28).padding(.top, 16) }
-
-            if items.isEmpty {
-                VStack(spacing: 10) {
-                    if let bee = Brand.bee { Image(nsImage: bee).resizable().frame(width: 64, height: 64).opacity(0.9) }
-                    Text(search.isEmpty ? "Nothing here yet" : "No matches").font(.headline)
-                    Text(search.isEmpty ? "Your dictations will appear here, ready to copy." : "Try another word.")
-                        .foregroundStyle(Brand.sand)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if all.isEmpty {
+                empty
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
-                        ForEach(days, id: \.0) { day, rows in
-                            Section {
-                                ForEach(rows) { row($0) }
-                            } header: {
-                                Text(day).font(.system(size: 12, weight: .semibold)).foregroundStyle(Brand.sand)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 28).padding(.vertical, 8)
-                                    .background(Brand.night)
+                GeometryReader { geo in
+                    ScrollView {
+                        if geo.size.width >= 900 {
+                            HStack(alignment: .top, spacing: 24) {
+                                list.frame(maxWidth: .infinity)
+                                if search.isEmpty { stats(vertical: true).frame(width: 230) }
                             }
+                            .padding(.horizontal, 36).padding(.bottom, 32)
+                        } else {
+                            VStack(alignment: .leading, spacing: 16) {
+                                if search.isEmpty { stats(vertical: false) }
+                                list
+                            }
+                            .padding(.horizontal, 36).padding(.bottom, 32)
                         }
                     }
-                    .padding(.bottom, 24)
+                    .scrollIndicators(.never)
                 }
-                .padding(.top, 12)
             }
         }
         .task(id: search) {
@@ -134,24 +226,54 @@ private struct HistoryPane: View {
         .onReceive(NotificationCenter.default.publisher(for: .historyChanged)) { _ in Task { await reload() } }
     }
 
-    private func reload() async { items = await store.history(search: search) }
+    private func reload() async {
+        items = await store.history(search: search)
+        if search.isEmpty { all = items } else if all.isEmpty { all = await store.history() }
+    }
 
-    private var stats: some View {
-        let words = items.reduce(0) { $0 + $1.words }
-        let minutes = items.reduce(0) { $0 + $1.durationS } / 60
-        let wpm = minutes > 0 ? Double(words) / minutes : 0
-        return HStack(spacing: 28) {
-            stat("\(items.count)", "dictations")
-            stat(words.formatted(), "words")
-            if wpm > 0 { stat(String(format: "%.0f", wpm), "words per minute") }
+    private var empty: some View {
+        VStack(spacing: 12) {
+            if let bee = Brand.bee { Image(nsImage: bee).resizable().frame(width: 72, height: 72) }
+            Text("No dictations yet").font(Brand.sora(20))
+            HStack(spacing: 6) {
+                Text("Hold").foregroundStyle(Brand.sand)
+                KeyCap(text: settings.holdKey.short)
+                Text("in any app, say something, and let go.").foregroundStyle(Brand.sand)
+            }
+            .font(.system(size: 14))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder private var list: some View {
+        if items.isEmpty {
+            Text("No dictations match “\(search)”.").foregroundStyle(Brand.sand).padding(.top, 40)
+        } else {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                ForEach(days, id: \.0) { day, rows in
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(day.uppercased())
+                            .font(.system(size: 11, weight: .semibold)).tracking(0.9)
+                            .foregroundStyle(Brand.sand)
+                            .padding(.horizontal, 18).padding(.top, 14).padding(.bottom, 6)
+                        ForEach(Array(rows.enumerated()), id: \.element.id) { i, item in
+                            if i > 0 { Rectangle().fill(Brand.border).frame(height: 1).padding(.leading, 18) }
+                            HistoryRow(item: item,
+                                       copy: { copy(item) },
+                                       delete: { Task { await store.delete(item.id); await reload(); model.flash("Dictation deleted") } })
+                        }
+                    }
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+                }
+            }
         }
     }
 
-    private func stat(_ value: String, _ label: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text(value).font(Brand.sora(20)).foregroundStyle(Brand.honey)
-            Text(label).font(.callout).foregroundStyle(Brand.sand)
-        }
+    private func copy(_ item: HistoryItem) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(item.text, forType: .string)
+        model.flash("Copied. Paste anywhere with ⌘V")
     }
 
     private var days: [(String, [HistoryItem])] {
@@ -166,57 +288,279 @@ private struct HistoryPane: View {
         return out
     }
 
-    private func row(_ item: HistoryItem) -> some View {
-        HistoryRow(item: item, copied: copied == item.id,
-                   copy: {
-                       NSPasteboard.general.clearContents()
-                       NSPasteboard.general.setString(item.text, forType: .string)
-                       copied = item.id
-                       Task { try? await Task.sleep(for: .seconds(1.5)); if copied == item.id { copied = nil } }
-                   },
-                   delete: { Task { await store.delete(item.id); await reload() } })
+    private func stats(vertical: Bool) -> some View {
+        let words = all.reduce(0) { $0 + $1.words }
+        let minutes = all.reduce(0) { $0 + $1.durationS } / 60
+        let wpm = minutes > 0 ? Int((Double(words) / minutes).rounded()) : 0
+        let layout = vertical ? AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
+                              : AnyLayout(HStackLayout(alignment: .center, spacing: 32))
+        return layout {
+            stat(words.formatted(), "total words")
+            if wpm > 0 { stat("\(wpm)", "words per minute") }
+            stat("\(streak)", "day streak")
+            if vertical {
+                Rectangle().fill(Brand.border).frame(height: 1)
+                HStack(spacing: 6) {
+                    Text("Hold").foregroundStyle(Brand.sand)
+                    KeyCap(text: settings.holdKey.short)
+                    Text("to talk").foregroundStyle(Brand.sand)
+                }
+                .font(.system(size: 13)).fixedSize()
+            } else {
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(vertical ? 20 : 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+    }
+
+    private func stat(_ value: String, _ label: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(value).font(Brand.sora(28)).foregroundStyle(Brand.honey)
+            Text(label).font(.system(size: 13)).foregroundStyle(Brand.sand).lineLimit(1)
+        }
+        .fixedSize()
+    }
+
+    /// Consecutive days with a dictation, ending today (or yesterday, so the streak survives until tonight).
+    private var streak: Int {
+        let cal = Calendar.current
+        let days = Set(all.map { cal.startOfDay(for: $0.date) })
+        var day = cal.startOfDay(for: Date())
+        if !days.contains(day) { day = cal.date(byAdding: .day, value: -1, to: day)! }
+        var n = 0
+        while days.contains(day) { n += 1; day = cal.date(byAdding: .day, value: -1, to: day)! }
+        return n
     }
 }
 
 private struct HistoryRow: View {
     let item: HistoryItem
-    let copied: Bool
     let copy: () -> Void
     let delete: () -> Void
     @State private var hover = false
+    @State private var confirming = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.date, format: .dateTime.hour().minute()).font(.system(size: 12, weight: .medium))
+                Text(item.date, format: .dateTime.hour().minute()).font(.system(size: 12)).foregroundStyle(Brand.sand)
                 if !item.app.isEmpty {
-                    Text(item.app).font(.system(size: 11)).foregroundStyle(Brand.sand).lineLimit(1)
+                    Text(item.app).font(.system(size: 11)).foregroundStyle(Brand.sand.opacity(0.7)).lineLimit(1)
                 }
             }
-            .frame(width: 84, alignment: .leading)
+            .frame(width: 76, alignment: .leading)
             Text(item.text)
                 .font(.system(size: 14))
-                .lineSpacing(3)
-                .textSelection(.enabled)
+                .lineSpacing(4)
+                .foregroundStyle(Brand.linen)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button(action: copy) {
-                Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(copied ? Brand.night : Brand.linen)
-                    .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Capsule().fill(copied ? Brand.honey : Brand.raised))
-            }
-            .buttonStyle(.plain)
-            .opacity(hover || copied ? 1 : 0)
         }
-        .padding(.horizontal, 28).padding(.vertical, 12)
-        .background(hover ? Brand.surface : Color.clear)
+        .padding(.horizontal, 18).padding(.vertical, 12)
+        .overlay(alignment: .topTrailing) {
+            HStack(spacing: 4) {
+                iconButton("doc.on.doc", "Copy", copy)
+                iconButton("trash", "Delete") { confirming = true }
+            }
+            .padding(6)
+            .background(RoundedRectangle(cornerRadius: 9).fill(Brand.surface).shadow(color: .black.opacity(0.3), radius: 6))
+            .padding(.top, 6).padding(.trailing, 10)
+            .opacity(hover ? 1 : 0)
+        }
+        .background(hover ? Brand.raised.opacity(0.55) : .clear)
         .contentShape(Rectangle())
-        .onHover { hover = $0 }
+        .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
+        .onTapGesture(perform: copy)
         .contextMenu {
             Button("Copy", action: copy)
-            Button("Delete", role: .destructive, action: delete)
+            Button("Delete", role: .destructive) { confirming = true }
         }
+        .confirmationDialog("Delete this dictation?", isPresented: $confirming) {
+            Button("Delete", role: .destructive, action: delete)
+        } message: { Text("It can’t be recovered.") }
+    }
+
+    private func iconButton(_ icon: String, _ help: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 12)).foregroundStyle(Brand.linen)
+                .frame(width: 26, height: 26)
+                .background(RoundedRectangle(cornerRadius: 7).fill(Brand.raised))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+}
+
+// MARK: - Dictionary
+
+private struct DictionaryPane: View {
+    let model: HubModel
+    struct Term: Identifiable, Hashable { var id: String { text }; var text: String; var auto: Bool }
+    @State private var terms: [Term] = []
+    @State private var search = ""
+    @State private var adding = false
+    @State private var newTerm = ""
+
+    private var shown: [Term] {
+        search.isEmpty ? terms : terms.filter { $0.text.localizedCaseInsensitiveContains(search) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            PageHeader(title: "Dictionary", subtitle: "Names and words MurmurBee should always spell right.") {
+                SearchField(prompt: "Search your words", text: $search)
+                Button("Add word") { adding = true }.buttonStyle(HoneyButton())
+            }
+            .padding(.horizontal, 36).padding(.top, 30).padding(.bottom, 18)
+
+            if adding {
+                HStack(spacing: 8) {
+                    TextField("A name or word, spelled the way you want it", text: $newTerm)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 12).padding(.vertical, 9)
+                        .background(RoundedRectangle(cornerRadius: 9).fill(Brand.surface))
+                        .overlay(RoundedRectangle(cornerRadius: 9).stroke(Brand.honey.opacity(0.6)))
+                        .onSubmit(add)
+                    Button("Add", action: add).buttonStyle(HoneyButton())
+                    Button("Cancel") { adding = false; newTerm = "" }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+                }
+                .padding(.horizontal, 36).padding(.bottom, 14)
+            }
+
+            if terms.isEmpty {
+                Text("No words yet. Add names you use often, or correct a pasted word and MurmurBee will learn it.")
+                    .foregroundStyle(Brand.sand).frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(shown.enumerated()), id: \.element.id) { i, t in
+                            if i > 0 { Rectangle().fill(Brand.border).frame(height: 1).padding(.leading, 18) }
+                            TermRow(term: t) { remove(t) }
+                        }
+                    }
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+                    .padding(.horizontal, 36).padding(.bottom, 32)
+                }
+                .scrollIndicators(.never)
+            }
+        }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        _ = Vocabulary.dictionary()
+        let text = (try? String(contentsOf: Vocabulary.file, encoding: .utf8)) ?? ""
+        var seen = Set<String>()
+        terms = text.split(separator: "\n").compactMap { line in
+            let parts = line.components(separatedBy: " #")
+            let t = parts[0].trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty, !t.hasPrefix("#"), seen.insert(t).inserted else { return nil }
+            return Term(text: t, auto: parts.count > 1 && parts[1].contains("auto"))
+        }
+    }
+
+    private func add() {
+        let t = newTerm.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return }
+        if !terms.contains(where: { $0.text == t }) { terms.insert(Term(text: t, auto: false), at: 0); save() }
+        newTerm = ""
+        adding = false
+        model.flash("“\(t)” added")
+    }
+
+    private func remove(_ t: Term) {
+        terms.removeAll { $0.text == t.text }
+        save()
+        model.flash("“\(t.text)” removed")
+    }
+
+    private func save() {
+        let text = terms.map { $0.auto ? "\($0.text)  # auto" : $0.text }.joined(separator: "\n") + "\n"
+        try? text.write(to: Vocabulary.file, atomically: true, encoding: .utf8)
+    }
+}
+
+private struct TermRow: View {
+    let term: DictionaryPane.Term
+    let remove: () -> Void
+    @State private var hover = false
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(term.text).font(.system(size: 14)).foregroundStyle(Brand.linen)
+            if term.auto { Text("✨").help("Learned from your edits") }
+            Spacer()
+            Button(action: remove) {
+                Image(systemName: "trash").font(.system(size: 12)).foregroundStyle(Brand.linen)
+                    .frame(width: 26, height: 26)
+                    .background(RoundedRectangle(cornerRadius: 7).fill(Brand.raised))
+            }
+            .buttonStyle(.plain).help("Remove").opacity(hover ? 1 : 0)
+        }
+        .padding(.horizontal, 18).padding(.vertical, 9)
+        .background(hover ? Brand.raised.opacity(0.55) : .clear)
+        .onHover { hover = $0 }
+    }
+}
+
+// MARK: - Settings sheet
+
+private struct SettingsSheet: View {
+    let initial: HubModel.Pane
+    let settings: Settings
+    let permissions: Permissions
+    let deleteHistory: () -> Void
+    let close: () -> Void
+    @State private var pane: HubModel.Pane = .settings
+
+    var body: some View {
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("SETTINGS").font(.system(size: 11, weight: .semibold)).tracking(0.9).foregroundStyle(Brand.sand)
+                    .padding(.horizontal, 8).padding(.bottom, 6)
+                rail("General", "gearshape", .settings)
+                rail("Privacy", "lock", .privacy)
+                Spacer()
+                Text("MurmurBee \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
+                    .font(.system(size: 11)).foregroundStyle(Brand.sand).padding(.horizontal, 8)
+            }
+            .padding(14).padding(.top, 8)
+            .frame(width: 180)
+            .background(Brand.surface)
+            Rectangle().fill(Brand.border).frame(width: 1)
+            VStack(spacing: 0) {
+                HStack {
+                    Text(pane == .privacy ? "Privacy" : "General").font(Brand.sora(20))
+                    Spacer()
+                    Button("Done", action: close).buttonStyle(HoneyButton()).keyboardShortcut(.defaultAction)
+                }
+                .padding(.horizontal, 24).padding(.top, 20)
+                if pane == .privacy {
+                    PrivacyTab(settings: settings, deleteHistory: deleteHistory)
+                } else {
+                    GeneralTab(settings: settings, permissions: permissions)
+                }
+            }
+            .background(Brand.night)
+        }
+        .frame(width: 760, height: 580)
+        .onAppear { pane = initial }
+        .brandWindow()
+    }
+
+    private func rail(_ title: String, _ icon: String, _ p: HubModel.Pane) -> some View {
+        Button { pane = p } label: {
+            HStack(spacing: 8) { Image(systemName: icon).frame(width: 18); Text(title) }
+                .font(.system(size: 13, weight: pane == p ? .semibold : .medium))
+                .foregroundStyle(pane == p ? Brand.linen : Brand.sand)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 7).fill(pane == p ? Brand.raised : .clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

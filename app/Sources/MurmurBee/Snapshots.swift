@@ -15,9 +15,9 @@ enum Snapshots {
         p.modelStatus = "Ready (murmurbee-cleanup-v1)"
         save(HubView(model: HubModel(), store: Store(), settings: .shared, permissions: p, deleteHistory: {})
                 .frame(width: 920, height: 640), "hub", dir)
-        let s = HubModel(); s.pane = .settings
+        let s = HubModel(); s.pane = .dictionary
         save(HubView(model: s, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
-                .frame(width: 920, height: 640), "hub-settings", dir)
+                .frame(width: 920, height: 640), "hub-dictionary", dir)
         // Flow bar states, on a light desktop-ish backdrop.
         let states: [(String, PillModel.State, Bool, PillModel.Edge, String?)] = [
             ("bar-idle", .idle, false, .bottom, nil), ("bar-hover", .idle, true, .bottom, nil),

@@ -228,68 +228,6 @@ struct GeneralTab: View {
     }
 }
 
-/// The dictionary file, one term per line. Auto-learned terms carry a "# auto" tag.
-struct DictionaryTab: View {
-    struct Term: Identifiable, Hashable { let id = UUID(); var text: String; var auto: Bool }
-    @State private var terms: [Term] = []
-    @State private var newTerm = ""
-    @State private var selection: Set<Term.ID> = []
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Names and words to spell right. MurmurBee also picks up names from your screen, and adds words you correct.")
-                .font(.callout).foregroundStyle(.secondary)
-            List(selection: $selection) {
-                ForEach(terms) { t in
-                    HStack {
-                        Text(t.text)
-                        Spacer()
-                        if t.auto { Text("Auto-learned").font(.caption).foregroundStyle(.secondary) }
-                    }
-                }
-            }
-            .listStyle(.bordered(alternatesRowBackgrounds: true))
-            .scrollContentBackground(.hidden)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Brand.surface))
-            HStack {
-                TextField("Add a word or name", text: $newTerm).onSubmit(add)
-                Button("Add", action: add).disabled(newTerm.trimmingCharacters(in: .whitespaces).isEmpty)
-                Button("Remove") {
-                    terms.removeAll { selection.contains($0.id) }
-                    save()
-                }
-                .disabled(selection.isEmpty)
-            }
-        }
-        .padding(20)
-        .onAppear(perform: load)
-    }
-
-    private func load() {
-        _ = Vocabulary.dictionary()  // seeds the file on first use
-        let text = (try? String(contentsOf: Vocabulary.file, encoding: .utf8)) ?? ""
-        terms = text.split(separator: "\n").compactMap { line in
-            let parts = line.components(separatedBy: " #")
-            let t = parts[0].trimmingCharacters(in: .whitespaces)
-            guard !t.isEmpty, !t.hasPrefix("#") else { return nil }
-            return Term(text: t, auto: parts.count > 1 && parts[1].contains("auto"))
-        }
-    }
-
-    private func add() {
-        let t = newTerm.trimmingCharacters(in: .whitespaces)
-        guard !t.isEmpty, !terms.contains(where: { $0.text == t }) else { return }
-        terms.insert(Term(text: t, auto: false), at: 0)
-        newTerm = ""
-        save()
-    }
-
-    private func save() {
-        let text = terms.map { $0.auto ? "\($0.text)  # auto" : $0.text }.joined(separator: "\n") + "\n"
-        try? text.write(to: Vocabulary.file, atomically: true, encoding: .utf8)
-    }
-}
-
 struct PrivacyTab: View {
     @Bindable var settings: Settings
     let deleteHistory: () -> Void
@@ -345,7 +283,7 @@ final class WindowManager {
         w.title = title
         w.styleMask = resizable ? [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView] : [.titled, .closable]
         if resizable {
-            w.setContentSize(NSSize(width: 920, height: 640))
+            w.setContentSize(NSSize(width: 1080, height: 720))
             w.setFrameAutosaveName("MurmurBee.\(id)")
         }
         w.titlebarAppearsTransparent = true
