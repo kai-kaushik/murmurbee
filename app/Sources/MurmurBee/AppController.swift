@@ -63,7 +63,11 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { self?.refreshPermissions() }
         }
         refreshPermissions()
-        if !settings.onboarded || !permissions.allGranted { showSetup() }
+        // Setup comes back after any restart (ours or macOS's "Quit & Reopen") until it's genuinely finished.
+        if !settings.onboarded || !permissions.allGranted || UserDefaults.standard.bool(forKey: "resumeSetup") {
+            UserDefaults.standard.set(false, forKey: "resumeSetup")
+            showSetup()
+        }
 
         Task {
             do {
@@ -186,9 +190,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard !r.cleaned.isEmpty else { pill.flash("No speech heard"); return }
             pill.show(.idle)
             let ctx = context
+            // Security: never paste a line break into a terminal, where it would run whatever text came before it.
+            let terminals: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable",
+                                          "com.mitchellh.ghostty", "org.alacritty", "net.kovidgoyal.kitty",
+                                          "com.github.wez.wezterm"]
+            var text = r.cleaned
+            if terminals.contains(ctx.bundleId) {
+                text = text.components(separatedBy: .newlines).filter { !$0.isEmpty }.joined(separator: " ")
+            }
             // Latency is release → ⌘V sent; verification happens after, off the critical path.
             let totalMs = Date().timeIntervalSince(released) * 1000
-            inserter.insert(r.cleaned) { [weak self] outcome in
+            inserter.insert(text) { [weak self] outcome in
                 self?.record(r, context: ctx, totalMs: totalMs, outcome: outcome)
             }
             recent.insert((r.cleaned, totalMs), at: 0)
@@ -276,6 +288,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func relaunch() {
+        UserDefaults.standard.set(true, forKey: "resumeSetup")
         let cfg = NSWorkspace.OpenConfiguration()
         cfg.createsNewApplicationInstance = true
         NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: cfg) { _, _ in
@@ -287,8 +300,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         windows.show("setup", title: "MurmurBee") {
             SetupView(permissions: permissions, settings: settings, relaunch: { [weak self] in self?.relaunch() },
                       done: { [weak self] in
-                          self?.settings.onboarded = true
-                          self?.windows.close("setup")
+                          guard let self else { return }
+                          // "Finish later" doesn't count as finished: setup returns until everything works.
+                          self.settings.onboarded = self.permissions.allGranted && self.hotkey.isListening
+                          self.windows.close("setup")
                       })
         }
     }
@@ -346,6 +361,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        add(menu, "Set Up MurmurBee…", #selector(showSetup))
         let s = add(menu, "Settings…", #selector(showSettings))
         s.keyEquivalent = ","
         menu.addItem(.separator())

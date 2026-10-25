@@ -177,7 +177,9 @@ actor Cleaner {
                 if Self.isLooping(out) { break }
             }
             out = out.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard Self.isPlausible(out, for: raw) else { return (raw, .fallbackRules) }
+            guard Self.isPlausible(out, for: raw), Self.isGrounded(out, raw: raw, vocab: vocab) else {
+                return (raw, .fallbackRules)
+            }
             // Guard against stopping early (seen after self-corrections, E13): if the last words said are missing,
             // clean that tail on its own and append it, so nothing the user said is silently lost.
             if allowTailRepair, let tail = Self.missingTail(raw: raw, out: out) {
@@ -232,6 +234,20 @@ actor Cleaner {
             if counts[k]! >= 4 { return true }
         }
         return false
+    }
+
+    /// Security: the prompt carries untrusted on-screen text (selection, text around the cursor, page names), which
+    /// could try to steer the model into writing something the user never said. Require most output words to come
+    /// from the transcript or the hints (prefix match tolerates "regard" → "Regards"); otherwise use the transcript.
+    static func isGrounded(_ out: String, raw: String, vocab: [String]) -> Bool {
+        func words(_ s: String) -> [String] {
+            s.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init).filter { !$0.isEmpty }
+        }
+        let source = Set(words(raw + " " + vocab.joined(separator: " ")).map { String($0.prefix(4)) })
+        let outWords = words(out).filter { !($0.allSatisfy(\.isNumber) && $0.count <= 2) }  // list numbers
+        guard outWords.count >= 4 else { return true }
+        let grounded = outWords.filter { source.contains(String($0.prefix(4))) }.count
+        return Double(grounded) / Double(outWords.count) >= 0.6
     }
 
     /// Validator: reject replies, summaries and loops; fall back to the raw transcript.

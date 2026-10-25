@@ -18,6 +18,8 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$PRODUCTS/MurmurBee" "$APP/Contents/MacOS/MurmurBee"
 # SwiftPM resource bundles (MLX metallib, tokenizer data, ...) go in Resources.
 for b in "$PRODUCTS"/*.bundle(N); do cp -R "$b" "$APP/Contents/Resources/"; done
+# Interface sounds (scripts/make_sounds.py)
+cp -R Resources/sounds "$APP/Contents/Resources/sounds"
 # Seed for ~/Library/Application Support/MurmurBee/dictionary.txt (first run only), from the Wispr dictionary.
 [[ -f ../data/vocab.txt ]] && cp ../data/vocab.txt "$APP/Contents/Resources/dictionary-seed.txt"
 # MLX also looks for its metallib next to the binary.
