@@ -604,7 +604,7 @@ kbd {
 .context__row { display: grid; grid-template-columns: 1fr; gap: 8px; align-items: center; }
 .context__text { font-size: 18px; line-height: 1.5; color: var(--linen); }
 .context__text--meta { font-size: 14px; color: var(--sand); }
-.context mark { background: none; color: inherit; box-shadow: inset 0 -2px 0 rgba(248,190,52,.55); }
+.context mark { background: none; color: var(--honey); }
 .context__lead { display: none; }
 .tag {
   justify-self: start;
@@ -625,7 +625,7 @@ kbd {
 .learn__line { font-size: clamp(20px, 2.2vw, 26px); line-height: 1.4; color: var(--linen); letter-spacing: -0.01em; }
 .learn__fix { white-space: nowrap; }
 .learn__fix del { color: #8F826D; text-decoration-color: var(--blush); text-decoration-thickness: 2px; margin-right: .3em; }
-.learn__fix ins { text-decoration: none; box-shadow: inset 0 -2px 0 rgba(248,190,52,.7); }
+.learn__fix ins { text-decoration: none; color: var(--honey); }
 .toast {
   display: inline-flex; align-items: center; gap: 10px;
   height: 40px; padding: 0 18px 0 14px;
