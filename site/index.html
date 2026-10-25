@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MurmurBee — Just murmur. It writes.</title>
+  <meta name="description" content="MurmurBee is free, open-source voice dictation for Mac. Speak naturally in any app and get clean, well-formatted text, about twice as fast as cloud dictation, with nothing leaving your Mac.">
+  <meta name="theme-color" content="#16130F">
+  <link rel="canonical" href="https://murmurbee.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://murmurbee.com/">
+  <meta property="og:site_name" content="MurmurBee">
+  <meta property="og:title" content="MurmurBee — private voice dictation for Mac">
+  <meta property="og:description" content="Speak naturally in any app. MurmurBee turns it into clean text in a blink, entirely on your Mac. Free and open source.">
+  <meta property="og:image" content="https://murmurbee.com/assets/murmurbee-mark.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MurmurBee — private voice dictation for Mac">
+  <meta name="twitter:description" content="Speak naturally in any app. Clean text in a blink, entirely on your Mac. Free and open source.">
+
+  <link rel="icon" type="image/svg+xml" href="assets/murmurbee-bee.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Sora:wght@600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="nav" id="top">
+    <div class="nav__inner wrap">
+      <a class="brand" href="#top" aria-label="MurmurBee home">
+        <img class="brand__mark" src="assets/murmurbee-bee.svg" alt="" width="34" height="33">
+        <span class="wordmark">Murmur<span class="wordmark__bee">Bee</span></span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn btn--honey btn--sm" href="#download"><span>Download<span class="hide-sm"> for Mac</span></span></a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
+        <h1 id="hero-title" class="hero__title">
+          <span class="hero__line">Just murmur.</span>
+          <span class="hero__line hero__line--two">It writes.<img class="hero__mark" src="assets/murmurbee-mark.svg" alt="" width="886" height="478" fetchpriority="high"></span>
+        </h1>
+
+        <div class="hero__foot">
+          <p class="hero__sub">Speak naturally in any app and get clean, well&#8209;formatted text. Twice as fast as cloud dictation. Nothing leaves your Mac.</p>
+          <div class="hero__actions">
+            <a class="btn btn--honey btn--lg" href="#download">Download for Mac</a>
+            <a class="textlink" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">View on GitHub <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="hero__meta">Free and open source · Apple Silicon · macOS 15 or later</p>
+        </div>
+      </div>
+
+      <!-- A believable moment on a Mac: dictating into a Mail reply -->
+      <figure class="wrap scene" aria-labelledby="scene-caption">
+        <div class="screen" aria-hidden="true">
+          <div class="menubar">
+            <svg class="menubar__apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.39-.92-2.41-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.9-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.77-.96 2.81 1.02.08 2.06-.52 2.69-1.28z"/></svg>
+            <b>Mail</b><span>File</span><span>Edit</span><span class="menubar__opt">View</span><span class="menubar__opt">Message</span><span class="menubar__opt">Window</span>
+            <span class="menubar__right">Wed 14:32</span>
+          </div>
+
+          <div class="mailwin">
+            <div class="mailwin__bar">
+              <span class="lights"><i></i><i></i><i></i></span>
+              <span class="mailwin__title">Re: Design sync</span>
+              <svg class="mailwin__send" viewBox="0 0 24 24"><path d="M3.5 11.6 20 4l-6.4 16.5-2.6-6.9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="mailwin__field"><span>To:</span> Siobhan Byrne</div>
+            <div class="mailwin__field"><span>Subject:</span> Re: Design sync</div>
+            <div class="mailwin__body">
+              <p>Hi Siobhan,</p>
+              <p class="dictation"><span class="dictation__text" data-demo-text></span><span class="caret"></span></p>
+              <p class="mailwin__quote">On Tue, Siobhan Byrne wrote:<br>Tuesday is packed for me. Any chance we shift the sync?</p>
+            </div>
+          </div>
+
+          <div class="fbar" data-demo-bar>
+            <i class="fbar__rec"></i>
+            <span class="fbar__wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="fbar__dots"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+        <figcaption id="scene-caption" class="scene__caption">
+          Hold <kbd>right&nbsp;⌥</kbd> or <kbd>fn</kbd> in any app and say it however it comes out. Let go, and the tidy version lands at your cursor.
+          <span class="sr-only">In the example, “um so can we move the sync to tuesday, sorry, wednesday at 3” becomes “Can we move the sync to Wednesday at 3?”</span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- PROOF -->
+    <section class="proof" aria-label="At a glance">
+      <dl class="wrap proof__list">
+        <div class="proof__item">
+          <dt class="proof__value">2×</dt>
+          <dd class="proof__label">faster than cloud dictation, from letting go of the key to text on screen.</dd>
+        </div>
+        <div class="proof__item">
+          <dt class="proof__value">3×</dt>
+          <dd class="proof__label">faster than typing. Most people type around 40 words a minute and speak around 120+.</dd>
+        </div>
+        <div class="proof__item">
+          <dt class="proof__value">0<small>bytes</small></dt>
+          <dd class="proof__label">of audio or text leave your Mac. Free, open source, no account.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- SPEED + LOCAL -->
+    <section class="speed" id="speed" aria-labelledby="speed-title">
+      <div class="wrap">
+        <h2 id="speed-title" class="speed__title">Local is faster.</h2>
+        <p class="speed__lead">There’s no round trip to a server. MurmurBee pastes your words a median 0.31&nbsp;seconds after you let go, about twice as fast as Wispr Flow on the same&nbsp;Mac.</p>
+
+        <!-- 1. Latency race -->
+        <figure class="race" data-race>
+          <figcaption class="race__head">
+            <span class="race__label">Key release to text pasted, median</span>
+            <span class="race__big" aria-hidden="true">2<span>×</span></span>
+          </figcaption>
+          <div class="race__chart" role="img" aria-label="Bar chart: MurmurBee 0.31 seconds, Wispr Flow 0.65 seconds, on a 0 to 1 second scale.">
+            <div class="race__axis" aria-hidden="true">
+              <span style="--at:0">0</span><span style="--at:.25">0.25</span><span style="--at:.5">0.5</span><span style="--at:.75">0.75</span><span style="--at:1">1&nbsp;s</span>
+            </div>
+            <div class="race__row">
+              <span class="race__name">MurmurBee</span>
+              <span class="race__track"><span class="race__bar race__bar--us" style="--v:.31"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
+              <span class="race__val">0.31&nbsp;s</span>
+            </div>
+            <div class="race__row">
+              <span class="race__name">Wispr Flow</span>
+              <span class="race__track"><span class="race__bar race__bar--them" style="--v:.65"></span></span>
+              <span class="race__val">0.65&nbsp;s</span>
+            </div>
+          </div>
+
+          <div class="split">
+            <p class="split__title">Where MurmurBee’s time goes, in a typical dictation</p>
+            <div class="split__bar" aria-hidden="true">
+              <span class="split__seg split__seg--asr" style="--w:90"></span>
+              <span class="split__seg split__seg--llm" style="--w:140"></span>
+              <span class="split__seg split__seg--paste" style="--w:60"></span>
+            </div>
+            <ul class="split__legend">
+              <li><i class="k k--asr"></i>~90&nbsp;ms finishing speech recognition</li>
+              <li><i class="k k--llm"></i>~140&nbsp;ms cleanup</li>
+              <li><i class="k k--paste"></i>paste</li>
+            </ul>
+            <p class="split__note">Earlier speech is recognised while you’re still talking, so the wait barely grows with length. In one test, a 30&#8209;second dictation pasted in 112&nbsp;ms.</p>
+          </div>
+        </figure>
+
+        <!-- 2. Speaking vs typing -->
+        <figure class="wpm" data-wpm>
+          <figcaption class="wpm__head">
+            <span class="race__label">Words per minute</span>
+            <span class="race__big" aria-hidden="true">3<span>×</span></span>
+          </figcaption>
+          <div class="wpm__rows" role="img" aria-label="Typing at about 40 words per minute versus speaking at about 120 words per minute: three to one.">
+            <div class="wpm__row">
+              <span class="wpm__name">Typing</span>
+              <span class="wpm__trail"><span class="wpm__dots wpm__dots--type" style="--v:40"></span></span>
+              <span class="wpm__val">~40</span>
+            </div>
+            <div class="wpm__row">
+              <span class="wpm__name">Speaking</span>
+              <span class="wpm__trail"><span class="wpm__dots wpm__dots--talk" style="--v:120"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
+              <span class="wpm__val">120+</span>
+            </div>
+          </div>
+          <p class="split__note">Most people type around 40 words a minute and speak around 120+. MurmurBee’s maker averages 122&nbsp;wpm across 759&nbsp;dictations.</p>
+        </figure>
+
+        <!-- 3. Your Mac boundary -->
+        <figure class="mac">
+          <figcaption class="mac__head">
+            <span class="mac__stat">0&nbsp;bytes</span>
+            <span class="mac__sub">of audio or text leave your Mac. No account, no server. After a one&#8209;time model download, it works offline.</span>
+          </figcaption>
+          <div class="mac__diagram">
+            <div class="mac__box">
+              <span class="mac__label">Your Mac</span>
+              <ol class="mac__flow">
+                <li><b>Microphone</b><span>while you hold the key</span></li>
+                <li><b>Parakeet TDT 0.6B</b><span>speech → words</span></li>
+                <li><b>Qwen 0.8B, fine&#8209;tuned</b><span>words → clean text</span></li>
+                <li><b>Your cursor</b><span>pasted in place</span></li>
+              </ol>
+              <span class="mac__chip">Apple Neural Engine + GPU</span>
+            </div>
+            <div class="mac__cloud" aria-label="The cloud is not used">
+              <svg viewBox="0 0 120 80" aria-hidden="true">
+                <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round"/>
+                <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Cloud<br>not used</span>
+            </div>
+          </div>
+        </figure>
+
+        <div class="acc">
+          <div class="acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
+          <div class="acc__text">
+            <h3 class="acc__title">Accuracy close to the best cloud dictation.</h3>
+            <p>Both get about 97–98 of every 100 words right. Your dictionary, the names on screen and what it learns from your edits do the rest.</p>
+          </div>
+        </div>
+
+        <div class="speed__notes">
+          <p>Measured on a MacBook Air M4 (32&nbsp;GB). MurmurBee: median of 19 real dictations, 90th percentile 0.75&nbsp;s. Wispr Flow figure from its own logs of dictations on the same Mac. Your numbers will vary.</p>
+          <p>Speech recognition on a 10&#8209;clip test: 96.8 vs 98.1 words correct per 100; your dictionary, on&#8209;screen context and learning from your edits close the gap further.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES as chapters -->
+    <section class="chapters" id="features" aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 id="features-title" class="chapters__intro">Talk the way you think. <span class="muted">Send it the way you meant it.</span></h2>
+
+        <!-- 1. Cleanup -->
+        <article class="chapter">
+          <div class="chapter__text">
+            <h3 class="chapter__title">Cleans up as you speak</h3>
+            <p>Fillers go. Self&#8209;corrections like “sorry, I meant…” are followed, not transcribed. Lists become lists, emails get greetings and sign&#8209;offs.</p>
+          </div>
+          <div class="chapter__visual specimen">
+            <div class="specimen__row">
+              <p class="specimen__said"><s>um so</s> can we move the sync to <s>tuesday, sorry,</s> wednesday at 3</p>
+              <span class="specimen__arrow" aria-hidden="true">→</span>
+              <p class="specimen__typed">Can we move the sync to Wednesday at&nbsp;3?</p>
+            </div>
+            <div class="specimen__row">
+              <p class="specimen__said">first the budget second the hiring plan and third <s>uh</s> the offsite</p>
+              <span class="specimen__arrow" aria-hidden="true">→</span>
+              <ol class="specimen__typed specimen__list">
+                <li>The budget</li>
+                <li>The hiring plan</li>
+                <li>The offsite</li>
+              </ol>
+            </div>
+            <p class="specimen__legend"><span>What you said</span><span>What MurmurBee typed</span></p>
+          </div>
+        </article>
+
+        <!-- 2. Context -->
+        <article class="chapter chapter--flip">
+          <div class="chapter__text">
+            <h3 class="chapter__title">Knows the context</h3>
+            <p>It reads the app you’re in, your selected text, what’s around your cursor, your dictionary and the names on screen. All of it locally, so “Siobhan” comes out spelled right the first time.</p>
+          </div>
+          <div class="chapter__visual context">
+            <div class="context__row">
+              <p class="context__text context__text--meta">Mail · Re: Venue for the offsite</p>
+              <span class="context__lead" aria-hidden="true"></span>
+              <span class="tag">App: Mail</span>
+            </div>
+            <div class="context__row">
+              <p class="context__text">Hi <mark>Siobhan</mark>,</p>
+              <span class="context__lead" aria-hidden="true"></span>
+              <span class="tag">Replying to: Siobhan</span>
+            </div>
+            <div class="context__row">
+              <p class="context__text">Thursday works. I’ll share the <mark>Larkspur</mark> board before&nbsp;then.</p>
+              <span class="context__lead" aria-hidden="true"></span>
+              <span class="tag">Your dictionary</span>
+            </div>
+            <div class="context__row">
+              <p class="context__text"><mark>Best,<br>Mara</mark></p>
+              <span class="context__lead" aria-hidden="true"></span>
+              <span class="tag">Your sign&#8209;off</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3. Learns -->
+        <article class="chapter">
+          <div class="chapter__text">
+            <h3 class="chapter__title">Learns from your edits</h3>
+            <p>Fix a word once and MurmurBee adds it to your dictionary. Next time, it gets it right without being asked.</p>
+          </div>
+          <div class="chapter__visual learn">
+            <p class="learn__line">Send the deck to the <span class="learn__fix"><del>Halverson</del><ins>Halvorsen</ins></span> team by&nbsp;Friday.</p>
+            <p class="toast" role="img" aria-label="Notification: Added Halvorsen to dictionary">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Added “Halvorsen” to dictionary
+            </p>
+          </div>
+        </article>
+
+        <p class="chapters__soon"><span>Coming soon</span> Bring your Wispr Flow history over in one click, so MurmurBee knows your words from day one.</p>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section how" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <header class="section__head">
+          <h2 id="how-title" class="section__title">From your voice to your cursor,<br><span class="muted">without leaving your Mac.</span></h2>
+        </header>
+
+        <div class="how__stage" data-trail>
+          <svg class="trail" aria-hidden="true" focusable="false">
+            <defs>
+              <mask id="trail-mask" maskUnits="userSpaceOnUse">
+                <path class="trail__reveal" d="" />
+              </mask>
+            </defs>
+            <path class="trail__ghost" d="" />
+            <path class="trail__dots" mask="url(#trail-mask)" d="" />
+          </svg>
+          <img class="trail__bee" data-trail-bee src="assets/murmurbee-bee.svg" alt="" width="64" height="63" loading="lazy">
+
+          <ol class="steps">
+            <li class="step">
+              <span class="step__num" aria-hidden="true">1</span>
+              <h3 class="step__title">Hold the key and talk</h3>
+              <p>Hold right <kbd>⌥</kbd> or <kbd>fn</kbd> in any app and speak like you would to a friend. The flow bar listens.</p>
+            </li>
+            <li class="step">
+              <span class="step__num" aria-hidden="true">2</span>
+              <h3 class="step__title">Parakeet transcribes on&#8209;device</h3>
+              <p>NVIDIA’s Parakeet speech model turns your audio into words, right on your Mac’s Neural Engine.</p>
+            </li>
+            <li class="step">
+              <span class="step__num" aria-hidden="true">3</span>
+              <h3 class="step__title">A tiny local model polishes it</h3>
+              <p>A small language model tidies fillers and corrections, formats the text, and pastes it where your cursor is.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
+      <div class="wrap privacy__inner">
+        <div>
+          <h2 id="privacy-title" class="section__title">Your voice stays<br>on your Mac.</h2>
+          <p class="privacy__lead">No asterisks. MurmurBee has no servers to send your words to, and no account to tie them to.</p>
+        </div>
+        <ul class="privacy__list">
+          <li>
+            <h3>Nothing leaves your Mac</h3>
+            <p>Your audio and your text are processed on&#8209;device and never sent anywhere.</p>
+          </li>
+          <li>
+            <h3>History you control</h3>
+            <p>Your dictation history is stored locally, and you can delete all of it in one click.</p>
+          </li>
+          <li>
+            <h3>Open source, so you can check</h3>
+            <p>Every line is on GitHub. Don’t take our word for it: <a href="https://github.com/kai-kaushik/murmurbee" rel="noopener">read the code</a>.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section faq" id="faq" aria-labelledby="faq-title">
+      <div class="wrap faq__inner">
+        <header class="section__head section__head--left">
+          <h2 id="faq-title" class="section__title">Questions, answered.</h2>
+        </header>
+        <div class="faq__list">
+          <details>
+            <summary>Is it really free?</summary>
+            <p>Yes. MurmurBee is free and open source. There’s no subscription, no account and no usage limit, because everything runs on your own Mac.</p>
+          </details>
+          <details>
+            <summary>Which Macs does it run on?</summary>
+            <p>Macs with Apple Silicon (M&#8209;series chips) running macOS 15 Sequoia or later.</p>
+          </details>
+          <details>
+            <summary>Which languages does it support?</summary>
+            <p>English today. More languages are planned.</p>
+          </details>
+          <details>
+            <summary>How is it different from Wispr Flow?</summary>
+            <p>MurmurBee is fully local: speech recognition and cleanup both run on your Mac, so nothing goes to a server. It’s also free, open source, and learns your vocabulary on your Mac rather than in the cloud. In our measurements on the same Mac, it was about twice as fast from key release to text.</p>
+          </details>
+          <details>
+            <summary>Does it need an internet connection?</summary>
+            <p>Only once, to download the speech and language models. After that, it works completely offline.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section class="section download" id="download" aria-labelledby="download-title">
+      <div class="wrap download__inner">
+        <img class="download__bee" src="assets/murmurbee-mark.svg" alt="The MurmurBee bee at the end of a looping dotted flight trail" width="443" height="239" loading="lazy">
+        <h2 id="download-title" class="section__title">Give your keyboard<br>a little break.</h2>
+        <p class="download__sub">Free for every Apple Silicon Mac on macOS 15 or later.</p>
+        <div class="hero__ctas">
+          <a class="btn btn--honey btn--lg" href="#" aria-describedby="beta-note">
+            <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.39-.92-2.41-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.9-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.77-.96 2.81 1.02.08 2.06-.52 2.69-1.28z"/></svg>
+            Download for Mac
+          </a>
+          <a class="btn btn--ghost btn--lg" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">View on GitHub</a>
+        </div>
+        <p class="download__note" id="beta-note"><span class="pill">Beta</span> DMG coming soon</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <a class="brand" href="#top" aria-label="MurmurBee, back to top">
+        <img class="brand__mark" src="assets/murmurbee-bee.svg" alt="" width="28" height="27" loading="lazy">
+        <span class="wordmark">Murmur<span class="wordmark__bee">Bee</span></span>
+      </a>
+      <p class="footer__copy">Made with care on a Mac. © 2026 MurmurBee</p>
+      <a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
