@@ -15,7 +15,7 @@ enum ModelStore {
 
     /// The general cleanup model, trained only on synthetic data, published as a GitHub release asset.
     /// The checksum is pinned here and always verified, so a swapped or tampered asset is rejected.
-    static let generalSHA256 = ""  // set when models-v1 is published; until then the download fails closed
+    static let generalSHA256 = "fb5b18f0563a3bd95e0bc4750675bbc5d96cdeda1dc7388d0086713c913b07df"  // models-v1 release asset
     static var general: Remote {
         var url = URL(string: "https://github.com/kai-kaushik/murmurbee/releases/download/models-v1/murmurbee-cleanup-v1.zip")!
         var sha = generalSHA256
