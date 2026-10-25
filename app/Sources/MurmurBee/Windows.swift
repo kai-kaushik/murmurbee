@@ -39,7 +39,12 @@ struct SetupView: View {
     let settings: Settings
     let relaunch: () -> Void
     let done: () -> Void
+    /// Celebrate as soon as the window opens (setup finished across a restart, e.g. macOS's "Quit & Reopen").
+    var celebrateOnAppear = false
     @State private var tryText = ""
+    @State private var confetti = 0
+
+    private var allSet: Bool { permissions.allGranted && permissions.listening }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -48,9 +53,15 @@ struct SetupView: View {
                     Image(nsImage: bee).resizable().interpolation(.high).frame(width: 58, height: 58)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Wordmark(size: 26)
-                    Text("Hold a key, speak, let go. Everything runs on this Mac.")
-                        .foregroundStyle(Brand.sand)
+                    if allSet {
+                        Text("You’re all set").font(Brand.sora(26)).foregroundStyle(Brand.linen)
+                        Text("Hold \(settings.holdKey.rawValue) in any app and start talking.")
+                            .foregroundStyle(Brand.sand)
+                    } else {
+                        Wordmark(size: 26)
+                        Text("Hold a key, speak, let go. Everything runs on this Mac.")
+                            .foregroundStyle(Brand.sand)
+                    }
                 }
             }
 
@@ -106,13 +117,16 @@ struct SetupView: View {
                 }
                 .frame(width: 230)
                 Spacer()
-                Button(permissions.allGranted ? "Done" : "Finish later") { done() }
+                Button(allSet ? "Start dictating" : "Finish later") { done() }
                     .buttonStyle(HoneyButton())
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
         .frame(width: 520)
+        .overlay(Confetti(trigger: confetti))
+        .onChange(of: allSet) { if allSet { confetti += 1 } }
+        .onAppear { if celebrateOnAppear && allSet { confetti += 1 } }
         .brandWindow()
     }
 }
@@ -152,25 +166,6 @@ private struct StepRow: View {
 
 // MARK: - Settings
 
-struct SettingsView: View {
-    let settings: Settings
-    let permissions: Permissions
-    let deleteHistory: () -> Void
-
-    var body: some View {
-        TabView {
-            GeneralTab(settings: settings, permissions: permissions)
-                .tabItem { Label("General", systemImage: "gearshape") }
-            DictionaryTab()
-                .tabItem { Label("Dictionary", systemImage: "character.book.closed") }
-            PrivacyTab(settings: settings, deleteHistory: deleteHistory)
-                .tabItem { Label("Privacy", systemImage: "lock") }
-        }
-        .frame(width: 520, height: 560)
-        .brandWindow()
-    }
-}
-
 /// Honey pill button with dark text (white on honey is hard to read).
 struct HoneyButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -182,7 +177,7 @@ struct HoneyButton: ButtonStyle {
     }
 }
 
-private struct GeneralTab: View {
+struct GeneralTab: View {
     @Bindable var settings: Settings
     let permissions: Permissions
     @State private var mics = AudioDevices.inputs()
@@ -234,7 +229,7 @@ private struct GeneralTab: View {
 }
 
 /// The dictionary file, one term per line. Auto-learned terms carry a "# auto" tag.
-private struct DictionaryTab: View {
+struct DictionaryTab: View {
     struct Term: Identifiable, Hashable { let id = UUID(); var text: String; var auto: Bool }
     @State private var terms: [Term] = []
     @State private var newTerm = ""
@@ -295,7 +290,7 @@ private struct DictionaryTab: View {
     }
 }
 
-private struct PrivacyTab: View {
+struct PrivacyTab: View {
     @Bindable var settings: Settings
     let deleteHistory: () -> Void
     @State private var confirming = false
@@ -340,7 +335,7 @@ private struct PrivacyTab: View {
 final class WindowManager {
     private var windows: [String: NSWindow] = [:]
 
-    func show<V: View>(_ id: String, title: String, @ViewBuilder content: () -> V) {
+    func show<V: View>(_ id: String, title: String, resizable: Bool = false, @ViewBuilder content: () -> V) {
         if let w = windows[id] {
             NSApp.activate()
             w.makeKeyAndOrderFront(nil)
@@ -348,7 +343,11 @@ final class WindowManager {
         }
         let w = NSWindow(contentViewController: NSHostingController(rootView: content()))
         w.title = title
-        w.styleMask = [.titled, .closable]
+        w.styleMask = resizable ? [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView] : [.titled, .closable]
+        if resizable {
+            w.setContentSize(NSSize(width: 920, height: 640))
+            w.setFrameAutosaveName("MurmurBee.\(id)")
+        }
         w.titlebarAppearsTransparent = true
         w.appearance = NSAppearance(named: .darkAqua)
         w.backgroundColor = Brand.nsNight
@@ -360,4 +359,5 @@ final class WindowManager {
     }
 
     func close(_ id: String) { windows[id]?.close() }
+    func isOpen(_ id: String) -> Bool { windows[id]?.isVisible ?? false }
 }

@@ -16,6 +16,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let inserter = Inserter()
     private let store = Store()
     private let pill = PillWindow()
+    private let hub = HubModel()
 
     private var ready = false
     private var status = "Loading models…"
@@ -56,10 +57,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { self?.refreshPermissions() }
         }
         refreshPermissions()
-        // Setup comes back after any restart (ours or macOS's "Quit & Reopen") until it's genuinely finished.
-        if !settings.onboarded || !permissions.allGranted || UserDefaults.standard.bool(forKey: "resumeSetup") {
-            UserDefaults.standard.set(false, forKey: "resumeSetup")
-            showSetup()
+        NSApp.mainMenu = mainMenu()
+        // Setup comes back after any restart (ours or macOS's "Quit & Reopen") until it's genuinely finished,
+        // and the first launch where everything works says so (with confetti). Otherwise the main window opens,
+        // unless macOS started us at login.
+        let d = UserDefaults.standard
+        let allSet = permissions.allGranted && hotkey.isListening
+        if !settings.onboarded || !permissions.allGranted || d.bool(forKey: "resumeSetup") || (allSet && !d.bool(forKey: "setupCelebrated")) {
+            d.set(false, forKey: "resumeSetup")
+            showSetup(celebrate: allSet)
+        } else if !launchedAtLogin {
+            showHub(.history)
         }
 
         Task { await loadModels() }
@@ -103,12 +111,19 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         rebuildMenu()
     }
 
-    /// Opening the app again (Finder, Spotlight, Dock) pops the menu up at the cursor,
-    /// so it's reachable even when the menu-bar icon is hidden behind the notch.
+    /// Clicking the Dock icon (or opening the app again) brings up the main window.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        rebuildMenu()
-        statusItem.menu?.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-        return false
+        if !flag { showHub(hub.pane) }
+        return true
+    }
+
+    /// Closing the window keeps MurmurBee listening in the menu bar; quit from the Dock or menu.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    private var launchedAtLogin: Bool {
+        let event = NSAppleEventManager.shared().currentAppleEvent
+        return event?.eventID == kAEOpenApplication
+            && event?.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
     }
 
     // MARK: Keys
@@ -249,6 +264,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             rec.vocab = r.vocab.joined(separator: "; ")
             if learn { rec.fieldAfter = outcome.fieldAfter }
             let id = await store.save(rec)
+            NotificationCenter.default.post(name: .historyChanged, object: nil)
             if learn, let field = outcome.field, let after = outcome.fieldAfter {
                 watchEdits(field, row: id, inserted: r.cleaned, after: after)
             }
@@ -308,30 +324,87 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc private func showSetup() {
+    @objc private func showSetup() { showSetup(celebrate: false) }
+
+    private func showSetup(celebrate: Bool) {
+        if celebrate { UserDefaults.standard.set(true, forKey: "setupCelebrated") }
         windows.show("setup", title: "MurmurBee") {
             SetupView(permissions: permissions, settings: settings, relaunch: { [weak self] in self?.relaunch() },
                       done: { [weak self] in
                           guard let self else { return }
                           // "Finish later" doesn't count as finished: setup returns until everything works.
-                          self.settings.onboarded = self.permissions.allGranted && self.hotkey.isListening
+                          let allSet = self.permissions.allGranted && self.hotkey.isListening
+                          self.settings.onboarded = allSet
+                          if allSet { UserDefaults.standard.set(true, forKey: "setupCelebrated") }
                           self.windows.close("setup")
-                      })
+                          if allSet { self.showHub(.history) }
+                      },
+                      celebrateOnAppear: celebrate)
         }
     }
 
-    @objc private func showSettings() {
-        windows.show("settings", title: "MurmurBee Settings") {
-            SettingsView(settings: settings, permissions: permissions,
-                         deleteHistory: { [weak self] in
-                             guard let self else { return }
-                             Task {
-                                 await self.store.deleteAll()
-                                 self.recent.removeAll()
-                                 self.rebuildMenu()
-                             }
-                         })
+    @objc private func showSettings() { showHub(.settings) }
+    @objc private func openHub() { showHub(.history) }
+
+    private func showHub(_ pane: HubModel.Pane) {
+        hub.pane = pane
+        windows.show("hub", title: "MurmurBee", resizable: true) {
+            HubView(model: hub, store: store, settings: settings, permissions: permissions,
+                    deleteHistory: { [weak self] in
+                        guard let self else { return }
+                        Task {
+                            await self.store.deleteAll()
+                            self.recent.removeAll()
+                            self.rebuildMenu()
+                            NotificationCenter.default.post(name: .historyChanged, object: nil)
+                        }
+                    })
         }
+    }
+
+    /// The app's menu bar while a window is active: standard app, edit and window menus.
+    private func mainMenu() -> NSMenu {
+        let main = NSMenu()
+        func submenu(_ title: String, _ items: [NSMenuItem]) {
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            let m = NSMenu(title: title)
+            items.forEach(m.addItem)
+            item.submenu = m
+            main.addItem(item)
+        }
+        func item(_ title: String, _ action: Selector?, _ key: String = "", target: AnyObject? = nil,
+                  mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+            let i = NSMenuItem(title: title, action: action, keyEquivalent: key)
+            i.keyEquivalentModifierMask = mods
+            i.target = target
+            return i
+        }
+        submenu("MurmurBee", [
+            item("About MurmurBee", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+            .separator(),
+            item("Settings…", #selector(showSettings), ",", target: self),
+            item("Set Up MurmurBee…", #selector(showSetup as () -> Void), target: self),
+            .separator(),
+            item("Hide MurmurBee", #selector(NSApplication.hide(_:)), "h"),
+            item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", mods: [.command, .option]),
+            .separator(),
+            item("Quit MurmurBee", #selector(NSApplication.terminate(_:)), "q"),
+        ])
+        submenu("Edit", [
+            item("Undo", Selector(("undo:")), "z"),
+            item("Redo", Selector(("redo:")), "z", mods: [.command, .shift]),
+            .separator(),
+            item("Cut", #selector(NSText.cut(_:)), "x"),
+            item("Copy", #selector(NSText.copy(_:)), "c"),
+            item("Paste", #selector(NSText.paste(_:)), "v"),
+            item("Select All", #selector(NSText.selectAll(_:)), "a"),
+        ])
+        submenu("Window", [
+            item("History", #selector(openHub), "1", target: self),
+            item("Minimize", #selector(NSWindow.performMiniaturize(_:)), "m"),
+            item("Close", #selector(NSWindow.performClose(_:)), "w"),
+        ])
+        return main
     }
 
     // MARK: Menu
@@ -344,7 +417,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(withTitle: "Hold \(settings.holdKey.rawValue) to talk", action: nil, keyEquivalent: "")
         } else {
             for (name, _) in missing { menu.addItem(withTitle: "✗  \(name) needed", action: nil, keyEquivalent: "") }
-            add(menu, "Finish Setup…", #selector(showSetup))
+            add(menu, "Finish Setup…", #selector(showSetup as () -> Void))
         }
         if let last = recent.first {
             menu.addItem(withTitle: String(format: "Last: %.0f ms from release to paste", last.ms),
@@ -373,7 +446,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        add(menu, "Set Up MurmurBee…", #selector(showSetup))
+        add(menu, "Open MurmurBee", #selector(openHub))
+        add(menu, "Set Up MurmurBee…", #selector(showSetup as () -> Void))
         let s = add(menu, "Settings…", #selector(showSettings))
         s.keyEquivalent = ","
         menu.addItem(.separator())

@@ -87,9 +87,9 @@ if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--snapshot" {
     exit(0)
 }
 
-// Menu-bar only app: no Dock icon, no main window.
+// A regular app (Dock icon, main window) that also lives in the menu bar and keeps running when its window closes.
 let app = NSApplication.shared
-app.setActivationPolicy(.accessory)
+app.setActivationPolicy(.regular)
 let controller = AppController()
 app.delegate = controller
 app.run()

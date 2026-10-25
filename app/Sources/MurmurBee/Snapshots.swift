@@ -13,7 +13,11 @@ enum Snapshots {
         save(SetupView(permissions: p, settings: .shared, relaunch: {}, done: {}), "setup", dir)
         p.modelsReady = true
         p.modelStatus = "Ready (murmurbee-cleanup-v1)"
-        save(SettingsView(settings: .shared, permissions: p, deleteHistory: {}), "settings", dir)
+        save(HubView(model: HubModel(), store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub", dir)
+        let s = HubModel(); s.pane = .settings
+        save(HubView(model: s, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-settings", dir)
         // Flow bar states, on a light desktop-ish backdrop.
         let states: [(String, PillModel.State, Bool, PillModel.Edge, String?)] = [
             ("bar-idle", .idle, false, .bottom, nil), ("bar-hover", .idle, true, .bottom, nil),

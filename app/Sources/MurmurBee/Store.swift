@@ -21,6 +21,21 @@ struct DictationRecord: Sendable {
     var vocab: String?
 }
 
+struct HistoryItem: Identifiable, Hashable, Sendable {
+    let id: Int64
+    let date: Date
+    let app: String
+    let text: String
+    let durationS: Double
+    let latencyMs: Double
+    var words: Int { text.split(whereSeparator: \.isWhitespace).count }
+}
+
+extension Notification.Name {
+    /// Posted on the main thread after a dictation is saved or history is deleted.
+    static let historyChanged = Notification.Name("MurmurBeeHistoryChanged")
+}
+
 actor Store {
     /// ~/Library/Application Support/MurmurBee. Data from the app's earlier name ("LocalFlow") is moved here once.
     static let directory: URL = {
@@ -81,6 +96,34 @@ actor Store {
         setText(id, "field_after", r.fieldAfter)
         setText(id, "vocab", r.vocab)
         return id
+    }
+
+    /// Newest first; `search` matches the pasted text, the edit or the app name.
+    func history(search: String = "", limit: Int = 500) -> [HistoryItem] {
+        var sql = """
+            SELECT id, created_at, app_name, COALESCE(NULLIF(cleaned_text, ''), asr_text), duration_s, latency_total_ms
+            FROM dictations WHERE COALESCE(NULLIF(cleaned_text, ''), asr_text) <> ''
+            """
+        let q = search.trimmingCharacters(in: .whitespaces)
+        if !q.isEmpty { sql += " AND (cleaned_text LIKE ?1 OR asr_text LIKE ?1 OR app_name LIKE ?1)" }
+        sql += " ORDER BY id DESC LIMIT \(limit)"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+        if !q.isEmpty { sqlite3_bind_text(stmt, 1, "%\(q)%", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
+        let iso = ISO8601DateFormatter()
+        func text(_ i: Int32) -> String { sqlite3_column_text(stmt, i).map { String(cString: $0) } ?? "" }
+        var out: [HistoryItem] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            out.append(HistoryItem(id: sqlite3_column_int64(stmt, 0), date: iso.date(from: text(1)) ?? .distantPast,
+                                   app: text(2), text: text(3), durationS: sqlite3_column_double(stmt, 4),
+                                   latencyMs: sqlite3_column_double(stmt, 5)))
+        }
+        return out
+    }
+
+    func delete(_ id: Int64) {
+        sqlite3_exec(db, "DELETE FROM dictations WHERE id = \(id)", nil, nil, nil)
     }
 
     func deleteAll() {
