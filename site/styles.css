@@ -902,3 +902,11 @@ kbd {
   .band__head--text .band__more { grid-column: 2; margin-top: 12px; }
   .band__head--text .band__lead + .band__more { grid-row: 3; }
 }
+
+/* ---------- Personal model ---------- */
+.band__soon { color: var(--honey); font-weight: 600; }
+.mac--personal { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) {
+  .mac--personal { grid-template-columns: minmax(0, 1fr); }
+  .mac--personal .mac__flow { grid-template-columns: repeat(3, 1fr); }
+}
