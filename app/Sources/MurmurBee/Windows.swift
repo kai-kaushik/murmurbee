@@ -112,10 +112,9 @@ struct SetupView: View {
             }
 
             HStack {
-                Picker("Hold to talk", selection: Binding(get: { settings.holdKey }, set: { settings.holdKey = $0 })) {
-                    ForEach(Hotkey.Key.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .frame(width: 230)
+                Text("Hold to talk").foregroundStyle(Brand.sand)
+                ChoiceMenu(selection: Binding(get: { settings.holdKey }, set: { settings.holdKey = $0 }),
+                           options: Hotkey.Key.allCases.map { ($0.rawValue, $0) }, width: 160)
                 Spacer()
                 Button(allSet ? "Start dictating" : "Finish later") { done() }
                     .buttonStyle(HoneyButton())
@@ -225,6 +224,40 @@ private extension View {
     func settingsPicker(_ width: CGFloat = 190) -> some View { labelsHidden().pickerStyle(.menu).frame(width: width) }
 }
 
+/// A pop-up choice drawn in MurmurBee's colours (the system pop-up button ignores them and goes grey in dark mode).
+struct ChoiceMenu<V: Hashable>: View {
+    @Binding var selection: V
+    let options: [(String, V)]
+    var width: CGFloat = 190
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.1) { title, value in
+                Button { selection = value } label: {
+                    if value == selection { Label(title, systemImage: "checkmark") } else { Text(title) }
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text(options.first { $0.1 == selection }?.0 ?? "")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Brand.linen).lineLimit(1)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Brand.sand)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .frame(width: width)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Brand.raised))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Brand.border))
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+}
+
 struct GeneralTab: View {
     @Bindable var settings: Settings
     let permissions: Permissions
@@ -236,9 +269,7 @@ struct GeneralTab: View {
             VStack(alignment: .leading, spacing: 28) {
                 SettingsSection(title: "Dictation") {
                     SettingsRow(title: "Hold to talk", detail: "Hold the key, speak, let go. Esc cancels at any time.", divider: false) {
-                        Picker("Hold to talk", selection: $settings.holdKey) {
-                            ForEach(Hotkey.Key.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                        }.settingsPicker()
+                        ChoiceMenu(selection: $settings.holdKey, options: Hotkey.Key.allCases.map { ($0.rawValue, $0) })
                     }
                     SettingsRow(title: "Hands-free", detail: "Double-tap the key to start, tap once to finish.") {
                         Toggle("Hands-free", isOn: $settings.handsFree).settingsToggle()
@@ -257,11 +288,8 @@ struct GeneralTab: View {
 
                 SettingsSection(title: "Flow bar and sound") {
                     SettingsRow(title: "Bar position", detail: "You can also drag the bar to any edge.", divider: false) {
-                        Picker("Bar position", selection: $settings.barEdge) {
-                            Text("Bottom").tag(PillModel.Edge.bottom)
-                            Text("Left").tag(PillModel.Edge.left)
-                            Text("Right").tag(PillModel.Edge.right)
-                        }.settingsPicker(120)
+                        ChoiceMenu(selection: $settings.barEdge,
+                                   options: [("Bottom", .bottom), ("Left", .left), ("Right", .right)], width: 130)
                     }
                     SettingsRow(title: "Show the bar when idle", detail: "Click it to start or finish a dictation.") {
                         Toggle("Show the bar when idle", isOn: $settings.showBarWhenIdle).settingsToggle()
@@ -273,19 +301,12 @@ struct GeneralTab: View {
 
                 SettingsSection(title: "System") {
                     SettingsRow(title: "Microphone", detail: "Automatic avoids Bluetooth headset mics, which sound worse.", divider: false) {
-                        Picker("Microphone", selection: $settings.microphone) {
-                            Text("Automatic").tag("auto")
-                            Text("System default").tag("default")
-                            if !mics.isEmpty { Divider() }
-                            ForEach(mics) { Text($0.name).tag($0.uid) }
-                        }.settingsPicker()
+                        ChoiceMenu(selection: $settings.microphone,
+                                   options: [("Automatic", "auto"), ("System default", "default")] + mics.map { ($0.name, $0.uid) })
                     }
                     SettingsRow(title: "Appearance", detail: "Match your Mac, or keep MurmurBee light or dark.") {
-                        Picker("Appearance", selection: Binding(get: { appearance }, set: { appearance = $0; Theme.set($0) })) {
-                            Text("System").tag(Theme.Mode.system)
-                            Text("Light").tag(Theme.Mode.light)
-                            Text("Dark").tag(Theme.Mode.dark)
-                        }.settingsPicker(120)
+                        ChoiceMenu(selection: Binding(get: { appearance }, set: { appearance = $0; Theme.set($0) }),
+                                   options: [("System", Theme.Mode.system), ("Light", .light), ("Dark", .dark)], width: 130)
                     }
                     SettingsRow(title: "Launch at login") {
                         Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin },
@@ -386,6 +407,7 @@ final class WindowManager {
             w.setFrameAutosaveName("MurmurBee.\(id)")
         }
         w.titlebarAppearsTransparent = true
+        w.titleVisibility = resizable ? .hidden : .visible
         w.backgroundColor = Brand.nsNight
         w.isReleasedWhenClosed = false
         w.center()

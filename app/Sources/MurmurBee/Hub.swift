@@ -61,9 +61,10 @@ struct HubView: View {
                                               bottomTrailingRadius: 14, topTrailingRadius: 20))
             .overlay(UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: 14,
                                             bottomTrailingRadius: 14, topTrailingRadius: 20).stroke(Brand.border))
-            .padding(.top, 40).padding(.trailing, 8).padding(.bottom, 8)
+            .padding(.top, 10).padding(.trailing, 10).padding(.bottom, 10)
         }
         .background(Brand.surface)
+        .ignoresSafeArea()  // run under the transparent title bar; the sidebar clears the traffic lights itself
         .overlay(alignment: .bottomTrailing) {
             if let toast = model.toast {
                 HStack(spacing: 8) {
@@ -93,7 +94,7 @@ struct HubView: View {
                 if let bee = Brand.bee { Image(nsImage: bee).resizable().interpolation(.high).frame(width: 26, height: 26) }
                 Wordmark(size: 17)
             }
-            .padding(.horizontal, 8).padding(.top, 46).padding(.bottom, 16)  // below the traffic lights
+            .padding(.horizontal, 8).padding(.top, 44).padding(.bottom, 16)  // below the traffic lights
             navItem(.history)
             navItem(.dictionary)
             Spacer()
@@ -215,7 +216,7 @@ private struct HomePane: View {
             PageHeader(title: all.isEmpty ? "Hi \(firstName), let’s get talking" : "Welcome back, \(firstName)") {
                 SearchField(prompt: "Search past dictations", text: $search)
             }
-            .padding(.horizontal, 36).padding(.top, 30).padding(.bottom, 18)
+            .padding(.horizontal, 36).padding(.top, 26).padding(.bottom, 18)
 
             if all.isEmpty {
                 empty
@@ -434,7 +435,7 @@ private struct DictionaryPane: View {
                 SearchField(prompt: "Search your words", text: $search)
                 Button("Add word") { adding = true }.buttonStyle(HoneyButton())
             }
-            .padding(.horizontal, 36).padding(.top, 30).padding(.bottom, 18)
+            .padding(.horizontal, 36).padding(.top, 26).padding(.bottom, 18)
 
             if adding {
                 HStack(spacing: 8) {
