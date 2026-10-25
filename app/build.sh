@@ -20,6 +20,10 @@ cp "$PRODUCTS/MurmurBee" "$APP/Contents/MacOS/MurmurBee"
 for b in "$PRODUCTS"/*.bundle(N); do cp -R "$b" "$APP/Contents/Resources/"; done
 # Interface sounds (scripts/make_sounds.py)
 cp -R Resources/sounds "$APP/Contents/Resources/sounds"
+# Brand: app icon, menu-bar bee, window bee, Sora font (scripts/make_icons.swift)
+cp -R Resources/brand "$APP/Contents/Resources/brand"
+cp Resources/brand/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+cp -R Resources/fonts "$APP/Contents/Resources/fonts"
 # Seed for ~/Library/Application Support/MurmurBee/dictionary.txt (first run only), from the Wispr dictionary.
 [[ -f ../data/vocab.txt ]] && cp ../data/vocab.txt "$APP/Contents/Resources/dictionary-seed.txt"
 # MLX also looks for its metallib next to the binary.
@@ -33,6 +37,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key><string>com.kaigen.murmurbee</string>
   <key>CFBundleName</key><string>MurmurBee</string>
   <key>CFBundleExecutable</key><string>MurmurBee</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1.0</string>
   <key>CFBundleVersion</key><string>1</string>

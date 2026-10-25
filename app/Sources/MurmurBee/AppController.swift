@@ -39,7 +39,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.autosaveName = "MurmurBeeStatusItem"  // remembers its spot if you ⌘-drag it
-        statusItem.button?.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "MurmurBee")
+        statusItem.button?.image = Brand.menuBarIcon ?? NSImage(systemSymbolName: "waveform", accessibilityDescription: "MurmurBee")
         rebuildMenu()
 
         pill.configure(edge: settings.barEdge, showWhenIdle: settings.showBarWhenIdle,

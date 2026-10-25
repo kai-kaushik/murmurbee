@@ -43,10 +43,15 @@ struct SetupView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Set up MurmurBee").font(.system(size: 22, weight: .semibold))
-                Text("Hold a key, speak, let go. Everything runs on this Mac.")
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 14) {
+                if let bee = Brand.bee {
+                    Image(nsImage: bee).resizable().interpolation(.high).frame(width: 58, height: 58)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Wordmark(size: 26)
+                    Text("Hold a key, speak, let go. Everything runs on this Mac.")
+                        .foregroundStyle(Brand.sand)
+                }
             }
 
             VStack(spacing: 0) {
@@ -78,19 +83,20 @@ struct SetupView: View {
                         detail: permissions.modelStatus, action: nil, busy: !permissions.modelsReady) {}
             }
             .padding(.horizontal, 14)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor)))
+            .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Try it").font(.headline)
                 Text("Click in the box, hold **\(settings.holdKey.rawValue)** and say: “Hi, I'm testing this, um, on Tuesday, no, Wednesday.”")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .font(.callout).foregroundStyle(Brand.sand)
                 TextEditor(text: $tryText)
                     .font(.body)
+                    .scrollContentBackground(.hidden)
                     .frame(height: 64)
-                    .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(nsColor: .separatorColor)))
+                    .padding(8)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Brand.raised))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.border))
                     .disabled(!(permissions.allGranted && permissions.listening && permissions.modelsReady))
             }
 
@@ -101,11 +107,13 @@ struct SetupView: View {
                 .frame(width: 230)
                 Spacer()
                 Button(permissions.allGranted ? "Done" : "Finish later") { done() }
+                    .buttonStyle(HoneyButton())
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
         .frame(width: 520)
+        .brandWindow()
     }
 }
 
@@ -121,7 +129,7 @@ private struct StepRow: View {
         HStack(spacing: 12) {
             Group {
                 if ok {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Brand.honey)
                 } else if busy {
                     ProgressView().controlSize(.small)
                 } else {
@@ -132,7 +140,7 @@ private struct StepRow: View {
             .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).fontWeight(.medium)
-                Text(detail).font(.callout).foregroundStyle(.secondary)
+                Text(detail).font(.callout).foregroundStyle(Brand.sand)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
@@ -159,6 +167,18 @@ struct SettingsView: View {
                 .tabItem { Label("Privacy", systemImage: "lock") }
         }
         .frame(width: 520, height: 560)
+        .brandWindow()
+    }
+}
+
+/// Honey pill button with dark text (white on honey is hard to read).
+struct HoneyButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Brand.night)
+            .padding(.horizontal, 16).padding(.vertical, 7)
+            .background(Capsule().fill(Brand.honey.opacity(configuration.isPressed ? 0.8 : 1)))
     }
 }
 
@@ -208,6 +228,7 @@ private struct GeneralTab: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .onAppear { mics = AudioDevices.inputs() }
     }
 }
@@ -233,6 +254,8 @@ private struct DictionaryTab: View {
                 }
             }
             .listStyle(.bordered(alternatesRowBackgrounds: true))
+            .scrollContentBackground(.hidden)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Brand.surface))
             HStack {
                 TextField("Add a word or name", text: $newTerm).onSubmit(add)
                 Button("Add", action: add).disabled(newTerm.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -302,6 +325,7 @@ private struct PrivacyTab: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .confirmationDialog("Delete all dictation history?", isPresented: $confirming) {
             Button("Delete History", role: .destructive, action: deleteHistory)
         } message: {
@@ -325,6 +349,9 @@ final class WindowManager {
         let w = NSWindow(contentViewController: NSHostingController(rootView: content()))
         w.title = title
         w.styleMask = [.titled, .closable]
+        w.titlebarAppearsTransparent = true
+        w.appearance = NSAppearance(named: .darkAqua)
+        w.backgroundColor = Brand.nsNight
         w.isReleasedWhenClosed = false
         w.center()
         windows[id] = w
