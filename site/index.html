@@ -54,12 +54,12 @@
         </h1>
 
         <div class="hero__foot">
-          <p class="hero__sub">Speak naturally in any app and get clean, well&#8209;formatted text. Twice as fast as cloud dictation. Nothing leaves your Mac.</p>
+          <p class="hero__sub"><strong class="hero__free">Free and open source.</strong> Speak naturally in any app and get clean, well&#8209;formatted text, twice as fast as cloud dictation. Nothing leaves your&nbsp;Mac.</p>
           <div class="hero__actions">
-            <a class="btn btn--honey btn--lg" href="#download">Download for Mac</a>
-            <a class="textlink" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">View on GitHub <span aria-hidden="true">→</span></a>
+            <a class="btn btn--honey btn--lg" href="#download">Download free for Mac</a>
+            <a class="textlink textlink--gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>Open source on GitHub <span aria-hidden="true">→</span></a>
           </div>
-          <p class="hero__meta">Free and open source · Apple Silicon · macOS 15 or later</p>
+          <p class="hero__meta">MIT licensed · Apple Silicon · macOS 15 or later</p>
         </div>
       </div>
 
@@ -112,23 +112,26 @@
           <dd class="proof__label">faster than typing. Most people type around 40 words a minute and speak around 120+.</dd>
         </div>
         <div class="proof__item">
-          <dt class="proof__value">0<small>bytes</small></dt>
-          <dd class="proof__label">of audio or text leave your Mac. Free, open source, no account.</dd>
+          <dt class="proof__value">Free</dt>
+          <dd class="proof__label">MIT open source. No account, no subscription, no usage&nbsp;cap.</dd>
         </div>
       </dl>
     </section>
 
-    <!-- (a) 2x faster than Wispr Flow -->
+    <!-- Every band below uses the same template:
+         row 1 = hero element (fixed column) + H2 + one sentence; row 2 = full-width visual -->
+
+    <!-- 2x faster than Wispr Flow -->
     <section class="band" id="speed" aria-labelledby="speed-title">
       <div class="wrap">
         <header class="band__head">
-          <p class="band__num" aria-hidden="true">2<span>×</span></p>
-          <div>
+          <p class="band__hero band__num" aria-hidden="true">2<span>×</span></p>
+          <div class="band__copy">
             <h2 id="speed-title" class="band__title">Twice as fast as Wispr&nbsp;Flow.</h2>
             <p class="band__lead">No round trip to a server, so your words land the moment you let&nbsp;go.</p>
           </div>
         </header>
-        <figure class="race" data-race>
+        <figure class="band__visual race" data-race>
           <div class="race__chart" role="img" aria-label="Bar chart: MurmurBee 0.31 seconds, Wispr Flow 0.65 seconds, on a 0 to 1 second scale.">
             <div class="race__axis" aria-hidden="true">
               <span style="--at:0">0</span><span style="--at:.25">0.25</span><span style="--at:.5">0.5</span><span style="--at:.75">0.75</span><span style="--at:1">1&nbsp;s</span>
@@ -149,17 +152,17 @@
       </div>
     </section>
 
-    <!-- (b) 3x faster than typing -->
+    <!-- 3x faster than typing -->
     <section class="band band--raised" aria-labelledby="wpm-title">
       <div class="wrap">
         <header class="band__head">
-          <p class="band__num" aria-hidden="true">3<span>×</span></p>
-          <div>
+          <p class="band__hero band__num" aria-hidden="true">3<span>×</span></p>
+          <div class="band__copy">
             <h2 id="wpm-title" class="band__title">Three times faster than&nbsp;typing.</h2>
             <p class="band__lead">Most people type about 40 words a minute and speak&nbsp;120+.</p>
           </div>
         </header>
-        <figure class="wpm" data-wpm>
+        <figure class="band__visual wpm" data-wpm>
           <div class="wpm__rows" role="img" aria-label="Typing at about 40 words per minute versus speaking at about 120 words per minute: three to one.">
             <div class="wpm__row">
               <span class="wpm__name">Typing</span>
@@ -177,130 +180,139 @@
       </div>
     </section>
 
-    <!-- (c) 0 bytes: your Mac -->
+    <!-- 0 bytes -->
     <section class="band" aria-labelledby="local-title">
       <div class="wrap">
         <header class="band__head">
-          <p class="band__num band__num--word" aria-hidden="true">0&nbsp;bytes</p>
-          <div>
+          <p class="band__hero band__num" aria-hidden="true">0&nbsp;bytes</p>
+          <div class="band__copy">
             <h2 id="local-title" class="band__title">Nothing goes to the&nbsp;cloud.</h2>
             <p class="band__lead">Speech and cleanup both run on your Mac, even&nbsp;offline.</p>
           </div>
         </header>
-        <figure class="mac">
-          <div class="mac__diagram">
-            <div class="mac__box">
-              <span class="mac__label">Your Mac</span>
-              <ol class="mac__flow">
-                <li><b>Microphone</b><span>while you hold the key</span></li>
-                <li><b>Parakeet TDT 0.6B</b><span>speech → words</span></li>
-                <li><b>Qwen 0.8B, fine&#8209;tuned</b><span>words → clean text</span></li>
-                <li><b>Your cursor</b><span>pasted in place</span></li>
-              </ol>
-              <span class="mac__chip">Apple Neural Engine + GPU</span>
-            </div>
-            <div class="mac__cloud">
-              <svg viewBox="0 0 120 80" aria-hidden="true">
-                <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round"/>
-                <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Cloud<br>not used</span>
-            </div>
+        <figure class="band__visual mac">
+          <div class="mac__box">
+            <span class="mac__label">Your Mac</span>
+            <ol class="mac__flow">
+              <li><b>Microphone</b><span>while you hold the key</span></li>
+              <li><b>Parakeet TDT 0.6B</b><span>speech → words</span></li>
+              <li><b>Qwen 0.8B, fine&#8209;tuned</b><span>words → clean text</span></li>
+              <li><b>Your cursor</b><span>pasted in place</span></li>
+            </ol>
+            <span class="mac__chip">Apple Neural Engine + GPU</span>
+          </div>
+          <div class="mac__cloud">
+            <svg viewBox="0 0 120 80" aria-hidden="true">
+              <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round"/>
+              <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Cloud not used</span>
           </div>
         </figure>
       </div>
     </section>
 
-    <!-- (d) accuracy -->
+    <!-- Accuracy -->
     <section class="band band--raised" aria-labelledby="acc-title">
       <div class="wrap">
-        <div class="acc">
-          <div class="acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
-          <div class="acc__text">
+        <header class="band__head band__head--solo">
+          <div class="band__hero acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
+          <div class="band__copy">
             <h2 id="acc-title" class="band__title">Accuracy close to the best cloud&nbsp;dictation.</h2>
             <p class="band__lead">Both get about 97–98 of every 100 words&nbsp;right.</p>
+            <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How we measured this <span aria-hidden="true">→</span></a></p>
           </div>
-        </div>
-        <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How we measured this <span aria-hidden="true">→</span></a></p>
+        </header>
       </div>
     </section>
 
-    <!-- FEATURES as chapters -->
-    <section class="chapters" id="features" aria-labelledby="features-title">
+    <!-- Features intro -->
+    <section class="band band--intro" id="features" aria-labelledby="features-title">
       <div class="wrap">
-        <h2 id="features-title" class="chapters__intro">Talk the way you think. <span class="muted">Send it the way you meant it.</span></h2>
+        <h2 id="features-title" class="intro__title"><span>Talk the way you think.</span> <span class="muted">Send it the way you meant&nbsp;it.</span></h2>
+      </div>
+    </section>
 
-        <!-- 1. Cleanup -->
-        <article class="chapter">
-          <div class="chapter__text">
-            <h3 class="chapter__title">Cleans up as you speak</h3>
-            <p>Fillers go. Self&#8209;corrections like “sorry, I meant…” are followed, not transcribed. Lists become lists, emails get greetings and sign&#8209;offs.</p>
+    <!-- Cleans up -->
+    <section class="band band--raised" aria-labelledby="clean-title">
+      <div class="wrap">
+        <header class="band__head band__head--text">
+          <div class="band__copy">
+            <h2 id="clean-title" class="band__title">Cleans up as you&nbsp;speak.</h2>
+            <p class="band__lead">Fillers go, self&#8209;corrections are followed, and lists come out as&nbsp;lists.</p>
           </div>
-          <div class="chapter__visual specimen">
-            <div class="specimen__row">
-              <p class="specimen__said"><s>um so</s> can we move the sync to <s>tuesday, sorry,</s> wednesday at 3</p>
-              <span class="specimen__arrow" aria-hidden="true">→</span>
-              <p class="specimen__typed">Can we move the sync to Wednesday at&nbsp;3?</p>
-            </div>
-            <div class="specimen__row">
-              <p class="specimen__said">first the budget second the hiring plan and third <s>uh</s> the offsite</p>
-              <span class="specimen__arrow" aria-hidden="true">→</span>
-              <ol class="specimen__typed specimen__list">
-                <li>The budget</li>
-                <li>The hiring plan</li>
-                <li>The offsite</li>
-              </ol>
-            </div>
-            <p class="specimen__legend"><span>What you said</span><span>What MurmurBee typed</span></p>
-          </div>
-        </article>
+        </header>
+        <div class="band__visual specimen">
+          <p class="specimen__label">What you said</p>
+          <span aria-hidden="true"></span>
+          <p class="specimen__label">What MurmurBee typed</p>
 
-        <!-- 2. Context -->
-        <article class="chapter chapter--flip">
-          <div class="chapter__text">
-            <h3 class="chapter__title">Knows the context</h3>
-            <p>It reads the app you’re in, your selected text, what’s around your cursor, your dictionary and the names on screen. All of it locally, so “Siobhan” comes out spelled right the first time.</p>
-          </div>
-          <div class="chapter__visual context">
-            <div class="context__row">
-              <p class="context__text context__text--meta">Mail · Re: Venue for the offsite</p>
-              <span class="context__lead" aria-hidden="true"></span>
-              <span class="tag">App: Mail</span>
-            </div>
-            <div class="context__row">
-              <p class="context__text">Hi <mark>Siobhan</mark>,</p>
-              <span class="context__lead" aria-hidden="true"></span>
-              <span class="tag">Replying to: Siobhan</span>
-            </div>
-            <div class="context__row">
-              <p class="context__text">Thursday works. I’ll share the <mark>Larkspur</mark> board before&nbsp;then.</p>
-              <span class="context__lead" aria-hidden="true"></span>
-              <span class="tag">Your dictionary</span>
-            </div>
-            <div class="context__row">
-              <p class="context__text"><mark>Best,<br>Mara</mark></p>
-              <span class="context__lead" aria-hidden="true"></span>
-              <span class="tag">Your sign&#8209;off</span>
-            </div>
-          </div>
-        </article>
+          <p class="specimen__said"><s>um so</s> can we move the sync to <s>tuesday, sorry,</s> wednesday at 3</p>
+          <span class="specimen__arrow" aria-hidden="true">→</span>
+          <p class="specimen__typed">Can we move the sync to Wednesday at&nbsp;3?</p>
 
-        <!-- 3. Learns -->
-        <article class="chapter">
-          <div class="chapter__text">
-            <h3 class="chapter__title">Learns from your edits</h3>
-            <p>Fix a word once and MurmurBee adds it to your dictionary. Next time, it gets it right without being asked.</p>
-          </div>
-          <div class="chapter__visual learn">
-            <p class="learn__line">Send the deck to the <span class="learn__fix"><del>Halverson</del><ins>Halvorsen</ins></span> team by&nbsp;Friday.</p>
-            <p class="toast" role="img" aria-label="Notification: Added Halvorsen to dictionary">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Added “Halvorsen” to dictionary
-            </p>
-          </div>
-        </article>
+          <p class="specimen__said">first the budget second the hiring plan and third <s>uh</s> the offsite</p>
+          <span class="specimen__arrow" aria-hidden="true">→</span>
+          <ol class="specimen__typed specimen__list">
+            <li>The budget</li>
+            <li>The hiring plan</li>
+            <li>The offsite</li>
+          </ol>
+        </div>
+      </div>
+    </section>
 
-        <p class="chapters__soon"><span>Coming soon</span> Bring your Wispr Flow history over in one click, so MurmurBee knows your words from day one.</p>
+    <!-- Knows the context -->
+    <section class="band" aria-labelledby="context-title">
+      <div class="wrap">
+        <header class="band__head band__head--text">
+          <div class="band__copy">
+            <h2 id="context-title" class="band__title">Knows the&nbsp;context.</h2>
+            <p class="band__lead">It reads the app, the names on screen and your dictionary, all&nbsp;locally.</p>
+          </div>
+        </header>
+        <div class="band__visual context">
+          <div class="context__row">
+            <p class="context__text context__text--meta">Mail · Re: Venue for the offsite</p>
+            <span class="context__lead" aria-hidden="true"></span>
+            <span class="tag">App: Mail</span>
+          </div>
+          <div class="context__row">
+            <p class="context__text">Hi <mark>Siobhan</mark>,</p>
+            <span class="context__lead" aria-hidden="true"></span>
+            <span class="tag">Replying to: Siobhan</span>
+          </div>
+          <div class="context__row">
+            <p class="context__text">Thursday works. I’ll share the <mark>Larkspur</mark> board before&nbsp;then.</p>
+            <span class="context__lead" aria-hidden="true"></span>
+            <span class="tag">Your dictionary</span>
+          </div>
+          <div class="context__row">
+            <p class="context__text"><mark>Best, Mara</mark></p>
+            <span class="context__lead" aria-hidden="true"></span>
+            <span class="tag">Your sign&#8209;off</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Learns from your edits -->
+    <section class="band band--raised" aria-labelledby="learn-title">
+      <div class="wrap">
+        <header class="band__head band__head--text">
+          <div class="band__copy">
+            <h2 id="learn-title" class="band__title">Learns from your&nbsp;edits.</h2>
+            <p class="band__lead">Fix a word once and it’s in your dictionary for next&nbsp;time.</p>
+          </div>
+        </header>
+        <div class="band__visual learn">
+          <p class="learn__line">Send the deck to the <span class="learn__fix"><del>Halverson</del><ins>Halvorsen</ins></span> team by&nbsp;Friday.</p>
+          <p class="toast" role="img" aria-label="Notification: Added Halvorsen to dictionary">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Added “Halvorsen” to dictionary
+          </p>
+          <p class="learn__soon"><span>Coming soon</span> Bring your Wispr Flow history over in one click, so MurmurBee knows your words from day one.</p>
+        </div>
       </div>
     </section>
 
