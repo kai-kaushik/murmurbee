@@ -852,3 +852,28 @@ kbd {
   }
   .js .reveal { opacity: 1; transform: none; }
 }
+
+/* ---------- Hero affordances ---------- */
+.btn--cta { box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 10px 32px -8px rgba(248,190,52,.6); }
+.btn--cta:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 16px 40px -8px rgba(248,190,52,.75); }
+.btn--cta .btn__icon { transition: transform .25s var(--ease); }
+.btn--cta:hover .btn__icon { transform: translateY(2px); }
+.btn--gh svg { width: 18px; height: 18px; flex: none; }
+.btn--gh:hover { transform: translateY(-1px); }
+[data-replay] { cursor: pointer; }
+
+.scrollhint {
+  position: fixed; right: 24px; bottom: 20px; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 14px; border-radius: 999px; background: rgba(22,19,15,.72);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: var(--sand); font-size: 14px; text-decoration: none;
+  transition: color .2s;
+}
+.scrollhint:hover { color: var(--linen); }
+.scrollhint { transition: color .2s, opacity .35s; }
+.scrollhint.is-hidden { opacity: 0; pointer-events: none; }
+.scrollhint svg { width: 22px; height: 22px; animation: hint-bob 1.8s var(--ease) infinite; }
+@keyframes hint-bob { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(6px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .scrollhint svg { animation: none; } }
+@media (max-width: 640px) { .scrollhint { display: none; } }

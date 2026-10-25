@@ -180,6 +180,13 @@
   }
   function startDemo() { if (demoRunning) return; demoRunning = true; cycle(); }
   function stopDemo() { demoRunning = false; clearTimers(); }
+  var hint = document.querySelector(".scrollhint");
+  if (hint) {
+    var hideHint = function () { hint.classList.toggle("is-hidden", window.scrollY > 60); };
+    window.addEventListener("scroll", hideHint, { passive: true }); window.addEventListener("load", hideHint); hideHint();
+  }
+  var replay = document.querySelector("[data-replay]");
+  if (replay && !reduced) replay.addEventListener("click", function () { stopDemo(); startDemo(); });
 
   function showStatic() {
     build();
