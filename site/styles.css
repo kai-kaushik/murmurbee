@@ -220,7 +220,12 @@ kbd {
 @media (max-width: 400px) { .hide-sm { display: none; } }
 
 /* ---------- Hero ---------- */
-.hero { padding: clamp(56px, 6.5vw, 96px) 0 0; }
+/* The hero fills exactly the first screen (below the nav), content centred; the next section starts on scroll. */
+.hero {
+  min-height: calc(100svh - 69px);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(24px, 3vw, 40px) 0;
+}
 
 .hero__title {
   font-family: var(--font-display);
@@ -292,12 +297,12 @@ kbd {
 .say { margin: clamp(36px, 3.4vw, 44px) auto 0; }
 .say__stage { position: relative; }
 .say__line {
-  min-height: calc(2 * 1.5em + 48px);
-  padding: 24px 0;
+  min-height: calc(2 * 1.32em + 32px);
+  padding: 16px 0;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: clamp(24px, 2.9vw, 42px);
-  line-height: 1.5;
+  line-height: 1.32;
   letter-spacing: -0.035em;
   color: var(--linen);
   transition: opacity .5s var(--ease), min-height .8s var(--ease);
@@ -360,7 +365,7 @@ kbd {
 .tip--end::before { left: auto; right: 16px; }
 .tip.is-on { opacity: 1; transform: none; }
 
-.say__bar { display: flex; align-items: center; gap: 14px; height: 48px; }
+.say__bar { display: flex; align-items: center; gap: 14px; height: 48px; transition: transform .6s cubic-bezier(.22,.8,.24,1); }
 .say__bee { width: 40px; height: auto; }
 .say__before { margin-bottom: 8px; font-size: 18px; color: var(--sand); }
 .say__before s { text-decoration-color: var(--strike); }

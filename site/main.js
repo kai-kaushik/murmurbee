@@ -209,10 +209,23 @@
       n.el.style.transform = "";
     });
     if (isNarrow()) fitHeight(true);
+    else liftBar(kept);
+  }
+
+  // Once the cleaned sentence is shorter, the flow bar glides up under its last line instead of leaving a gap.
+  var sayBar = document.querySelector(".say__bar");
+  function liftBar(kept) {
+    if (!sayBar || !kept.length) return;
+    var bottom = 0;
+    kept.forEach(function (n) { bottom = Math.max(bottom, n.el.offsetTop + n.el.offsetHeight); });
+    var padB = parseFloat(getComputedStyle(line).paddingBottom) || 0;
+    var d = Math.max(0, line.offsetTop + line.offsetHeight - padB - bottom);
+    sayBar.style.transform = d ? "translateY(" + (-d) + "px)" : "";
   }
 
   function cycle() {
     if (!demoRunning) return;
+    if (sayBar) sayBar.style.transform = "";
     build();
     setBar("");
     var t = 700;
