@@ -882,7 +882,7 @@ kbd {
 .band__index {
   display: flex; align-items: center; gap: 12px;
   margin-bottom: 20px;
-  font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .04em;
+  font-family: var(--font-body); font-weight: 500; font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--honey);
 }
 .band__index i {
