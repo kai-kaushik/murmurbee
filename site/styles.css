@@ -220,7 +220,7 @@ kbd {
 @media (max-width: 400px) { .hide-sm { display: none; } }
 
 /* ---------- Hero ---------- */
-.hero { padding: clamp(32px, 3.4vw, 48px) 0 0; }
+.hero { padding: clamp(56px, 6.5vw, 96px) 0 0; }
 
 .hero__title {
   font-family: var(--font-display);
@@ -247,7 +247,8 @@ kbd {
   border-top: 1px solid var(--border);
 }
 .hero__sub { max-width: 42rem; color: var(--sand); font-size: clamp(18px, 1.7vw, 20px); line-height: 1.5; }
-.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 20px; }
+.hero__dl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .hero__meta { color: var(--sand); font-size: 14px; }
 .hero__free {
   color: var(--linen);
@@ -273,9 +274,8 @@ kbd {
 
 @media (min-width: 900px) {
   .hero__foot { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 64px; }
-  .hero__sub { grid-row: 1 / span 2; align-self: start; }
+  .hero__sub { align-self: start; }
   .hero__actions { grid-row: 1; grid-column: 2; }
-  .hero__meta { grid-row: 2; grid-column: 2; margin-top: -14px; }
 }
 
 @media (max-width: 719px) {
@@ -292,11 +292,11 @@ kbd {
 .say { margin: clamp(36px, 3.4vw, 44px) auto 0; }
 .say__stage { position: relative; }
 .say__line {
-  min-height: calc(2 * 1.5em + 72px);
-  padding: 36px 0;
+  min-height: calc(2 * 1.5em + 48px);
+  padding: 24px 0;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(30px, 4.2vw, 60px);
+  font-size: clamp(24px, 2.9vw, 42px);
   line-height: 1.5;
   letter-spacing: -0.035em;
   color: var(--linen);
