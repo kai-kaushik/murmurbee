@@ -38,6 +38,7 @@ ap.add_argument("--chunked", action="store_true")
 ap.add_argument("--suites", default="data/sft3")
 ap.add_argument("--split", default="dev", choices=["dev", "test"])
 ap.add_argument("--json", default=None)
+ap.add_argument("--suites-only", action="store_true", help="skip the clip evaluation")
 a = ap.parse_args()
 
 model, tok = load(a.model, adapter_path=a.adapter)
@@ -101,7 +102,7 @@ for r in ctx.values():
         if r["finalText"]:
             rows.append(r)
 res = []
-for r in rows[:LIMIT]:
+for r in ([] if a.suites_only else rows[:LIMIT]):
     raw = ultra[r["transcriptEntityId"]]
     app = APPS.get(r["app"], ("unknown", "general"))
     c = ctx.get(r["transcriptEntityId"], {})
@@ -158,17 +159,22 @@ for b in ["short", "med", "long", "xl", "ALL"]:
           f"  p50 {statistics.median(x[3] for x in rs):.0f} ms")
 
 # (2) structure, held out
-if a.prompt == "v2":
+# E14 note: this used to read `if a.prompt == "v2"`, which silently skipped the suites for every v3 run.
+if a.prompt in ("v2", "v3"):
     kinds = {"name fix": [], "sign-off misheard": [], "spoken time": [], "correction then more": [], "self-correction": [], "list": [], "list continuation": [], "email": [], "sign-off chunk": [],
              "quote": [], "continuation": []}
     cue = re.compile(r"\b(no wait|wait no|sorry|correct that|scratch that|or rather|i mean|no,? actually)\b", re.I)
     for l in open(f"{a.suites}/{a.split}_suites.jsonl"):
-        m = json.loads(l)["messages"]
+        row = json.loads(l)
+        m = row["messages"]
         u, t = m[1]["content"], m[2]["content"]
         if a.prompt != "v3":  # strip v3-only context so a v2 model sees its own format
             u = "\n".join(x for x in u.split("\n") if not re.match(r"^(user=|locale=|tz=|url=)", x))
             u = re.sub(r"<(selected|after)>.*?</\1>\n?", "", u, flags=re.S)
         has_before = "<before>" in u
+        if "kind" in row:  # labelled suite (data/public): use its own behaviour labels
+            kinds.setdefault(row["kind"], []).append((u, t))
+            continue
         raw_in = re.search(r"<transcript>(.*)</transcript>", u, re.S).group(1)
         vocab_line = re.search(r"^vocab: (.*)$", u, re.M)
         vocab_terms = vocab_line.group(1).split("; ") if vocab_line else []
