@@ -1,0 +1,101 @@
+import Foundation
+import SQLite3
+
+/// Local history, one row per dictation. Text only; no audio is kept.
+/// Context fields are stored even though v1's model doesn't use them yet: they are training data for v2.
+struct DictationRecord: Sendable {
+    var createdAt = Date()
+    var context = ContextSnapshot()
+    var durationS = 0.0
+    var chunks = 0
+    var asrText = ""
+    var cleanedText = ""
+    var cleanupPaths = ""
+    var insertMethod = ""
+    var insertConfirmed = false
+    var latencyTotalMs = 0.0
+    var latencyAsrFinalMs = 0.0
+    var latencyCleanupFinalMs = 0.0
+    var cleanupOrigin = ""
+    var fieldAfter: String?
+    var vocab: String?
+}
+
+actor Store {
+    /// ~/Library/Application Support/MurmurBee. Data from the app's earlier name ("LocalFlow") is moved here once.
+    static let directory: URL = {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let dir = support.appendingPathComponent("MurmurBee")
+        let old = support.appendingPathComponent("LocalFlow")
+        if !FileManager.default.fileExists(atPath: dir.path), FileManager.default.fileExists(atPath: old.path) {
+            try? FileManager.default.moveItem(at: old, to: dir)
+        }
+        return dir
+    }()
+    private var db: OpaquePointer?
+
+    init() {
+        try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
+        let path = Self.directory.appendingPathComponent("history.sqlite").path
+        sqlite3_open(path, &db)
+        sqlite3_exec(db, """
+            PRAGMA journal_mode=WAL;
+            CREATE TABLE IF NOT EXISTS dictations (
+              id INTEGER PRIMARY KEY, created_at TEXT, app_bundle TEXT, app_name TEXT, app_type TEXT,
+              window_title TEXT, before_cursor TEXT, selected_text TEXT, duration_s REAL, chunks INTEGER,
+              asr_text TEXT, cleaned_text TEXT, cleanup_paths TEXT, asr_origin TEXT, cleanup_origin TEXT,
+              insert_method TEXT, insert_confirmed INTEGER, latency_total_ms REAL, latency_asr_final_ms REAL,
+              latency_cleanup_final_ms REAL, edited_text TEXT);
+            """, nil, nil, nil)
+        // Columns added after v0.1; ALTER fails harmlessly when they already exist.
+        for col in ["field_after TEXT", "field_later TEXT", "vocab TEXT", "cleanup_origin_v TEXT"] {
+            sqlite3_exec(db, "ALTER TABLE dictations ADD COLUMN \(col)", nil, nil, nil)
+        }
+    }
+
+    @discardableResult
+    func save(_ r: DictationRecord) -> Int64 {
+        let sql = """
+            INSERT INTO dictations (created_at, app_bundle, app_name, app_type, window_title, before_cursor,
+              selected_text, duration_s, chunks, asr_text, cleaned_text, cleanup_paths, asr_origin, cleanup_origin,
+              insert_method, insert_confirmed, latency_total_ms, latency_asr_final_ms, latency_cleanup_final_ms)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(stmt) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        let texts = [ISO8601DateFormatter().string(from: r.createdAt), r.context.bundleId, r.context.appName,
+                     r.context.appType, r.context.windowTitle, r.context.beforeCursor, r.context.selectedText]
+        for (i, t) in texts.enumerated() { sqlite3_bind_text(stmt, Int32(i + 1), t, -1, transient) }
+        sqlite3_bind_double(stmt, 8, r.durationS)
+        sqlite3_bind_int(stmt, 9, Int32(r.chunks))
+        for (i, t) in [r.asrText, r.cleanedText, r.cleanupPaths, Transcriber.origin, r.cleanupOrigin, r.insertMethod]
+            .enumerated() { sqlite3_bind_text(stmt, Int32(10 + i), t, -1, transient) }
+        sqlite3_bind_int(stmt, 16, r.insertConfirmed ? 1 : 0)
+        sqlite3_bind_double(stmt, 17, r.latencyTotalMs)
+        sqlite3_bind_double(stmt, 18, r.latencyAsrFinalMs)
+        sqlite3_bind_double(stmt, 19, r.latencyCleanupFinalMs)
+        sqlite3_step(stmt)
+        let id = sqlite3_last_insert_rowid(db)
+        setText(id, "field_after", r.fieldAfter)
+        setText(id, "vocab", r.vocab)
+        return id
+    }
+
+    func deleteAll() {
+        sqlite3_exec(db, "DELETE FROM dictations; VACUUM;", nil, nil, nil)
+    }
+
+    /// Edit capture: the field's contents some time after the paste (diffed offline by scripts/learn.py).
+    func setText(_ id: Int64, _ column: String, _ value: String?) {
+        guard let value, id > 0 else { return }
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "UPDATE dictations SET \(column) = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK
+        else { return }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, value, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_int64(stmt, 2, id)
+        sqlite3_step(stmt)
+    }
+}

@@ -1,0 +1,16 @@
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 2072.90it/s]
+DEV CLIPS (Parakeet input, vs Kai's final text), n=80
+  short n=24  WER 0.117 [0.062, 0.181]  (raw 0.135)  p50 355 ms
+  med   n=29  WER 0.185 [0.099, 0.319]  (raw 0.162)  p50 936 ms
+  long  n=20  WER 0.223 [0.134, 0.342]  (raw 0.199)  p50 2162 ms
+  xl    n= 7  WER 0.477 [0.196, 0.919]  (raw 0.274)  p50 5337 ms
+  ALL   n=80  WER 0.200 [0.139, 0.274]  (raw 0.173)  p50 939 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  self-correction    n=40  layout 35/40  WER 0.113
+  list               n=40  layout 37/40  WER 0.046
+  list continuation  n=40  layout 37/40  WER 0.025
+  email              n=39  layout 31/39  WER 0.029
+  sign-off chunk     n=40  layout 40/40  WER 0.000
+  quote              n=13  layout 13/13  WER 0.152
+  continuation       n=40  layout 38/40  WER 0.077

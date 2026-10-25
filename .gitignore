@@ -1,0 +1,18 @@
+# Personal data: Kai's Wispr export, audio, splits, training sets. Never published.
+data/
+# Trained models and adapters (personal; large)
+models/
+adapters/
+# Third-party checkouts (fetched by SwiftPM / cloned for benchmarks)
+vendor/
+# Raw outputs that contain dictated text
+bench/compare_recent.md
+bench/**/*.log
+# Build products and environments
+app/build.noindex/
+bench/asr/.build/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.swiftpm/

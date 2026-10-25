@@ -1,0 +1,18 @@
+== v2 resumed, step 0001200 of 1800
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 1965.83it/s]
+TEST SET (Parakeet input, vs Kai's final text)
+  short n= 6  WER 0.024  (raw 0.034)  p50 1332 ms
+  med   n= 7  WER 0.183  (raw 0.128)  p50 2018 ms
+  long  n= 5  WER 0.308  (raw 0.204)  p50 7797 ms
+  xl    n= 2  WER 1.180  (raw 0.291)  p50 69589 ms
+  ALL   n=20  WER 0.266  (raw 0.135)  p50 2194 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  self-correction    n=25  layout 19/25  WER 0.231
+  list               n=23  layout 20/23  WER 0.051
+  list continuation  n=16  layout 13/16  WER 0.072
+  email              n= 7  layout 3/7  WER 0.030
+  sign-off chunk     n=11  layout 11/11  WER 0.000
+  quote              n= 4  layout 4/4  WER 0.146
+  continuation       n=25  layout 23/25  WER 0.104
+done

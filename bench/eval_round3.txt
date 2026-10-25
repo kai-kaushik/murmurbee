@@ -1,0 +1,51 @@
+== v1 (current app model)
+TEST SET (Parakeet input, vs Kai's final text)
+  short n= 6  WER 0.024  (raw 0.034)  p50 1525 ms
+  med   n= 7  WER 0.097  (raw 0.128)  p50 2231 ms
+  long  n= 5  WER 1.381  (raw 0.204)  p50 13569 ms
+  xl    n= 2  WER 0.987  (raw 0.291)  p50 58918 ms
+  ALL   n=20  WER 0.485  (raw 0.135)  p50 3404 ms
+== v1 on v2 structure set (v2 prompt)
+STRUCTURE (held-out examples): exact line layout / WER
+  self-correction    n=25  layout 19/25  WER 0.584
+  list               n=23  layout 0/23  WER 0.267
+  list continuation  n=16  layout 3/16  WER 0.718
+  email              n= 7  layout 0/7  WER 0.040
+  sign-off chunk     n=11  layout 0/11  WER 2.182
+  quote              n= 4  layout 4/4  WER 0.475
+  continuation       n=25  layout 23/25  WER 0.326
+== v2 first run, step 600
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 341.37it/s]
+TEST SET (Parakeet input, vs Kai's final text)
+  short n= 6  WER 0.043  (raw 0.034)  p50 1781 ms
+  med   n= 7  WER 0.090  (raw 0.128)  p50 3015 ms
+  long  n= 5  WER 0.148  (raw 0.204)  p50 19791 ms
+  xl    n= 2  WER 0.844  (raw 0.291)  p50 127488 ms
+  ALL   n=20  WER 0.166  (raw 0.135)  p50 4268 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  self-correction    n=25  layout 18/25  WER 0.384
+  list               n=23  layout 21/23  WER 0.039
+  list continuation  n=16  layout 16/16  WER 0.026
+  email              n= 7  layout 5/7  WER 0.036
+  sign-off chunk     n=11  layout 11/11  WER 0.000
+  quote              n= 4  layout 4/4  WER 0.042
+  continuation       n=25  layout 24/25  WER 0.137
+== v2 resumed (with self-corrections), checkpoint
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 477.40it/s]
+TEST SET (Parakeet input, vs Kai's final text)
+  short n= 6  WER 0.024  (raw 0.034)  p50 2603 ms
+  med   n= 7  WER 0.187  (raw 0.128)  p50 2196 ms
+  long  n= 5  WER 0.344  (raw 0.204)  p50 14034 ms
+  xl    n= 2  WER 1.436  (raw 0.291)  p50 49889 ms
+  ALL   n=20  WER 0.302  (raw 0.135)  p50 2999 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  self-correction    n=25  layout 19/25  WER 0.245
+  list               n=23  layout 18/23  WER 0.157
+  list continuation  n=16  layout 15/16  WER 0.033
+  email              n= 7  layout 6/7  WER 0.063
+  sign-off chunk     n=11  layout 11/11  WER 0.000
+  quote              n= 4  layout 4/4  WER 0.167
+  continuation       n=25  layout 22/25  WER 0.083
+done
