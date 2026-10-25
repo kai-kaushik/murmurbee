@@ -392,6 +392,8 @@ final class PillWindow {
     }
 
     func configure(edge: PillModel.Edge, showWhenIdle: Bool, keyName: String) {
+        if configured && edge != model.edge && !model.dragging { along = 0.5 }  // picked in Settings: start centred
+        configured = true
         model.edge = edge
         model.showWhenIdle = showWhenIdle
         model.keyName = keyName
@@ -448,17 +450,26 @@ final class PillWindow {
         return CGPoint(x: p.x - f.minX, y: f.maxY - p.y)
     }
 
-    /// The dock point for each edge (where the bar's centre lands), in overlay coordinates.
-    private func targets() -> [(PillModel.Edge, CGPoint)] {
-        guard let f = dragScreen?.frame else { return [] }
-        let ins = drag.insets, w = f.width, h = f.height, midY = (h + ins.top - ins.bottom) / 2
-        return [(.bottom, CGPoint(x: w / 2, y: h - ins.bottom - 23)),
-                (.left, CGPoint(x: ins.leading + 18, y: midY)),
-                (.right, CGPoint(x: w - ins.trailing - 18, y: midY))]
+    /// The edge closest to the pointer, and where on that edge the bar's centre lands (overlay coordinates):
+    /// the bar can sit anywhere along an edge, like Wispr's.
+    private func nearest(_ p: CGPoint) -> (PillModel.Edge, CGPoint) {
+        guard let f = dragScreen?.frame else { return (.bottom, p) }
+        let ins = drag.insets, w = f.width, h = f.height
+        let dBottom = h - ins.bottom - p.y, dLeft = p.x - ins.leading, dRight = w - ins.trailing - p.x
+        let x = min(max(p.x, ins.leading + 70), w - ins.trailing - 70)
+        let y = min(max(p.y, ins.top + 70), h - ins.bottom - 70)
+        if dBottom <= dLeft && dBottom <= dRight { return (.bottom, CGPoint(x: x, y: h - ins.bottom - 23)) }
+        return dLeft <= dRight ? (.left, CGPoint(x: ins.leading + 18, y: y)) : (.right, CGPoint(x: w - ins.trailing - 18, y: y))
     }
 
-    private func nearest(_ p: CGPoint) -> (PillModel.Edge, CGPoint) {
-        targets().min { hypot($0.1.x - p.x, $0.1.y - p.y) < hypot($1.1.x - p.x, $1.1.y - p.y) } ?? (.bottom, p)
+    private var configured = false
+
+    /// Position along the current edge, 0…1 (left→right on the bottom, top→bottom on the sides). Saved.
+    private var along: CGFloat = {
+        let v = UserDefaults.standard.double(forKey: "barAlong")
+        return v > 0 ? v : 0.5
+    }() {
+        didSet { UserDefaults.standard.set(Double(along), forKey: "barAlong") }
     }
 
     private func moveDrag(to p: NSPoint) {
@@ -469,6 +480,12 @@ final class PillWindow {
 
     private func endDrag(at p: NSPoint) {
         let (edge, target) = nearest(local(p))
+        if let f = dragScreen?.frame {
+            let ins = drag.insets
+            along = edge == .bottom
+                ? (target.x - ins.leading) / max(1, f.width - ins.leading - ins.trailing)
+                : (target.y - ins.top) / max(1, f.height - ins.top - ins.bottom)
+        }
         withAnimation(.timingCurve(0.2, 0.9, 0.3, 1, duration: 0.3)) { drag.ghost = target }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(300))
@@ -513,10 +530,13 @@ final class PillWindow {
         // Above the Dock when it's showing; otherwise right down at the bottom edge.
         let bottom = dock ? f.minY : screen.frame.minY
         let origin: NSPoint
+        // Wherever it was dropped along the edge, kept fully on screen.
+        let cx = min(max(f.minX + along * f.width - s.width / 2, f.minX + 8), f.maxX - s.width - 8)
+        let cy = min(max(f.maxY - along * f.height - s.height / 2, f.minY + 8), f.maxY - s.height - 8)
         switch model.edge {
-        case .bottom: origin = NSPoint(x: f.midX - s.width / 2, y: bottom)
-        case .left: origin = NSPoint(x: f.minX, y: f.midY - s.height / 2)
-        case .right: origin = NSPoint(x: f.maxX - s.width, y: f.midY - s.height / 2)
+        case .bottom: origin = NSPoint(x: cx, y: bottom)
+        case .left: origin = NSPoint(x: f.minX, y: cy)
+        case .right: origin = NSPoint(x: f.maxX - s.width, y: cy)
         }
         let frame = NSRect(origin: origin, size: s)
         guard animated else { panel.setFrame(frame, display: true); return }
