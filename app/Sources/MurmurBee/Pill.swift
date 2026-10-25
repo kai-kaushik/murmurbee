@@ -124,7 +124,7 @@ struct PillView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .frame(height: 30)
-                .background(Capsule().fill(Brand.night.opacity(0.88))
+                .background(Capsule().fill(Brand.barNight.opacity(0.88))
                     .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)))
                 .fixedSize()
                 .transition(.opacity.combined(with: .offset(y: model.vertical ? 0 : 4)))
@@ -138,14 +138,14 @@ struct PillView: View {
                 .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, 12)
                 .frame(height: 28)
-                .background(Capsule().fill(Brand.night.opacity(0.78)))
+                .background(Capsule().fill(Brand.barNight.opacity(0.78)))
                 .fixedSize()
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
         }
     }
 
     private var capsule: some View {
-        Capsule().fill(Brand.night.opacity(active ? 0.82 : (model.hovering ? 0.85 : 0.42)))
+        Capsule().fill(Brand.barNight.opacity(active ? 0.82 : (model.hovering ? 0.85 : 0.42)))
             .overlay(Capsule().strokeBorder(Color.white.opacity(active ? 0.12 : 0.28), lineWidth: 0.5))
             .shadow(color: .black.opacity(active ? 0.25 : 0.12), radius: active ? 9 : 4, y: active ? 4 : 1)
     }
@@ -188,14 +188,14 @@ private struct Bars: View {
             if vertical {
                 VStack(spacing: 2) {
                     ForEach(lengths.indices, id: \.self) { i in
-                        Capsule().fill(Brand.honey).frame(width: lengths[i], height: 2.5)
+                        Capsule().fill(Brand.barHoney).frame(width: lengths[i], height: 2.5)
                     }
                 }
                 .frame(width: 18)
             } else {
                 HStack(spacing: 2) {
                     ForEach(lengths.indices, id: \.self) { i in
-                        Capsule().fill(Brand.honey).frame(width: 2.5, height: lengths[i])
+                        Capsule().fill(Brand.barHoney).frame(width: 2.5, height: lengths[i])
                     }
                 }
                 .frame(height: 18)
@@ -211,7 +211,7 @@ private struct Shimmer: View {
     @State private var phase = 0.0
     var body: some View {
         let dots = ForEach(0..<3) { i in
-            Circle().fill(Brand.honey).frame(width: 5, height: 5)
+            Circle().fill(Brand.barHoney).frame(width: 5, height: 5)
                 .opacity(0.35 + 0.65 * max(0, cos((phase - Double(i) * 0.33) * .pi * 2)))
         }
         Group {
@@ -246,9 +246,9 @@ struct DragOverlayView: View {
                 zone(.left, size: CGSize(width: 86, height: 124), center: CGPoint(x: ins.leading + 10 + 43, y: midY))
                 zone(.right, size: CGSize(width: 86, height: 124),
                      center: CGPoint(x: w - ins.trailing - 10 - 43, y: midY))
-                Circle().fill(Brand.night)
+                Circle().fill(Brand.barNight)
                     .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
-                    .overlay(Image(systemName: "waveform").font(.system(size: 13, weight: .semibold)).foregroundStyle(Brand.honey))
+                    .overlay(Image(systemName: "waveform").font(.system(size: 13, weight: .semibold)).foregroundStyle(Brand.barHoney))
                     .frame(width: 30, height: 30)
                     .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
                     .position(model.ghost)

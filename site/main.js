@@ -13,6 +13,63 @@
     if (nav) nav.classList.toggle("is-scrolled", window.scrollY > 8);
   }
 
+  /* ---------- Theme: light / dark with a radial wipe from the toggle ---------- */
+  var THEME_MS = 1500;
+  var themeBtn = document.querySelector("[data-theme-toggle]");
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function currentTheme() { return doc.getAttribute("data-theme") === "light" ? "light" : "dark"; }
+  function syncThemeUI() {
+    var t = currentTheme();
+    if (themeBtn) themeBtn.setAttribute("aria-label", t === "dark" ? "Switch to light theme" : "Switch to dark theme");
+    if (themeMeta) themeMeta.setAttribute("content", t === "dark" ? "#16130F" : "#FBF7F0");
+  }
+  function writeTheme(t, persist) {
+    doc.setAttribute("data-theme", t);
+    if (persist) { try { localStorage.setItem("mb-theme", t); } catch (e) {} }
+    syncThemeUI();
+  }
+  function toggleTheme(origin) {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    if (reduceMQ.matches) { writeTheme(next, true); return; }
+    if (document.startViewTransition) {
+      var x = origin ? origin.x : window.innerWidth / 2;
+      var y = origin ? origin.y : window.innerHeight / 2;
+      var end = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+      doc.classList.add("theme-wipe");
+      var vt = document.startViewTransition(function () { writeTheme(next, true); });
+      vt.ready.then(function () {
+        doc.animate(
+          { "--transition-x": [x + "px", x + "px"], "--transition-y": [y + "px", y + "px"], "--transition-radius": ["0px", (end + 80) + "px"] },
+          { duration: THEME_MS, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)", fill: "forwards" }
+        );
+      }).catch(function () {});
+      vt.finished.finally(function () { doc.classList.remove("theme-wipe"); });
+      return;
+    }
+    doc.classList.add("theme-fade");
+    writeTheme(next, true);
+    setTimeout(function () { doc.classList.remove("theme-fade"); }, 400);
+  }
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function (e) {
+      var r = themeBtn.getBoundingClientRect();
+      // keyboard activation has no pointer position: start from the button's centre
+      var o = (e.detail && e.clientX) ? { x: e.clientX, y: e.clientY } : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      toggleTheme(o);
+    });
+  }
+  // follow the system theme until the visitor picks one
+  if (window.matchMedia) {
+    var schemeMQ = window.matchMedia("(prefers-color-scheme: light)");
+    var onScheme = function (e) {
+      var saved = null;
+      try { saved = localStorage.getItem("mb-theme"); } catch (err) {}
+      if (saved !== "light" && saved !== "dark") writeTheme(e.matches ? "light" : "dark", false);
+    };
+    if (schemeMQ.addEventListener) schemeMQ.addEventListener("change", onScheme);
+  }
+  syncThemeUI();
+
   /* ---------- Placeholder download link (DMG not published yet) ---------- */
   document.querySelectorAll('a[href="#"]').forEach(function (a) {
     a.addEventListener("click", function (e) { e.preventDefault(); });

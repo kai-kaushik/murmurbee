@@ -18,6 +18,12 @@ enum Snapshots {
         let s = HubModel(); s.pane = .dictionary
         save(HubView(model: s, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
                 .frame(width: 920, height: 640), "hub-dictionary", dir)
+        save(HubView(model: HubModel(), store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 1080, height: 720), "hub-light", dir, light: true)
+        save(GeneralTab(settings: .shared, permissions: p).frame(width: 600, height: 900).background(Brand.night),
+             "settings-light", dir, light: true)
+        save(GeneralTab(settings: .shared, permissions: p).frame(width: 600, height: 900).background(Brand.night), "settings-general", dir)
+        save(PrivacyTab(settings: .shared, deleteHistory: {}).frame(width: 600, height: 600).background(Brand.night), "settings-privacy", dir)
         // Flow bar states, on a light desktop-ish backdrop.
         let states: [(String, PillModel.State, Bool, PillModel.Edge, String?)] = [
             ("bar-idle", .idle, false, .bottom, nil), ("bar-hover", .idle, true, .bottom, nil),
@@ -42,10 +48,11 @@ enum Snapshots {
                                            startPoint: .top, endPoint: .bottom)), "drag-overlay", dir)
     }
 
-    private static func save<V: View>(_ view: V, _ name: String, _ dir: URL) {
+    private static func save<V: View>(_ view: V, _ name: String, _ dir: URL, light: Bool = false) {
         let host = NSHostingView(rootView: view.background(Color(nsColor: .windowBackgroundColor)))
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: host.fittingSize),
                               styleMask: [.titled], backing: .buffered, defer: false)
+        window.appearance = NSAppearance(named: light ? .aqua : .darkAqua)
         window.contentView = host
         window.layoutIfNeeded()
         host.layoutSubtreeIfNeeded()

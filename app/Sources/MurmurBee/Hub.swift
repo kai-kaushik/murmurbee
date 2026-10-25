@@ -98,6 +98,7 @@ struct HubView: View {
             navItem(.dictionary)
             Spacer()
             Rectangle().fill(Brand.border).frame(height: 1).padding(.vertical, 8)
+            ThemeToggle()
             navButton("Settings", "gearshape") { model.show(.settings) }
             navButton("Help", "questionmark.circle") {
                 NSWorkspace.shared.open(URL(string: "https://github.com/kai-kaushik/murmurbee#readme")!)
@@ -125,6 +126,26 @@ struct HubView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Sun / moon switch at the bottom of the sidebar; wipes the window into the other theme.
+private struct ThemeToggle: View {
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        Button { Theme.toggle() } label: {
+            HStack(spacing: 8) {
+                Image(systemName: scheme == .dark ? "sun.max" : "moon").frame(width: 20)
+                Text(scheme == .dark ? "Light mode" : "Dark mode")
+            }
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(Brand.sand)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Switch to \(scheme == .dark ? "light" : "dark") mode")
     }
 }
 
@@ -545,7 +566,7 @@ private struct SettingsSheet: View {
             }
             .background(Brand.night)
         }
-        .frame(width: 760, height: 580)
+        .frame(width: 780, height: 620)
         .onAppear { pane = initial }
         .brandWindow()
     }

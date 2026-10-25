@@ -171,60 +171,155 @@ struct HoneyButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Brand.night)
+            .foregroundStyle(Brand.ink)
             .padding(.horizontal, 16).padding(.vertical, 7)
-            .background(Capsule().fill(Brand.honey.opacity(configuration.isPressed ? 0.8 : 1)))
+            .background(Capsule().fill(Brand.honeyFill.opacity(configuration.isPressed ? 0.8 : 1)))
     }
+}
+
+// MARK: - Settings building blocks
+
+/// A titled group of settings rows on one rounded card, with room to breathe.
+struct SettingsSection<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .semibold)).tracking(0.9)
+                .foregroundStyle(Brand.sand)
+                .padding(.leading, 4)
+            VStack(spacing: 0) { content }
+                .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        }
+    }
+}
+
+/// One setting: a title with an optional quiet explanation underneath, and its control on the right.
+struct SettingsRow<Control: View>: View {
+    let title: String
+    var detail: String? = nil
+    var divider = true
+    @ViewBuilder var control: Control
+    var body: some View {
+        VStack(spacing: 0) {
+            if divider { Rectangle().fill(Brand.border.opacity(0.55)).frame(height: 1).padding(.leading, 20) }
+            HStack(alignment: .center, spacing: 24) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(Brand.linen)
+                    if let detail {
+                        Text(detail).font(.system(size: 12.5)).foregroundStyle(Brand.sand)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: 12)
+                control
+            }
+            .padding(.horizontal, 20).padding(.vertical, 15)
+        }
+    }
+}
+
+private extension View {
+    func settingsToggle() -> some View { toggleStyle(.switch).tint(Brand.honeyFill).labelsHidden() }
+    func settingsPicker(_ width: CGFloat = 190) -> some View { labelsHidden().pickerStyle(.menu).frame(width: width) }
 }
 
 struct GeneralTab: View {
     @Bindable var settings: Settings
     let permissions: Permissions
     @State private var mics = AudioDevices.inputs()
+    @State private var appearance = Theme.mode
 
     var body: some View {
-        Form {
-            Section {
-                Picker("Hold to talk", selection: $settings.holdKey) {
-                    ForEach(Hotkey.Key.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                SettingsSection(title: "Dictation") {
+                    SettingsRow(title: "Hold to talk", detail: "Hold the key, speak, let go. Esc cancels at any time.", divider: false) {
+                        Picker("Hold to talk", selection: $settings.holdKey) {
+                            ForEach(Hotkey.Key.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                        }.settingsPicker()
+                    }
+                    SettingsRow(title: "Hands-free", detail: "Double-tap the key to start, tap once to finish.") {
+                        Toggle("Hands-free", isOn: $settings.handsFree).settingsToggle()
+                    }
+                    SettingsRow(title: "Clean up with AI", detail: "Tidies wording, punctuation and lists on this Mac.") {
+                        Toggle("Clean up with AI", isOn: $settings.cleanupOn).settingsToggle()
+                    }
+                    SettingsRow(title: "Name you sign with", detail: "Used for email sign-offs like “Best, \(firstName)”.") {
+                        TextField("Name", text: $settings.signName, prompt: Text(NSFullUserName()))
+                            .textFieldStyle(.plain).multilineTextAlignment(.trailing)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Brand.raised))
+                            .frame(width: 190)
+                    }
                 }
-                Toggle("Hands-free: double-tap to start, tap to finish", isOn: $settings.handsFree)
-                Toggle("Play a sound when recording starts and stops", isOn: $settings.playSounds)
-                Text("Esc cancels a dictation at any time.").font(.callout).foregroundStyle(.secondary)
-            }
-            Section {
-                Picker("Bar position", selection: $settings.barEdge) {
-                    Text("Bottom").tag(PillModel.Edge.bottom)
-                    Text("Left").tag(PillModel.Edge.left)
-                    Text("Right").tag(PillModel.Edge.right)
+
+                SettingsSection(title: "Flow bar and sound") {
+                    SettingsRow(title: "Bar position", detail: "You can also drag the bar to any edge.", divider: false) {
+                        Picker("Bar position", selection: $settings.barEdge) {
+                            Text("Bottom").tag(PillModel.Edge.bottom)
+                            Text("Left").tag(PillModel.Edge.left)
+                            Text("Right").tag(PillModel.Edge.right)
+                        }.settingsPicker(120)
+                    }
+                    SettingsRow(title: "Show the bar when idle", detail: "Click it to start or finish a dictation.") {
+                        Toggle("Show the bar when idle", isOn: $settings.showBarWhenIdle).settingsToggle()
+                    }
+                    SettingsRow(title: "Sounds", detail: "A soft chime when recording starts and stops.") {
+                        Toggle("Sounds", isOn: $settings.playSounds).settingsToggle()
+                    }
                 }
-                Toggle("Show the bar when not dictating", isOn: $settings.showBarWhenIdle)
-                Text("You can also drag the bar to any edge. Click it to start or finish a dictation.")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
-            Section {
-                Picker("Microphone", selection: $settings.microphone) {
-                    Text("Automatic (avoid Bluetooth headsets)").tag("auto")
-                    Text("System default").tag("default")
-                    if !mics.isEmpty { Divider() }
-                    ForEach(mics) { Text($0.name).tag($0.uid) }
+
+                SettingsSection(title: "System") {
+                    SettingsRow(title: "Microphone", detail: "Automatic avoids Bluetooth headset mics, which sound worse.", divider: false) {
+                        Picker("Microphone", selection: $settings.microphone) {
+                            Text("Automatic").tag("auto")
+                            Text("System default").tag("default")
+                            if !mics.isEmpty { Divider() }
+                            ForEach(mics) { Text($0.name).tag($0.uid) }
+                        }.settingsPicker()
+                    }
+                    SettingsRow(title: "Appearance", detail: "Match your Mac, or keep MurmurBee light or dark.") {
+                        Picker("Appearance", selection: Binding(get: { appearance }, set: { appearance = $0; Theme.set($0) })) {
+                            Text("System").tag(Theme.Mode.system)
+                            Text("Light").tag(Theme.Mode.light)
+                            Text("Dark").tag(Theme.Mode.dark)
+                        }.settingsPicker(120)
+                    }
+                    SettingsRow(title: "Launch at login") {
+                        Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin },
+                                                                set: { settings.launchAtLogin = $0 })).settingsToggle()
+                    }
                 }
-                Toggle("Clean up with AI", isOn: $settings.cleanupOn)
-                TextField("Name you sign with", text: $settings.signName, prompt: Text(NSFullUserName()))
-                Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin },
-                                                        set: { settings.launchAtLogin = $0 }))
+
+                SettingsSection(title: "Status") {
+                    status("Models", permissions.modelStatus, permissions.modelsReady, first: true)
+                    status("Microphone", permissions.microphone ? "Allowed" : "Not allowed", permissions.microphone)
+                    status("Accessibility", permissions.accessibility ? "Allowed" : "Not allowed", permissions.accessibility)
+                    status("Input Monitoring",
+                           permissions.inputMonitoring ? (permissions.listening ? "Allowed, listening" : "Allowed, relaunch needed") : "Not allowed",
+                           permissions.inputMonitoring && permissions.listening)
+                }
             }
-            Section("Status") {
-                LabeledContent("Models", value: permissions.modelStatus)
-                LabeledContent("Microphone", value: permissions.microphone ? "Allowed" : "Not allowed")
-                LabeledContent("Accessibility", value: permissions.accessibility ? "Allowed" : "Not allowed")
-                LabeledContent("Input Monitoring", value: permissions.inputMonitoring
-                    ? (permissions.listening ? "Allowed, listening" : "Allowed, relaunch needed") : "Not allowed")
+            .padding(.horizontal, 24).padding(.vertical, 20)
+        }
+        .scrollIndicators(.never)
+        .onAppear { mics = AudioDevices.inputs() }
+    }
+
+    private var firstName: String {
+        let n = settings.signName.isEmpty ? NSFullUserName() : settings.signName
+        return n.split(separator: " ").first.map(String.init) ?? "Sam"
+    }
+
+    private func status(_ title: String, _ value: String, _ ok: Bool, first: Bool = false) -> some View {
+        SettingsRow(title: title, divider: !first) {
+            HStack(spacing: 8) {
+                Circle().fill(ok ? Brand.honey : Color(red: 0.95, green: 0.63, blue: 0.48)).frame(width: 7, height: 7)
+                Text(value).font(.system(size: 13)).foregroundStyle(Brand.sand).lineLimit(1)
             }
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
-        .onAppear { mics = AudioDevices.inputs() }
     }
 }
 
@@ -234,31 +329,35 @@ struct PrivacyTab: View {
     @State private var confirming = false
 
     var body: some View {
-        Form {
-            Section {
-                LabeledContent("Network") {
-                    Text("None. Speech and cleanup run on this Mac; nothing is sent anywhere.")
-                        .multilineTextAlignment(.trailing).foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                SettingsSection(title: "On this Mac") {
+                    SettingsRow(title: "Network", detail: "None. Speech and cleanup run on this Mac; nothing is sent anywhere.", divider: false) {
+                        Image(systemName: "checkmark.shield").foregroundStyle(Brand.honey)
+                    }
+                    SettingsRow(title: "Audio", detail: "Never kept. Only the text of each dictation is saved.") {
+                        Image(systemName: "waveform.slash").foregroundStyle(Brand.honey)
+                    }
                 }
-                LabeledContent("Audio") {
-                    Text("Never kept. Only the text of each dictation is saved.").foregroundStyle(.secondary)
+                SettingsSection(title: "Learning") {
+                    SettingsRow(title: "Learn from my edits",
+                                detail: "After pasting, MurmurBee re-reads the field once or twice to see what you corrected, so it gets those words right next time.",
+                                divider: false) {
+                        Toggle("Learn from my edits", isOn: $settings.learnFromEdits).settingsToggle()
+                    }
+                }
+                SettingsSection(title: "Your data") {
+                    SettingsRow(title: "History folder", detail: "Your dictation history and dictionary, as plain files.", divider: false) {
+                        Button("Show in Finder") { NSWorkspace.shared.open(Store.directory) }
+                    }
+                    SettingsRow(title: "Delete all history", detail: "Removes every saved dictation. Your dictionary is kept.") {
+                        Button("Delete…", role: .destructive) { confirming = true }
+                    }
                 }
             }
-            Section {
-                Toggle("Learn from my edits", isOn: $settings.learnFromEdits)
-                Text("After pasting, MurmurBee re-reads the field once or twice to see what you corrected, so it can get those words right next time.")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
-            Section {
-                HStack {
-                    Button("Show History Folder") { NSWorkspace.shared.open(Store.directory) }
-                    Spacer()
-                    Button("Delete All History…", role: .destructive) { confirming = true }
-                }
-            }
+            .padding(.horizontal, 24).padding(.vertical, 20)
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
+        .scrollIndicators(.never)
         .confirmationDialog("Delete all dictation history?", isPresented: $confirming) {
             Button("Delete History", role: .destructive, action: deleteHistory)
         } message: {
@@ -287,7 +386,6 @@ final class WindowManager {
             w.setFrameAutosaveName("MurmurBee.\(id)")
         }
         w.titlebarAppearsTransparent = true
-        w.appearance = NSAppearance(named: .darkAqua)
         w.backgroundColor = Brand.nsNight
         w.isReleasedWhenClosed = false
         w.center()

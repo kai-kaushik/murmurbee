@@ -4,14 +4,32 @@ import SwiftUI
 
 /// MurmurBee's look: night background, linen text, honey accent, Sora wordmark (brand/, site/).
 enum Brand {
-    static let night = Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x0F / 255)
-    static let surface = Color(red: 0x20 / 255, green: 0x1B / 255, blue: 0x16 / 255)
-    static let raised = Color(red: 0x2A / 255, green: 0x23 / 255, blue: 0x1B / 255)
-    static let border = Color(red: 0x3A / 255, green: 0x32 / 255, blue: 0x2A / 255)
-    static let linen = Color(red: 0xF7 / 255, green: 0xEF / 255, blue: 0xE0 / 255)
-    static let sand = Color(red: 0xC9 / 255, green: 0xBB / 255, blue: 0xA3 / 255)
-    static let honey = Color(red: 0xF8 / 255, green: 0xBE / 255, blue: 0x34 / 255)
-    static let nsNight = NSColor(red: 0x16 / 255, green: 0x13 / 255, blue: 0x0F / 255, alpha: 1)
+    /// A colour with a light and a dark value, resolved against the view's appearance.
+    private static func dynamic(_ light: UInt32, _ dark: UInt32) -> NSColor {
+        NSColor(name: nil) { appearance in
+            let hex = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+            return NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        }
+    }
+
+    // Window colours: night/linen in dark mode, paper/ink in light mode.
+    static let nsNight = dynamic(0xFBF7F0, 0x16130F)
+    static let night = Color(nsColor: nsNight)                       // page background
+    static let surface = Color(nsColor: dynamic(0xF3ECE0, 0x201B16)) // sidebar, cards
+    static let raised = Color(nsColor: dynamic(0xE9E0D0, 0x2A231B))  // hover, inputs, selected
+    static let border = Color(nsColor: dynamic(0xE2D7C4, 0x3A322A))
+    static let linen = Color(nsColor: dynamic(0x1F1A14, 0xF7EFE0))   // primary text
+    static let sand = Color(nsColor: dynamic(0x6A5B45, 0xC9BBA3))    // secondary text
+    /// Honey as text and marks: deeper gold on paper so it stays readable.
+    static let honey = Color(nsColor: dynamic(0xB9791A, 0xF8BE34))
+    /// Honey as a fill (buttons, switches): the same bright honey in both modes, with dark text on it.
+    static let honeyFill = Color(red: 0xF8 / 255, green: 0xBE / 255, blue: 0x34 / 255)
+    static let ink = Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x0F / 255)
+
+    // The flow bar is always dark, like the real product shot on the website.
+    static let barNight = Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x0F / 255)
+    static let barHoney = honeyFill
 
     static func resource(_ path: String) -> URL? {
         let url = Bundle.main.resourceURL?.appendingPathComponent(path)
@@ -57,8 +75,7 @@ struct Wordmark: View {
 extension View {
     /// Dark MurmurBee window chrome for SwiftUI content.
     func brandWindow() -> some View {
-        self.preferredColorScheme(.dark)
-            .tint(Brand.honey)
+        self.tint(Brand.honeyFill)
             .foregroundStyle(Brand.linen)
             .background(Brand.night)
     }
