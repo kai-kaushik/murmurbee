@@ -56,7 +56,17 @@ final class Settings {
     }
     private var launchAtLoginTick = 0  // lets SwiftUI re-read the system status after a change
 
+    /// Settings saved under the app's old identifier (com.kaigen.murmurbee) carry over once.
+    private static func migrateDefaults(into d: UserDefaults) {
+        guard !d.bool(forKey: "migratedFromKaigen"),
+              let old = UserDefaults(suiteName: "com.kaigen.murmurbee")?.persistentDomain(forName: "com.kaigen.murmurbee")
+        else { return }
+        for (key, value) in old where d.object(forKey: key) == nil && !key.hasPrefix("NS") { d.set(value, forKey: key) }
+        d.set(true, forKey: "migratedFromKaigen")
+    }
+
     private init() {
+        Self.migrateDefaults(into: d)
         holdKey = d.string(forKey: "holdKey").flatMap(Hotkey.Key.init(rawValue:)) ?? .rightOption
         barEdge = d.string(forKey: "barEdge").flatMap(PillModel.Edge.init(rawValue:)) ?? .bottom
         showBarWhenIdle = d.object(forKey: "showBarWhenIdle") as? Bool ?? true

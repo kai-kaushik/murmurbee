@@ -20,7 +20,7 @@ enum ModelStore {
         var url = URL(string: "https://github.com/kai-kaushik/murmurbee/releases/download/models-v1/murmurbee-cleanup-v1.zip")!
         var sha = generalSHA256
         #if DEBUG
-        // Debug builds only: `defaults write com.kaigen.murmurbee modelURL <url>` (+ modelSHA256) to test another package.
+        // Debug builds only: `defaults write com.murmurbee.app modelURL <url>` (+ modelSHA256) to test another package.
         let d = UserDefaults.standard
         if let u = d.string(forKey: "modelURL").flatMap(URL.init(string:)), let h = d.string(forKey: "modelSHA256") {
             url = u; sha = h
