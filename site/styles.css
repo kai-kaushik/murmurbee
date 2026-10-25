@@ -877,3 +877,28 @@ kbd {
 @keyframes hint-bob { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(6px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .scrollhint svg { animation: none; } }
 @media (max-width: 640px) { .scrollhint { display: none; } }
+
+/* ---------- Text-only band headers (accuracy + feature chapters): editorial split ---------- */
+.band__index {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+  font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .04em;
+  color: var(--honey);
+}
+.band__index i {
+  width: 56px; height: 4px; flex: none;
+  background: radial-gradient(circle, var(--honey) 1.6px, transparent 2px) 0 50% / 9px 4px repeat-x;
+}
+.band__head--text .band__title { font-size: clamp(36px, 4.6vw, 64px); line-height: 1.02; }
+@media (min-width: 900px) {
+  .band__head--text .band__copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 96px;
+    align-items: end;
+  }
+  .band__head--text .band__index { grid-column: 1 / -1; }
+  .band__head--text .band__lead { margin: 0 0 .35em; max-width: 28rem; font-size: 19px; }
+  .band__head--text .band__more { grid-column: 2; margin-top: 12px; }
+  .band__head--text .band__lead + .band__more { grid-row: 3; }
+}
