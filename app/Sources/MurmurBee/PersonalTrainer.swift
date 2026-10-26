@@ -158,6 +158,13 @@ final class PersonalTrainer {
         }
         try JSONEncoder().encode(config).write(to: staging.appendingPathComponent("adapter_config.json"))
 
+        // (Experiments: also score the general model on its own, to measure what personal training adds.)
+        if ProcessInfo.processInfo.environment["MB_SCORE_GENERAL"] != nil, currentDir.lastPathComponent != generalName {
+            let general = try await loadContainer(generalDir)
+            let g = try await score(general, held) { _ in }
+            print(String(format: "general model WER %.3f", g))
+        }
+
         // 3. Score the new model on the same held-out dictations.
         let candidate = try await loadContainer(generalDir, adapter: staging)
         let newWER = try await score(candidate, held) { report(.checkingNew(done: $0, total: held.count)) }
