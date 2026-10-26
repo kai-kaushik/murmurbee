@@ -83,12 +83,52 @@ final class PersonalTrainer {
 
     func stop() { Self.cancel.set(true) }
 
+    // MARK: - Settings
+
+    /// Training settings. Environment overrides (MB_*) exist for experiments (E15); the defaults ship.
+    struct Hyper: Sendable {
+        var lr = 2e-5, warmup = 0, minLRFraction = 1.0, rank = 8, layers = 16, editWeight = 1, seed: UInt64 = 0
+        static var current: Hyper {
+            let e = ProcessInfo.processInfo.environment
+            var h = Hyper()
+            if let v = e["MB_LR"].flatMap(Double.init) { h.lr = v }
+            if let v = e["MB_WARMUP"].flatMap(Int.init) { h.warmup = v }
+            if let v = e["MB_MIN_LR"].flatMap(Double.init) { h.minLRFraction = v }
+            if let v = e["MB_RANK"].flatMap(Int.init) { h.rank = v }
+            if let v = e["MB_LAYERS"].flatMap(Int.init) { h.layers = v }
+            if let v = e["MB_EDIT_WEIGHT"].flatMap(Int.init) { h.editWeight = v }
+            if let v = e["MB_SEED"].flatMap(UInt64.init) { h.seed = v }
+            return h
+        }
+        /// Linear warm-up, then cosine decay to minLRFraction × lr.
+        func learningRate(step: Int, of total: Int) -> Float {
+            if step < warmup { return Float(lr * Double(step + 1) / Double(warmup)) }
+            let t = Double(step - warmup) / Double(max(1, total - warmup))
+            let floor = lr * minLRFraction
+            return Float(floor + (lr - floor) * 0.5 * (1 + cos(.pi * t)))
+        }
+    }
+
+    /// Deterministic sampling when a seed is set (so experiments compare settings, not luck).
+    struct SplitMix: RandomNumberGenerator {
+        var state: UInt64
+        mutating func next() -> UInt64 {
+            state &+= 0x9E3779B97F4A7C15
+            var z = state
+            z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+            z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+            return z ^ (z >> 31)
+        }
+    }
+
     // MARK: - Data
 
     struct Example: Sendable {
         let prompt: String, target: String, date: Date
         /// Fair to test on: the target came from you (an edit) or from another app, not from the model being tested.
         let independent: Bool
+        /// You corrected this one by hand: the clearest signal of what you want.
+        var edited = false
     }
 
     /// Pairs from history: Wispr imports use your final text (your edit, else what was pasted); MurmurBee's own rows
@@ -112,7 +152,7 @@ final class PersonalTrainer {
             let prompt = PromptV3.userMessage(appName: r.app.isEmpty ? "Unknown" : r.app, appType: type, raw: raw,
                                               vocab: [], before: r.before, ctx: ctx)
             return Example(prompt: prompt, target: target, date: r.date,
-                           independent: r.source == "wispr" || r.edited != nil)
+                           independent: r.source == "wispr" || r.edited != nil, edited: r.edited != nil)
         }
     }
 
@@ -146,11 +186,13 @@ final class PersonalTrainer {
         try? FileManager.default.removeItem(at: staging)
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         let base = try await loadModelContainer(from: generalDir, using: #huggingFaceTokenizerLoader())
-        let config = LoRAConfiguration(numLayers: 16, loraParameters: .init(rank: 8, scale: 20.0))
+        let hyper = Hyper.current
+        if hyper.seed != 0 { MLXRandom.seed(hyper.seed) }
+        let config = LoRAConfiguration(numLayers: hyper.layers, loraParameters: .init(rank: hyper.rank, scale: 20.0))
         try await base.perform { context in
             let model = context.model
             _ = try LoRAContainer.from(model: model, configuration: config)
-            try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps) { step, loss in
+            try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps, hyper: hyper) { step, loss in
                 report(.training(step: step, total: steps, loss: loss))
             }
             model.train(false)
@@ -214,8 +256,10 @@ final class PersonalTrainer {
     // MARK: - Training loop (answer-only loss, like mlx_lm's mask_prompt)
 
     nonisolated private static func trainLoop(model: any LanguageModel, tokenizer: any MLXLMCommon.Tokenizer, examples: [Example],
-                                              steps: Int, report: (Int, Float?) -> Void) throws {
-        let encoded: [(tokens: [Int], promptLength: Int)] = examples.compactMap { e in
+                                              steps: Int, hyper: Hyper, report: (Int, Float?) -> Void) throws {
+        // Hand-edited examples can be sampled more often (editWeight copies each).
+        let weighted = examples.flatMap { e in Array(repeating: e, count: e.edited ? max(1, hyper.editWeight) : 1) }
+        let encoded: [(tokens: [Int], promptLength: Int)] = weighted.compactMap { e in
             guard let prompt = try? tokenizer.applyChatTemplate(
                 messages: [["role": "system", "content": Cleaner.system], ["role": "user", "content": e.prompt]],
                 tools: nil, additionalContext: ["enable_thinking": false]) else { return nil }
@@ -225,7 +269,8 @@ final class PersonalTrainer {
         }
         guard !encoded.isEmpty else { throw TrainError.notEnoughData(0) }
 
-        let optimizer = Adam(learningRate: Float(ProcessInfo.processInfo.environment["MB_LR"].flatMap(Double.init) ?? 2e-5))
+        let optimizer = Adam(learningRate: hyper.learningRate(step: 0, of: steps))
+        var rng = SplitMix(state: hyper.seed == 0 ? UInt64.random(in: 1...UInt64.max) : hyper.seed)
         let lossAndGrad = valueAndGrad(model: model) { model, arrays in
             let (inputs, targets, mask) = (arrays[0], arrays[1], arrays[2])
             let logits = (model as! any LanguageModel)(inputs, cache: nil).asType(.float32)
@@ -237,7 +282,8 @@ final class PersonalTrainer {
         for step in 0..<steps {
             while pause.get() && !cancel.get() { Thread.sleep(forTimeInterval: 0.2) }
             if cancel.get() { throw CancellationError() }
-            let (tokens, promptLength) = encoded[Int.random(in: 0..<encoded.count)]
+            optimizer.learningRate = hyper.learningRate(step: step, of: steps)
+            let (tokens, promptLength) = encoded[Int.random(in: 0..<encoded.count, using: &rng)]
             let inputs = MLXArray(tokens.dropLast().map(Int32.init)).reshaped(1, -1)
             let targets = MLXArray(tokens.dropFirst().map(Int32.init)).reshaped(1, -1)
             // Position i predicts token i+1: learn only the answer (positions from promptLength-1 on).
