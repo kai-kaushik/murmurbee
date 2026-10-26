@@ -35,7 +35,12 @@ enum ModelStore {
         guard let names = try? fm.contentsOfDirectory(atPath: directory.path) else { return nil }
         let candidates = names.sorted().compactMap { name -> (URL, Int)? in
             let dir = directory.appendingPathComponent(name)
-            guard fm.fileExists(atPath: dir.appendingPathComponent("config.json").path) else { return nil }
+            // A full model, or a personal adapter whose base model is installed.
+            let full = fm.fileExists(atPath: dir.appendingPathComponent("config.json").path)
+            let adapter = PersonalTrainer.baseName(of: dir).map {
+                fm.fileExists(atPath: directory.appendingPathComponent($0).appendingPathComponent("config.json").path)
+            } ?? false
+            guard full || adapter else { return nil }
             return (dir, rank(of: dir))
         }
         return candidates.max { $0.1 < $1.1 }?.0

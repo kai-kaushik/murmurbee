@@ -60,6 +60,22 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.mainMenu = mainMenu()
         Theme.applySaved()
         WisprImporter.shared.store = store
+        PersonalTrainer.shared.store = store
+        PersonalTrainer.shared.userName = settings.signName.isEmpty ? NSFullUserName() : settings.signName
+        PersonalTrainer.shared.refresh()
+        // A newly trained personal model goes live straight away.
+        NotificationCenter.default.addObserver(forName: .personalModelInstalled, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let dir = ModelStore.best() else { return }
+                Task {
+                    try? await self.cleaner.load(from: dir)
+                    self.permissions.modelStatus = "Ready (\(await self.cleaner.origin))"
+                }
+            }
+        }
+        NotificationCenter.default.addObserver(forName: .historyChanged, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { PersonalTrainer.shared.refresh() }
+        }
         // Setup comes back after any restart (ours or macOS's "Quit & Reopen") until it's genuinely finished,
         // and the first launch where everything works says so (with confetti). Otherwise the main window opens,
         // unless macOS started us at login.
@@ -198,6 +214,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         do {
             try s.start(device: AudioDevices.resolve(settings.microphone))
             session = s
+            PersonalTrainer.pause.set(true)  // personal training waits while you dictate
             pill.model.hint = nil
             pill.show(.listening)
             Sounds.play(.start)
@@ -215,6 +232,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pill.show(.finishing)
         Sounds.play(.stop)
         Task {
+            defer { PersonalTrainer.pause.set(false) }
             let r = await s.finish()
             guard !r.cleaned.isEmpty else { pill.flash("No speech heard"); return }
             pill.show(.idle)
@@ -242,6 +260,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if session != nil { Sounds.play(.cancel) }
         session?.cancel()
         session = nil
+        PersonalTrainer.pause.set(false)
         keyState = .idle
         pill.show(.idle)
     }

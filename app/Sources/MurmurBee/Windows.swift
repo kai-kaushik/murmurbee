@@ -43,6 +43,7 @@ struct SetupView: View {
     var celebrateOnAppear = false
     @State private var tryText = ""
     @State private var confetti = 0
+    private let importer = WisprImporter.shared
 
     private var allSet: Bool { permissions.allGranted && permissions.listening }
 
@@ -92,6 +93,16 @@ struct SetupView: View {
                 Divider()
                 StepRow(ok: permissions.modelsReady, title: "Speech and cleanup models",
                         detail: permissions.modelStatus, action: nil, busy: !permissions.modelsReady) {}
+                if let found = importer.found, found.dictations > 0 {
+                    Divider()
+                    StepRow(ok: WisprImport.imported || importer.result != nil,
+                            title: "Bring your Wispr Flow history (optional)",
+                            detail: importer.progress.map { "Importing \($0.done.formatted()) of \($0.total.formatted())…" }
+                                ?? (importer.result ?? (WisprImport.imported ? WisprImport.Result(dictations: found.dictations, words: found.words) : nil))
+                                    .map { "Imported \($0.dictations.formatted()) dictations and \($0.words) words." }
+                                ?? "\(found.dictations.formatted()) dictations and \(found.words) words found. MurmurBee learns your names and style from them. Read-only; nothing leaves your Mac.",
+                            action: "Import", busy: importer.running) { importer.start() }
+                }
             }
             .padding(.horizontal, 14)
             .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))

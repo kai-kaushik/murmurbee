@@ -141,7 +141,7 @@ actor Cleaner {
     enum Path: String { case skip, model, fallbackRules = "fallback_rules", off }
 
     func load(from dir: URL) async throws {
-        container = try await loadModelContainer(from: dir, using: #huggingFaceTokenizerLoader())
+        container = try await PersonalTrainer.loadContainer(dir)  // a full model, or a personal adapter on its base
         if let data = try? Data(contentsOf: dir.appendingPathComponent("localflow.json")),
            let cfg = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let v = cfg["prompt"] as? String { promptVersion = v }

@@ -1,6 +1,35 @@
 import AppKit
 import FluidAudio
 
+final class TimeBox: @unchecked Sendable {
+    private var start: Date?
+    private let lock = NSLock()
+    func startIfNeeded() -> Date { lock.lock(); defer { lock.unlock() }; if start == nil { start = Date() }; return start! }
+}
+
+// A short personal-training run that installs nothing:  MurmurBee --train-test <steps> <held-out>
+if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--train-test" {
+    let steps = Int(CommandLine.arguments[2]) ?? 30, held = Int(CommandLine.arguments[3]) ?? 10
+    Task {
+        let t0 = Date()
+        let trainStart = TimeBox()
+        do {
+            let o = try await PersonalTrainer.run(store: Store(), user: "Kai Kaushik", steps: steps, heldLimit: held,
+                                                  install: false) { p in
+                if case .training(let s, let n, let l) = p {
+                    let start = trainStart.startIfNeeded()
+                    print(String(format: "step %d/%d loss %.3f  (%.2f s/step)", s, n, l ?? -1,
+                                 Date().timeIntervalSince(start) / Double(s)))
+                }
+            }
+            print(String(format: "examples %d, held out %d, current WER %.3f, new WER %.3f, %.1f min total",
+                         o.examples, o.heldOut, o.currentWER, o.newWER, Date().timeIntervalSince(t0) / 60))
+        } catch { print("failed:", error.localizedDescription) }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 // Imports Wispr Flow's history into a scratch database twice (to check nothing is added twice); never touches the
 // real history or dictionary:  MurmurBee --import-wispr-test <scratch.sqlite>
 if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--import-wispr-test" {

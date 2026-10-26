@@ -6,12 +6,13 @@ import SwiftUI
 @Observable
 final class HubModel {
     enum Pane: String, CaseIterable, Identifiable {
-        case history = "Home", dictionary = "Dictionary", settings = "Settings", privacy = "Privacy"
+        case history = "Home", dictionary = "Dictionary", model = "Your model", settings = "Settings", privacy = "Privacy"
         var id: String { rawValue }
         var icon: String {
             switch self {
             case .history: "house"
             case .dictionary: "character.book.closed"
+            case .model: "sparkles"
             case .settings: "gearshape"
             case .privacy: "lock"
             }
@@ -25,7 +26,7 @@ final class HubModel {
 
     func show(_ p: Pane) {
         switch p {
-        case .history, .dictionary: pane = p; settingsPane = nil
+        case .history, .dictionary, .model: pane = p; settingsPane = nil
         case .settings, .privacy: settingsPane = p
         }
     }
@@ -52,6 +53,7 @@ struct HubView: View {
             Group {
                 switch model.pane {
                 case .dictionary: DictionaryPane(model: model)
+                case .model: YourModelPane(hub: model)
                 default: HomePane(model: model, store: store, settings: settings)
                 }
             }
@@ -97,6 +99,7 @@ struct HubView: View {
             .padding(.horizontal, 8).padding(.top, 44).padding(.bottom, 16)  // below the traffic lights
             navItem(.history)
             navItem(.dictionary)
+            navItem(.model)
             Spacer()
             Rectangle().fill(Brand.border).frame(height: 1).padding(.vertical, 8)
             ThemeToggle()
@@ -453,6 +456,134 @@ private struct WisprCard: View {
         .padding(18)
         .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.honey.opacity(0.35)))
+    }
+}
+
+// MARK: - Your model (personal training)
+
+private struct YourModelPane: View {
+    let hub: HubModel
+    private let trainer = PersonalTrainer.shared
+    private let importer = WisprImporter.shared
+    @State private var personal = PersonalInfo.load()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                PageHeader(title: "Your model",
+                           subtitle: "MurmurBee learns your words and style from your own dictations, on this Mac.") { EmptyView() }
+                current
+                trainCard
+                if importer.offerOnHome {
+                    WisprCard(importer: importer, flash: hub.flash)
+                }
+                Text("How it works: your newest dictations are held back as a test. A personal model is trained on the rest, then both models clean the held-back dictations, and the new one is only switched in if it makes fewer mistakes. Nothing leaves your Mac.")
+                    .font(.system(size: 12.5)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 36).padding(.top, 26).padding(.bottom, 32)
+        }
+        .scrollIndicators(.never)
+        .onAppear { trainer.refresh(); personal = PersonalInfo.load() }
+        .onChange(of: trainer.phase) { personal = PersonalInfo.load() }
+    }
+
+    private var current: some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: personal == nil ? "cube" : "sparkles").font(.system(size: 20)).foregroundStyle(Brand.honey)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(personal == nil ? "Using the general model" : "Using your personal model")
+                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
+                Text(personal.map { p in
+                    "Trained \(p.trained.formatted(date: .abbreviated, time: .omitted)) on \(p.examples.formatted()) of your dictations. " +
+                    "On your held-back dictations it made \(p.improvement)% fewer mistakes than the model before it."
+                } ?? "Trained for everyone, on made-up examples. A personal model learns your names, phrasing and style.")
+                    .font(.system(size: 13)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 12)
+            if personal != nil {
+                Button("Use the general model") {
+                    try? FileManager.default.removeItem(at: PersonalTrainer.personalDir)
+                    personal = nil
+                    NotificationCenter.default.post(name: .personalModelInstalled, object: nil)
+                    hub.flash("Switched back to the general model")
+                }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+            }
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+    }
+
+    private var trainCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(trainer.available.formatted())").font(Brand.sora(28)).foregroundStyle(Brand.honey)
+                Text("dictations to learn from").font(.system(size: 13)).foregroundStyle(Brand.sand)
+                Spacer()
+                if trainer.running {
+                    Button("Stop") { trainer.stop() }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+                } else {
+                    Button(personal == nil ? "Train my model" : "Train again") { trainer.start() }
+                        .buttonStyle(HoneyButton()).disabled(trainer.available < 200)
+                }
+            }
+            status
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+    }
+
+    @ViewBuilder private var status: some View {
+        switch trainer.phase {
+        case .idle:
+            Text(trainer.available < 200
+                 ? "Needs at least 200 dictations. Keep dictating, or import your Wispr Flow history."
+                 : "Takes about 30–60 minutes. MurmurBee keeps working while it trains, and training pauses whenever you dictate.")
+                .font(.system(size: 13)).foregroundStyle(Brand.sand)
+        case .preparing:
+            line("Getting your dictations ready…", nil)
+        case .checkingCurrent(let d, let t):
+            line("Testing the model you use now on your held-back dictations (\(d) of \(t))", Double(d) / Double(max(1, t)) * 0.1)
+        case .training(let st, let n, _):
+            line("Training on your dictations: step \(st) of \(n)", 0.1 + Double(st) / Double(max(1, n)) * 0.8)
+        case .checkingNew(let d, let t):
+            line("Testing your new model (\(d) of \(t))", 0.9 + Double(d) / Double(max(1, t)) * 0.1)
+        case .finished(let o):
+            Text(o.installed
+                 ? "Your new model is live. On \(o.heldOut) held-back dictations it made \(pct(o))% fewer mistakes (word error rate \(f(o.currentWER)) → \(f(o.newWER)))."
+                 : "Your new model wasn't better than the one you use now on \(o.heldOut) held-back dictations (\(f(o.newWER)) vs \(f(o.currentWER))), so nothing changed. More history usually helps.")
+                .font(.system(size: 13)).foregroundStyle(o.installed ? Brand.linen : Brand.sand)
+                .fixedSize(horizontal: false, vertical: true)
+        case .failed(let msg):
+            Text("Training stopped: \(msg)").font(.system(size: 13)).foregroundStyle(Brand.sand)
+        }
+    }
+
+    private func line(_ text: String, _ progress: Double?) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(text).font(.system(size: 13)).foregroundStyle(Brand.linen)
+            if let progress { ProgressView(value: progress).tint(Brand.honeyFill) } else { ProgressView().controlSize(.small) }
+        }
+    }
+    private func f(_ x: Double) -> String { String(format: "%.3f", x) }
+    private func pct(_ o: PersonalTrainer.Outcome) -> Int {
+        o.currentWER > 0 ? Int(((o.currentWER - o.newWER) / o.currentWER * 100).rounded()) : 0
+    }
+}
+
+/// What the installed personal model's localflow.json says about it.
+private struct PersonalInfo: Equatable {
+    let trained: Date, examples: Int, improvement: Int
+    static func load() -> PersonalInfo? {
+        let url = PersonalTrainer.personalDir.appendingPathComponent("localflow.json")
+        guard let data = try? Data(contentsOf: url),
+              let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        let wer = j["wer"] as? Double ?? 0, cur = j["currentWer"] as? Double ?? 0
+        return PersonalInfo(trained: (j["trained"] as? String).flatMap { ISO8601DateFormatter().date(from: $0) } ?? Date(),
+                            examples: j["examples"] as? Int ?? 0,
+                            improvement: cur > 0 ? Int(((cur - wer) / cur * 100).rounded()) : 0)
     }
 }
 

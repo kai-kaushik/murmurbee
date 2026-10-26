@@ -126,6 +126,34 @@ actor Store {
         return out
     }
 
+    struct TrainingRow: Sendable {
+        let date: Date, source: String, bundle: String, app: String, appType: String, url: String
+        let before: String, selected: String, asr: String, pasted: String, edited: String?
+    }
+
+    /// Every dictation that can teach the personal model something (raw transcript and a final text).
+    func trainingRows() -> [TrainingRow] {
+        let sql = """
+            SELECT created_at, COALESCE(source, ''), COALESCE(app_bundle, ''), COALESCE(app_name, ''),
+                   COALESCE(app_type, ''), COALESCE(url, ''), COALESCE(before_cursor, ''), COALESCE(selected_text, ''),
+                   asr_text, COALESCE(cleaned_text, ''), NULLIF(edited_text, '')
+            FROM dictations WHERE COALESCE(asr_text, '') <> '' AND COALESCE(cleaned_text, '') <> '' ORDER BY created_at
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+        let iso = ISO8601DateFormatter()
+        func text(_ i: Int32) -> String { sqlite3_column_text(stmt, i).map { String(cString: $0) } ?? "" }
+        var out: [TrainingRow] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            out.append(TrainingRow(date: iso.date(from: text(0)) ?? .distantPast, source: text(1), bundle: text(2),
+                                   app: text(3), appType: text(4), url: text(5), before: text(6), selected: text(7),
+                                   asr: text(8), pasted: text(9),
+                                   edited: sqlite3_column_type(stmt, 10) == SQLITE_NULL ? nil : text(10)))
+        }
+        return out
+    }
+
     /// Adds dictations imported from Wispr Flow (one transaction per batch); returns how many were new.
     func importDictations(_ rows: [WisprImport.Row], appName: @Sendable (String) -> String) -> Int {
         let sql = """
