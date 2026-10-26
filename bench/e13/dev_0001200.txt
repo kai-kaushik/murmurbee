@@ -1,0 +1,7 @@
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 1155.93it/s]
+DEV CLIPS (Parakeet input, vs Kai's final text), n=77
+  short n=24  WER 0.106 [0.058, 0.160]  (raw 0.135)  p50 611 ms
+  med   n=27  WER 0.113 [0.082, 0.147]  (raw 0.167)  p50 930 ms
+  long  n=19  WER 0.188 [0.117, 0.286]  (raw 0.194)  p50 939 ms
+  xl    n= 7  WER 0.225 [0.149, 0.327]  (raw 0.274)  p50 622 ms
+  ALL   n=77  WER 0.140 [0.110, 0.175]  (raw 0.173)  p50 820 ms

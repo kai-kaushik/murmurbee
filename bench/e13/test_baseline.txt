@@ -1,0 +1,19 @@
+TEST CLIPS (Parakeet input, vs Kai's final text), n=72
+  short n=21  WER 0.194 [0.096, 0.306]  (raw 0.246)  p50 486 ms
+  med   n=37  WER 0.225 [0.165, 0.296]  (raw 0.232)  p50 559 ms
+  long  n=11  WER 0.169 [0.117, 0.224]  (raw 0.255)  p50 454 ms
+  xl    n= 3  WER 0.276 [0.110, 0.419]  (raw 0.225)  p50 653 ms
+  ALL   n=72  WER 0.210 [0.164, 0.261]  (raw 0.239)  p50 528 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  name fix           n=40  layout 23/40  WER 0.168
+  sign-off misheard  n=34  layout 18/34  WER 0.120
+  spoken time        n=26  layout 26/26  WER 0.075
+  correction then more n=40  layout 38/40  WER 0.098
+  self-correction    n=11  layout 11/11  WER 0.000
+  list               n=40  layout 38/40  WER 0.073
+  list continuation  n=40  layout 40/40  WER 0.015
+  email              n=40  layout 40/40  WER 0.046
+  sign-off chunk     n=40  layout 40/40  WER 0.000
+  quote              n=13  layout 13/13  WER 0.035
+  continuation       n=40  layout 38/40  WER 0.099

@@ -1,0 +1,61 @@
+{
+ "split": "test",
+ "clips": {},
+ "suites": {
+  "name fix": {
+   "n": 40,
+   "layout": 33,
+   "wer": 0.08027940490163386
+  },
+  "sign-off misheard": {
+   "n": 34,
+   "layout": 34,
+   "wer": 0.04295233574325646
+  },
+  "spoken time": {
+   "n": 26,
+   "layout": 26,
+   "wer": 0.01842948717948718
+  },
+  "correction then more": {
+   "n": 40,
+   "layout": 39,
+   "wer": 0.03455964296496048
+  },
+  "self-correction": {
+   "n": 11,
+   "layout": 11,
+   "wer": 0.0
+  },
+  "list": {
+   "n": 40,
+   "layout": 38,
+   "wer": 0.03857769333465542
+  },
+  "list continuation": {
+   "n": 40,
+   "layout": 39,
+   "wer": 0.024204881124118872
+  },
+  "email": {
+   "n": 40,
+   "layout": 38,
+   "wer": 0.04257761472187847
+  },
+  "sign-off chunk": {
+   "n": 40,
+   "layout": 40,
+   "wer": 0.0
+  },
+  "quote": {
+   "n": 13,
+   "layout": 13,
+   "wer": 0.05904992443453982
+  },
+  "continuation": {
+   "n": 40,
+   "layout": 38,
+   "wer": 0.10356616658708315
+  }
+ }
+}

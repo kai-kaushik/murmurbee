@@ -1,0 +1,24 @@
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 2133.96it/s]
+TEST CLIPS (Parakeet input, vs Kai's final text), n=72
+  short n=21  WER 0.497 [0.233, 0.805]  (raw 0.246)  p50 219 ms
+  med   n=37  WER 0.559 [0.433, 0.699]  (raw 0.232)  p50 291 ms
+  long  n=11  WER 0.490 [0.336, 0.659]  (raw 0.255)  p50 245 ms
+  xl    n= 3  WER 0.510 [0.161, 0.709]  (raw 0.225)  p50 276 ms
+  ALL   n=72  WER 0.528 [0.426, 0.647]  (raw 0.239)  p50 274 ms
+
+STRUCTURE (held-out examples): exact line layout / WER
+  list               n=19  layout 3/19  WER 0.825
+  email              n=20  layout 1/20  WER 0.170
+  continuation       n=19  layout 8/19  WER 0.857
+  question           n=21  layout 19/21  WER 0.157
+  vocab_asr          n=18  layout 14/18  WER 0.326
+  long               n=27  layout 12/27  WER 0.112
+  instruction_like   n=16  layout 10/16  WER 1.039
+  plain              n=22  layout 12/22  WER 0.369
+  code               n=24  layout 3/24  WER 1.853
+  numbers            n=21  layout 14/21  WER 0.954
+  reply_names        n=24  layout 20/24  WER 0.522
+  self_correction    n=19  layout 10/19  WER 0.934
+  self_correction/self_correction_neg n= 4  layout 4/4  WER 0.065
+  short              n=23  layout 19/23  WER 1.203
+  selected           n=23  layout 11/23  WER 0.581

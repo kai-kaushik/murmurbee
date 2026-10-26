@@ -1,0 +1,61 @@
+{
+ "split": "dev",
+ "clips": {},
+ "suites": {
+  "name fix": {
+   "n": 40,
+   "layout": 33,
+   "wer": 0.05472575309603335
+  },
+  "sign-off misheard": {
+   "n": 34,
+   "layout": 31,
+   "wer": 0.05220361373384502
+  },
+  "spoken time": {
+   "n": 26,
+   "layout": 26,
+   "wer": 0.021613696132926904
+  },
+  "correction then more": {
+   "n": 40,
+   "layout": 35,
+   "wer": 0.059275400992802256
+  },
+  "self-correction": {
+   "n": 14,
+   "layout": 14,
+   "wer": 0.0
+  },
+  "list": {
+   "n": 40,
+   "layout": 38,
+   "wer": 0.024389512078565403
+  },
+  "list continuation": {
+   "n": 40,
+   "layout": 39,
+   "wer": 0.014469246031746031
+  },
+  "email": {
+   "n": 40,
+   "layout": 39,
+   "wer": 0.027061588799492026
+  },
+  "sign-off chunk": {
+   "n": 40,
+   "layout": 40,
+   "wer": 0.0
+  },
+  "quote": {
+   "n": 15,
+   "layout": 15,
+   "wer": 0.06592592592592593
+  },
+  "continuation": {
+   "n": 40,
+   "layout": 36,
+   "wer": 0.12906154639208642
+  }
+ }
+}

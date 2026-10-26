@@ -1,0 +1,15 @@
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 529.46it/s]
+TEST CLIPS (Parakeet input, vs Kai's final text), n=0
+
+STRUCTURE (held-out examples): exact line layout / WER
+  name fix           n=40  layout 33/40  WER 0.080
+  sign-off misheard  n=34  layout 34/34  WER 0.043
+  spoken time        n=26  layout 26/26  WER 0.018
+  correction then more n=40  layout 39/40  WER 0.035
+  self-correction    n=11  layout 11/11  WER 0.000
+  list               n=40  layout 38/40  WER 0.039
+  list continuation  n=40  layout 39/40  WER 0.024
+  email              n=40  layout 38/40  WER 0.043
+  sign-off chunk     n=40  layout 40/40  WER 0.000
+  quote              n=13  layout 13/13  WER 0.059
+  continuation       n=40  layout 38/40  WER 0.104
