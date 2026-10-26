@@ -544,7 +544,7 @@ private struct YourModelPane: View {
         case .idle:
             Text(trainer.available < 200
                  ? "Needs at least 200 dictations. Keep dictating, or import your Wispr Flow history."
-                 : "Takes about 30–60 minutes. MurmurBee keeps working while it trains, and training pauses whenever you dictate.")
+                 : "Takes up to about 2 hours with a big history, so overnight is ideal. MurmurBee keeps working while it trains, and training pauses whenever you dictate.")
                 .font(.system(size: 13)).foregroundStyle(Brand.sand)
         case .preparing:
             line("Getting your dictations ready…", nil)

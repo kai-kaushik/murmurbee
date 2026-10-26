@@ -181,7 +181,8 @@ final class PersonalTrainer {
         let currentWER = try await score(current, held) { report(.checkingCurrent(done: $0, total: held.count)) }
 
         // 2. Train a LoRA on the general model.
-        let steps = stepsOverride ?? min(1200, max(300, train.count / 4))
+        // E15d: 2,400 steps on a full history beat 1,200 clearly (0.105 vs 0.116 held-out WER).
+        let steps = stepsOverride ?? min(2400, max(300, Int(Double(train.count) / 2.5)))
         let staging = ModelStore.directory.appendingPathComponent(".personal-training")
         try? FileManager.default.removeItem(at: staging)
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
