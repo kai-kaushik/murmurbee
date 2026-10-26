@@ -24,11 +24,16 @@ Speech recognition and cleanup both run on your Mac. No account, no server, noth
 
 The full lab notebook (datasets, splits, every experiment and result) is in [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
+## Download
+**[Download MurmurBee for Mac](https://github.com/kai-kaushik/murmurbee/releases/latest/download/MurmurBee.dmg)** (beta, Apple Silicon, macOS 15+).
+Open the DMG and drag MurmurBee into Applications. The beta isn't notarized yet, so the first launch needs
+**System Settings → Privacy & Security → Open Anyway** once. On first run MurmurBee downloads its speech model and the
+[general cleanup model](https://github.com/kai-kaushik/murmurbee/releases/tag/models-v1) (trained only on synthetic
+data, verified by checksum); after that it works offline.
+
 ## Status
-Early and moving fast. The app is built and used daily on Apple Silicon, but:
-- the fine-tuned cleanup models are trained on personal dictation history and **aren't published**; a general model
-  and a first-run download are next;
-- there's no signed, notarized download yet; build from source for now.
+Early beta. Still to come: Apple notarization, one-click import of your Wispr Flow history, and training a personal
+model on your own Mac (the personal models I use are trained on my own dictations and aren't published).
 
 ## Build from source
 Requires an Apple Silicon Mac, macOS 15+, Xcode and the Metal toolchain (`xcodebuild -downloadComponent MetalToolchain`).
