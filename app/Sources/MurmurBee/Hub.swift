@@ -466,6 +466,7 @@ private struct YourModelPane: View {
     private let trainer = PersonalTrainer.shared
     private let importer = WisprImporter.shared
     @State private var personal = PersonalInfo.load()
+    private var activeName: String { ModelStore.best()?.lastPathComponent ?? PersonalTrainer.generalName }
 
     var body: some View {
         ScrollView {
@@ -492,12 +493,15 @@ private struct YourModelPane: View {
             Image(systemName: personal == nil ? "cube" : "sparkles").font(.system(size: 20)).foregroundStyle(Brand.honey)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 4) {
-                Text(personal == nil ? "Using the general model" : "Using your personal model")
+                Text(personal != nil ? "Using your personal model"
+                     : activeName == PersonalTrainer.generalName ? "Using the general model" : "Using \(activeName)")
                     .font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
                 Text(personal.map { p in
                     "Trained \(p.trained.formatted(date: .abbreviated, time: .omitted)) on \(p.examples.formatted()) of your dictations. " +
                     "On your held-back dictations it made \(p.improvement)% fewer mistakes than the model before it."
-                } ?? "Trained for everyone, on made-up examples. A personal model learns your names, phrasing and style.")
+                } ?? (activeName == PersonalTrainer.generalName
+                      ? "Trained for everyone, on made-up examples. A personal model learns your names, phrasing and style."
+                      : "A custom model installed on this Mac. Training a personal model compares against it and only switches if it's better."))
                     .font(.system(size: 13)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
