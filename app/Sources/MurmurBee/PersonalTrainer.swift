@@ -87,7 +87,7 @@ final class PersonalTrainer {
 
     /// Training settings. Environment overrides (MB_*) exist for experiments (E15); the defaults ship.
     struct Hyper: Sendable {
-        var lr = 2e-5, warmup = 0, minLRFraction = 1.0, rank = 8, layers = 16, editWeight = 1, seed: UInt64 = 0
+        var lr = 5e-5, warmup = 60, minLRFraction = 0.1, rank = 8, layers = 16, editWeight = 3, seed: UInt64 = 0  // E15 R2
         static var current: Hyper {
             let e = ProcessInfo.processInfo.environment
             var h = Hyper()
