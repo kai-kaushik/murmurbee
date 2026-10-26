@@ -49,9 +49,10 @@ actor Store {
     }()
     private var db: OpaquePointer?
 
-    init() {
+    /// `path` is for tests; the app uses Application Support/MurmurBee/history.sqlite.
+    init(path: String? = nil) {
         try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
-        let path = Self.directory.appendingPathComponent("history.sqlite").path
+        let path = path ?? Self.directory.appendingPathComponent("history.sqlite").path
         sqlite3_open(path, &db)
         sqlite3_exec(db, """
             PRAGMA journal_mode=WAL;
@@ -63,9 +64,12 @@ actor Store {
               latency_cleanup_final_ms REAL, edited_text TEXT);
             """, nil, nil, nil)
         // Columns added after v0.1; ALTER fails harmlessly when they already exist.
-        for col in ["field_after TEXT", "field_later TEXT", "vocab TEXT", "cleanup_origin_v TEXT"] {
+        for col in ["field_after TEXT", "field_later TEXT", "vocab TEXT", "cleanup_origin_v TEXT",
+                    "source TEXT", "import_id TEXT", "url TEXT"] {
             sqlite3_exec(db, "ALTER TABLE dictations ADD COLUMN \(col)", nil, nil, nil)
         }
+        // Imported rows (e.g. from Wispr Flow) carry their original id, so importing twice adds nothing.
+        sqlite3_exec(db, "CREATE UNIQUE INDEX IF NOT EXISTS dictations_import_id ON dictations(import_id)", nil, nil, nil)
     }
 
     @discardableResult
@@ -120,6 +124,36 @@ actor Store {
                                    latencyMs: sqlite3_column_double(stmt, 5)))
         }
         return out
+    }
+
+    /// Adds dictations imported from Wispr Flow (one transaction per batch); returns how many were new.
+    func importDictations(_ rows: [WisprImport.Row], appName: @Sendable (String) -> String) -> Int {
+        let sql = """
+            INSERT OR IGNORE INTO dictations (created_at, app_bundle, app_name, app_type, window_title, before_cursor,
+              selected_text, duration_s, chunks, asr_text, cleaned_text, cleanup_paths, asr_origin, cleanup_origin,
+              insert_method, insert_confirmed, latency_total_ms, edited_text, source, import_id, url)
+            VALUES (?,?,?,'','',?,?,?,0,?,?,'','wispr-flow','wispr-flow','',1,0,?,'wispr',?,?)
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(stmt) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        let iso = ISO8601DateFormatter()
+        let before = sqlite3_total_changes(db)
+        sqlite3_exec(db, "BEGIN", nil, nil, nil)
+        for r in rows {
+            sqlite3_reset(stmt)
+            let texts: [(Int32, String?)] = [(1, iso.string(from: r.date)), (2, r.bundle), (3, appName(r.bundle)),
+                                             (4, r.before), (5, r.selected), (7, r.asr), (8, r.pasted),
+                                             (9, r.edited), (10, "wispr:\(r.id)"), (11, r.url)]
+            for (i, t) in texts {
+                if let t { sqlite3_bind_text(stmt, i, t, -1, transient) } else { sqlite3_bind_null(stmt, i) }
+            }
+            sqlite3_bind_double(stmt, 6, r.durationS)
+            sqlite3_step(stmt)
+        }
+        sqlite3_exec(db, "COMMIT", nil, nil, nil)
+        return Int(sqlite3_total_changes(db) - before)
     }
 
     func delete(_ id: Int64) {

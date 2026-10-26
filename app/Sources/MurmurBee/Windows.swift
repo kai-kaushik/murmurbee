@@ -348,6 +348,14 @@ struct PrivacyTab: View {
     @Bindable var settings: Settings
     let deleteHistory: () -> Void
     @State private var confirming = false
+    private let importer = WisprImporter.shared
+
+    private var wisprDetail: String {
+        if let p = importer.progress { return "Importing \(p.done.formatted()) of \(p.total.formatted()) dictations…" }
+        if let r = importer.result { return "Imported \(r.dictations.formatted()) dictations and \(r.words) words. Running it again adds only what's new." }
+        guard let f = importer.found else { return "Wispr Flow's history wasn't found on this Mac." }
+        return "\(f.dictations.formatted()) dictations and \(f.words) dictionary words found. Read-only; audio is not imported."
+    }
 
     var body: some View {
         ScrollView {
@@ -368,7 +376,11 @@ struct PrivacyTab: View {
                     }
                 }
                 SettingsSection(title: "Your data") {
-                    SettingsRow(title: "History folder", detail: "Your dictation history and dictionary, as plain files.", divider: false) {
+                    SettingsRow(title: "Import from Wispr Flow", detail: wisprDetail, divider: false) {
+                        Button(importer.running ? "Importing…" : "Import") { importer.start() }
+                            .disabled(importer.running || importer.found == nil)
+                    }
+                    SettingsRow(title: "History folder", detail: "Your dictation history and dictionary, as plain files.") {
                         Button("Show in Finder") { NSWorkspace.shared.open(Store.directory) }
                     }
                     SettingsRow(title: "Delete all history", detail: "Removes every saved dictation. Your dictionary is kept.") {

@@ -1,6 +1,23 @@
 import AppKit
 import FluidAudio
 
+// Imports Wispr Flow's history into a scratch database twice (to check nothing is added twice); never touches the
+// real history or dictionary:  MurmurBee --import-wispr-test <scratch.sqlite>
+if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--import-wispr-test" {
+    let store = Store(path: CommandLine.arguments[2])
+    Task {
+        print("found:", WisprImport.scan().map { "\($0.dictations) dictations, \($0.words) words" } ?? "none")
+        let t = Date()
+        let a = try await WisprImport.run(into: store, writeDictionary: false) { _, _ in }
+        print(String(format: "first run: %d dictations, %d words, %.1fs", a.dictations, a.words, Date().timeIntervalSince(t)))
+        let b = try await WisprImport.run(into: store, writeDictionary: false) { _, _ in }
+        print("second run: \(b.dictations) new dictations")
+        for h in await store.history(limit: 3) { print("-", h.date, h.app, "|", h.text.prefix(70)) }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 // Installs a cleanup model package the way first run does:  MurmurBee --fetch-model <url> <sha256> [name]
 if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--fetch-model" {
     let a = CommandLine.arguments

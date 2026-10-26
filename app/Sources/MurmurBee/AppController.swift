@@ -59,6 +59,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshPermissions()
         NSApp.mainMenu = mainMenu()
         Theme.applySaved()
+        WisprImporter.shared.store = store
         // Setup comes back after any restart (ours or macOS's "Quit & Reopen") until it's genuinely finished,
         // and the first launch where everything works says so (with confetti). Otherwise the main window opens,
         // unless macOS started us at login.

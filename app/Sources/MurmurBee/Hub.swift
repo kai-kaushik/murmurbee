@@ -200,6 +200,7 @@ private struct KeyCap: View {
 
 private struct HomePane: View {
     let model: HubModel
+    private let importer = WisprImporter.shared
     let store: Store
     let settings: Settings
     @State private var items: [HistoryItem] = []
@@ -217,6 +218,10 @@ private struct HomePane: View {
                 SearchField(prompt: "Search past dictations", text: $search)
             }
             .padding(.horizontal, 36).padding(.top, 26).padding(.bottom, 18)
+
+            if importer.offerOnHome {
+                WisprCard(importer: importer, flash: model.flash).padding(.horizontal, 36).padding(.bottom, 16)
+            }
 
             if all.isEmpty {
                 empty
@@ -412,6 +417,42 @@ private struct HistoryRow: View {
         }
         .buttonStyle(.plain)
         .help(help)
+    }
+}
+
+/// "Bring your Wispr Flow history": shown on Home when Wispr Flow's data is on this Mac.
+private struct WisprCard: View {
+    let importer: WisprImporter
+    let flash: (String) -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            Image(systemName: "arrow.down.doc").font(.system(size: 22)).foregroundStyle(Brand.honey).frame(width: 30)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Bring your Wispr Flow history").font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
+                Group {
+                    if let p = importer.progress {
+                        Text("Importing… \(p.done.formatted()) of \(p.total.formatted()) dictations")
+                    } else if let f = importer.found {
+                        Text("Found \(f.dictations.formatted()) dictations and \(f.words) dictionary words on this Mac. Import them so MurmurBee knows your words from day one. Nothing leaves your Mac.")
+                    }
+                }
+                .font(.system(size: 13)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
+                if let p = importer.progress, p.total > 0 {
+                    ProgressView(value: Double(p.done), total: Double(p.total)).tint(Brand.honeyFill).padding(.top, 4)
+                }
+            }
+            Spacer(minLength: 12)
+            if !importer.running {
+                Button("Not now") { importer.dismissed = true }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+                Button("Import") {
+                    importer.start { r in flash("Imported \(r.dictations.formatted()) dictations and \(r.words) words") }
+                }.buttonStyle(HoneyButton())
+            }
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.honey.opacity(0.35)))
     }
 }
 
