@@ -35,11 +35,6 @@ final class PillModel {
     }
 }
 
-private struct BarFrameKey: PreferenceKey {
-    static let defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
-}
-
 struct PillView: View {
     let model: PillModel
 
@@ -59,7 +54,6 @@ struct PillView: View {
         }
         .padding(model.vertical ? .horizontal : .bottom, 12)
         .coordinateSpace(name: "panel")
-        .onPreferenceChange(BarFrameKey.self) { model.barFrame = $0 }
         .opacity(model.dragging || (model.state == .idle && !model.showWhenIdle && !model.hovering) ? 0 : 1)
         .animation(.spring(response: 0.32, dampingFraction: 0.78), value: model.state)
         .animation(.spring(response: 0.28, dampingFraction: 0.85), value: model.hovering)
@@ -87,7 +81,7 @@ struct PillView: View {
         }
         .background(capsule)
         .fixedSize()
-        .reportFrame()
+        .reportFrame(model)
     }
 
     /// Side edges: a vertical capsule; text pops out beside it in its own bubble.
@@ -101,7 +95,7 @@ struct PillView: View {
         }
         .background(capsule)
         .fixedSize()
-        .reportFrame()
+        .reportFrame(model)
     }
 
     /// The resting sliver; on hover it becomes a mic button (click to dictate).
@@ -171,8 +165,10 @@ struct PillView: View {
 }
 
 private extension View {
-    func reportFrame() -> some View {
-        background(GeometryReader { p in Color.clear.preference(key: BarFrameKey.self, value: p.frame(in: .named("panel"))) })
+    /// Reports the bar's frame (in the panel's coordinates) for hit-testing clicks, hover and drags.
+    /// (A PreferenceKey here came through as zero, which made the bar ignore every click.)
+    func reportFrame(_ model: PillModel) -> some View {
+        onGeometryChange(for: CGRect.self) { $0.frame(in: .named("panel")) } action: { model.barFrame = $0 }
     }
 }
 
