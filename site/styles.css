@@ -1039,22 +1039,38 @@ kbd {
 .learn__line--said + .learn__line { margin-top: -4px; }
 .learn__name { color: var(--honey-text); }
 
-/* ---------- Feature examples that transform in place ---------- */
+/* ---------- Feature examples that transform in place (slow, premium) ---------- */
 @media (min-width: 900px) {
   [data-feature] .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 72px; align-items: center; }
   [data-feature] .band__title { font-size: clamp(36px, 3.6vw, 52px); }
+  [data-feature] .band__head--text .band__copy { display: block; }
   [data-feature] .learn__line { font-size: clamp(24px, 2.3vw, 32px); }
   [data-feature] .band__visual { margin: 0; }
 }
-.morph .learn__line span { display: inline-block; vertical-align: bottom; white-space: pre; overflow: hidden;
-  transition: max-width .7s var(--ease), opacity .45s ease, color .45s ease; }
-.morph .m-cut, .morph .m-old { max-width: 24ch; }
-.morph .m-new { max-width: 0; opacity: 0; }
+.morph { --ease-premium: cubic-bezier(.65, 0, .35, 1); }
+.morph .learn__line { transition: opacity .9s var(--ease-premium); }
+.morph .learn__line span {
+  display: inline-block; vertical-align: bottom; white-space: pre; overflow: hidden;
+  max-width: var(--w, 24ch);
+  transition: max-width 1.2s var(--ease-premium) var(--d, 0s), opacity .9s var(--ease-premium) var(--d, 0s),
+              filter .9s var(--ease-premium) var(--d, 0s), transform .9s var(--ease-premium) var(--d, 0s),
+              color .8s var(--ease-premium), background-size .9s var(--ease-premium) var(--sd, 0s);
+}
+/* the strike draws itself across each cut word */
+.morph .m-cut {
+  background: linear-gradient(var(--strike), var(--strike)) no-repeat 0 58% / 0% 2px;
+}
+.morph.is-strike .m-cut { background-size: 100% 2px; color: var(--struck); }
+/* new words start collapsed, blurred and slightly low */
+.morph .learn__line .m-new { max-width: 0; opacity: 0; filter: blur(6px); transform: translateY(6px); }
 .morph .m-hi { color: var(--honey-text); }
-.morph.is-strike .m-cut { color: var(--struck); text-decoration: line-through; text-decoration-color: var(--strike); text-decoration-thickness: 2px; }
-.morph.is-done .m-cut, .morph.is-done .m-old { max-width: 0; opacity: 0; }
-.morph.is-done .m-new { max-width: 24ch; opacity: 1; }
-.morph .m-pill { opacity: 0; transform: translateY(6px); transition: opacity .5s ease .4s, transform .5s var(--ease) .4s; }
-.morph.is-done .m-pill { opacity: 1; transform: none; }
-.morph.is-reset .learn__line, .morph.is-reset .m-pill { opacity: 0; transition: opacity .3s ease; }
-@media (prefers-reduced-motion: reduce) { .morph .learn__line span, .morph .m-pill { transition: none; } }
+/* cleaned: cut and old words fold away, new ones arrive a beat later */
+.morph.is-done .learn__line .m-cut, .morph.is-done .learn__line .m-old { max-width: 0; opacity: 0; filter: blur(4px); }
+.morph.is-done .learn__line .m-new { max-width: var(--w, 24ch); opacity: 1; filter: none; transform: none; --d: .35s; }
+.morph .m-pill { opacity: 0; transform: translateY(8px); filter: blur(4px);
+  transition: opacity 1s var(--ease-premium) 1.1s, transform 1s var(--ease-premium) 1.1s, filter 1s var(--ease-premium) 1.1s; }
+.morph.is-done .m-pill { opacity: 1; transform: none; filter: none; }
+.morph.is-reset .learn__line, .morph.is-reset .m-pill { opacity: 0; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) {
+  .morph .learn__line, .morph .learn__line span, .morph .m-pill { transition: none !important; }
+}

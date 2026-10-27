@@ -448,22 +448,49 @@
   }
 })();
 
-// Feature examples: what you said transforms into what MurmurBee typed, looping while on screen.
+// Feature examples: what you said transforms into what MurmurBee typed, slowly, looping while on screen.
 (function () {
   var groups = document.querySelectorAll("[data-morph]");
   if (!groups.length) return;
+  // Each word folds and unfolds from its real width (a rough cap makes short words snap and long ones lag).
+  function measure(g) {
+    // Measure in the starting state, so the box can reserve the tallest (spoken) version: nothing below moves.
+    var cls = ["is-strike", "is-done", "is-reset"].filter(function (c) { return g.classList.contains(c); });
+    g.classList.remove("is-strike", "is-done", "is-reset");
+    g.style.minHeight = "";
+    g.querySelectorAll(".learn__line span").forEach(function (sp) {
+      sp.style.setProperty("--w", "none");
+      sp.style.maxWidth = "none";
+      var w = sp.scrollWidth;
+      sp.style.maxWidth = "";
+      sp.style.setProperty("--w", Math.ceil(w + 2) + "px");
+    });
+    var spoken = g.offsetHeight;
+    g.classList.add("is-done");
+    var typed = g.offsetHeight;
+    g.classList.remove("is-done");
+    g.style.minHeight = Math.max(spoken, typed) + "px";
+    cls.forEach(function (c) { g.classList.add(c); });
+    // the strike sweeps across the cut words one after another
+    g.querySelectorAll(".m-cut").forEach(function (sp, i) { sp.style.setProperty("--sd", (i * 0.45) + "s"); });
+  }
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    groups.forEach(function (g) { g.classList.add("is-strike", "is-done"); });
+    groups.forEach(function (g) { measure(g); g.classList.add("is-strike", "is-done"); });
     return;
   }
   function loop(g) {
     if (!g._on) { g._running = false; return; }
     g._running = true;
     g.classList.remove("is-strike", "is-done", "is-reset");
-    setTimeout(function () { g.classList.add("is-strike"); }, 1400);
-    setTimeout(function () { g.classList.add("is-done"); }, 2400);
-    setTimeout(function () { g.classList.add("is-reset"); }, 6400);
-    setTimeout(function () { loop(g); }, 6800);
+    var cuts = g.querySelectorAll(".m-cut").length;
+    var t = 2200;                                   // read what was said
+    setTimeout(function () { g.classList.add("is-strike"); }, t);
+    t += 900 + cuts * 450 + 500;                    // strikes draw, one after another
+    setTimeout(function () { g.classList.add("is-done"); }, t);
+    t += 1600 + 4200;                               // fold, arrive, then hold the clean sentence
+    setTimeout(function () { g.classList.add("is-reset"); }, t);
+    t += 1000;                                      // soft fade before the next loop
+    setTimeout(function () { loop(g); }, t);
   }
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
@@ -471,5 +498,10 @@
       if (e.isIntersecting && !e.target._running) loop(e.target);
     });
   }, { threshold: 0.4 });
-  groups.forEach(function (g) { io.observe(g); });
+  // Measure once the web fonts are in (otherwise widths are for the fallback font and words get clipped).
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
+    groups.forEach(function (g) { measure(g); io.observe(g); });
+  });
+  var rt;
+  window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { groups.forEach(measure); }, 200); });
 })();
