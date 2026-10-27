@@ -20,3 +20,7 @@ __pycache__/
 # Local tooling
 .claude/
 .agents/
+
+# Private lab notes (names from my dictations): never commit
+docs/EXPERIMENTS.md
+bench/RESULTS.md
