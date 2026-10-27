@@ -31,7 +31,7 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=18">
   <script src="main.js?v=11" defer></script>
 </head>
 <body>
@@ -401,6 +401,15 @@
           'floating-chat.donateButton.background-color': '#F8BE34',
           'floating-chat.donateButton.text-color': '#16130F'
         });
+        // Ko-fi draws the button in a fixed 195px frame, which cuts off the right end of a wider
+        // button. Once it renders, size the frame to the button (via a stylesheet rule, since Ko-fi
+        // rewrites the frame's inline style).
+        var tries = 0, fit = setInterval(function () {
+          var f = document.querySelector('.floatingchat-container'), btn;
+          try { btn = f && f.contentDocument.querySelector('.floatingchat-donate-button'); } catch (e) {}
+          if (btn && btn.scrollWidth) { document.documentElement.style.setProperty('--kofi-w', (btn.scrollWidth + 12) + 'px'); clearInterval(fit); }
+          else if (++tries > 40) clearInterval(fit);
+        }, 150);
       };
       document.body.appendChild(k);
     });

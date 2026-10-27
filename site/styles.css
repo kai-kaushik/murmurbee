@@ -1086,3 +1086,6 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .morph .learn__line, .morph .learn__line span, .morph .m-pill { transition: none !important; }
 }
+
+/* Ko-fi tip button: its frame is a fixed 195px, narrower than the button. The loader script in index.html measures the button and sets --kofi-w */
+.floatingchat-container-wrap .floatingchat-container { width: var(--kofi-w, 216px) !important; }
