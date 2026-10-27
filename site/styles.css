@@ -224,7 +224,7 @@ kbd {
 .hero {
   min-height: calc(100svh - 69px);
   display: flex; flex-direction: column; justify-content: center;
-  padding: clamp(24px, 3vw, 40px) 0;
+  padding: clamp(24px, 3vw, 40px) 0 calc(clamp(24px, 3vw, 40px) + 56px);  /* room for the scroll cue */
 }
 
 .hero__title {
@@ -474,7 +474,8 @@ kbd {
 .band__more { margin-top: 20px; font-size: 16px; }
 .band__caption { margin-top: 24px; color: var(--sand); font-size: 14px; }
 @media (min-width: 900px) {
-  .band__head { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 48px; }
+  /* Big number, then the headline right after it (the number's column is as wide as the number). */
+  .band__head { grid-template-columns: auto minmax(0, 1fr); column-gap: clamp(40px, 5vw, 80px); }
   .band__head--text { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -911,21 +912,27 @@ kbd {
 .btn--gh:hover { transform: translateY(-1px); }
 [data-replay] { cursor: pointer; }
 
+/* Scroll cue: the bee drifting down a short dotted trail, bottom centre of the hero */
+.hero { position: relative; }
 .scrollhint {
-  position: fixed; right: 24px; bottom: 20px; z-index: 40;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 6px 14px; border-radius: 999px; background: var(--nav-bg);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  color: var(--sand); font-size: 14px; text-decoration: none;
-  transition: color .2s;
+  position: absolute; left: 50%; bottom: clamp(14px, 2.4vh, 28px); transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 6px 10px; text-decoration: none;
+  transition: opacity .6s cubic-bezier(.65, 0, .35, 1);
 }
-.scrollhint:hover { color: var(--linen); }
-.scrollhint { transition: color .2s, opacity .35s; }
 .scrollhint.is-hidden { opacity: 0; pointer-events: none; }
-.scrollhint svg { width: 22px; height: 22px; animation: hint-bob 1.8s var(--ease) infinite; }
-@keyframes hint-bob { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(6px); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .scrollhint svg { animation: none; } }
-@media (max-width: 640px) { .scrollhint { display: none; } }
+.scrollhint__mouse { position: relative; display: block; width: 24px; height: 38px; border-radius: 12px;
+  border: 1.5px solid var(--sand); opacity: .7; transition: opacity .3s ease, border-color .3s ease; }
+.scrollhint:hover .scrollhint__mouse { opacity: 1; border-color: var(--linen); }
+.scrollhint__mouse i { position: absolute; left: 50%; top: 7px; width: 4px; height: 7px; margin-left: -2px;
+  border-radius: 2px; background: var(--honey); animation: hint-wheel 2.4s cubic-bezier(.65, 0, .35, 1) infinite; }
+@keyframes hint-wheel {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  70% { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(12px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .scrollhint__mouse i { animation: none; } }
 
 /* ---------- Text-only band headers (accuracy + feature chapters): editorial split ---------- */
 .band__index {

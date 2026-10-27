@@ -31,8 +31,8 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=9">
-  <script src="main.js?v=9" defer></script>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <script src="main.js?v=11" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -97,11 +97,13 @@
           <span class="sr-only">In the example, “Um, so can we move, sync the meeting to tuesday, sorry, wednesday?” becomes “Can we sync the meeting to Wednesday?”</span>
         </figcaption>
       </figure>
-      <a class="scrollhint" href="#compare"><span>See how it compares</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a class="scrollhint" href="#typing" aria-label="Scroll to see more">
+        <span class="scrollhint__mouse" aria-hidden="true"><i></i></span>
+      </a>
     </section>
 
     <!-- 3x faster than typing -->
-    <section class="band" aria-labelledby="wpm-title">
+    <section class="band" id="typing" aria-labelledby="wpm-title">
       <div class="wrap">
         <header class="band__head">
           <p class="band__hero band__num" aria-hidden="true">3<span>×</span></p>
