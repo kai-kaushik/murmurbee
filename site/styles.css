@@ -1038,3 +1038,23 @@ kbd {
 .learn__line--said s { color: var(--struck); text-decoration-color: var(--strike); text-decoration-thickness: 2px; }
 .learn__line--said + .learn__line { margin-top: -4px; }
 .learn__name { color: var(--honey-text); }
+
+/* ---------- Feature examples that transform in place ---------- */
+@media (min-width: 900px) {
+  [data-feature] .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 72px; align-items: center; }
+  [data-feature] .band__title { font-size: clamp(36px, 3.6vw, 52px); }
+  [data-feature] .learn__line { font-size: clamp(24px, 2.3vw, 32px); }
+  [data-feature] .band__visual { margin: 0; }
+}
+.morph .learn__line span { display: inline-block; vertical-align: bottom; white-space: pre; overflow: hidden;
+  transition: max-width .7s var(--ease), opacity .45s ease, color .45s ease; }
+.morph .m-cut, .morph .m-old { max-width: 24ch; }
+.morph .m-new { max-width: 0; opacity: 0; }
+.morph .m-hi { color: var(--honey-text); }
+.morph.is-strike .m-cut { color: var(--struck); text-decoration: line-through; text-decoration-color: var(--strike); text-decoration-thickness: 2px; }
+.morph.is-done .m-cut, .morph.is-done .m-old { max-width: 0; opacity: 0; }
+.morph.is-done .m-new { max-width: 24ch; opacity: 1; }
+.morph .m-pill { opacity: 0; transform: translateY(6px); transition: opacity .5s ease .4s, transform .5s var(--ease) .4s; }
+.morph.is-done .m-pill { opacity: 1; transform: none; }
+.morph.is-reset .learn__line, .morph.is-reset .m-pill { opacity: 0; transition: opacity .3s ease; }
+@media (prefers-reduced-motion: reduce) { .morph .learn__line span, .morph .m-pill { transition: none; } }

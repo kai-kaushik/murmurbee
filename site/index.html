@@ -31,8 +31,8 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="styles.css">
-  <script src="main.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=7">
+  <script src="main.js?v=7" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -204,31 +204,30 @@
     </section>
 
     <!-- Cleans up -->
-    <section class="band band--raised" aria-labelledby="clean-title">
+    <section class="band band--raised" aria-labelledby="clean-title" data-feature>
       <div class="wrap">
         <header class="band__head band__head--text">
           <div class="band__copy">
-            <h2 id="clean-title" class="band__title">Cleans up as you&nbsp;speak.</h2>
+            <h2 id="clean-title" class="band__title">Cleans up<br>as you speak.</h2>
           </div>
         </header>
-        <div class="band__visual learn">
-          <p class="learn__line learn__line--said"><s>um so</s> the budget is <s>ten, no,</s> twelve&nbsp;thousand</p>
-          <p class="learn__line">The budget is 12,000.</p>
+        <div class="band__visual learn morph" data-morph aria-label="“um so the budget is ten, no, twelve thousand” becomes “The budget is 12,000.”">
+          <p class="learn__line" aria-hidden="true"><span class="m-cut">um so </span><span class="m-old">the</span><span class="m-new">The</span> budget is <span class="m-cut">ten, no, </span><span class="m-old">twelve thousand</span><span class="m-new m-hi">12,000.</span></p>
         </div>
       </div>
     </section>
 
     <!-- Knows the context -->
-    <section class="band" aria-labelledby="context-title">
+    <section class="band" aria-labelledby="context-title" data-feature>
       <div class="wrap">
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="context-title" class="band__title">Knows the&nbsp;context.</h2>
           </div>
         </header>
-        <div class="band__visual learn">
-          <p class="learn__line">Thanks <span class="learn__name">Siobhan</span>, Thursday&nbsp;works.</p>
-          <p class="toast" role="img" aria-label="Note: name read from the email you’re replying to">
+        <div class="band__visual learn morph" data-morph aria-label="“thanks shiv on, thursday works” becomes “Thanks Siobhan, Thursday works.”, the name read from the email you’re replying to">
+          <p class="learn__line" aria-hidden="true"><span class="m-old">thanks</span><span class="m-new">Thanks</span> <span class="m-old">shiv on</span><span class="m-new m-hi">Siobhan</span>, <span class="m-old">thursday works</span><span class="m-new">Thursday works.</span></p>
+          <p class="toast m-pill">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Name read from the email you’re replying to
           </p>
@@ -237,16 +236,16 @@
     </section>
 
     <!-- Learns from your edits -->
-    <section class="band band--raised" aria-labelledby="learn-title">
+    <section class="band band--raised" aria-labelledby="learn-title" data-feature>
       <div class="wrap">
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="learn-title" class="band__title">Learns from your&nbsp;edits.</h2>
           </div>
         </header>
-        <div class="band__visual learn">
-          <p class="learn__line">Send the deck to the <span class="learn__fix"><del>Halverson</del><ins>Halvorsen</ins></span> team by&nbsp;Friday.</p>
-          <p class="toast" role="img" aria-label="Notification: Added Halvorsen to dictionary">
+        <div class="band__visual learn morph" data-morph aria-label="You correct Halverson to Halvorsen, and it’s added to your dictionary">
+          <p class="learn__line" aria-hidden="true">Send the deck to the <span class="m-cut">Halverson</span><span class="m-new m-hi">Halvorsen</span> team by&nbsp;Friday.</p>
+          <p class="toast m-pill" aria-hidden="true">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Added “Halvorsen” to dictionary
           </p>

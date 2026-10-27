@@ -447,3 +447,29 @@
     reduceMQ.addEventListener("change", function (e) { reduced = e.matches; updateTrail(); });
   }
 })();
+
+// Feature examples: what you said transforms into what MurmurBee typed, looping while on screen.
+(function () {
+  var groups = document.querySelectorAll("[data-morph]");
+  if (!groups.length) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    groups.forEach(function (g) { g.classList.add("is-strike", "is-done"); });
+    return;
+  }
+  function loop(g) {
+    if (!g._on) { g._running = false; return; }
+    g._running = true;
+    g.classList.remove("is-strike", "is-done", "is-reset");
+    setTimeout(function () { g.classList.add("is-strike"); }, 1400);
+    setTimeout(function () { g.classList.add("is-done"); }, 2400);
+    setTimeout(function () { g.classList.add("is-reset"); }, 6400);
+    setTimeout(function () { loop(g); }, 6800);
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      e.target._on = e.isIntersecting;
+      if (e.isIntersecting && !e.target._running) loop(e.target);
+    });
+  }, { threshold: 0.4 });
+  groups.forEach(function (g) { io.observe(g); });
+})();
