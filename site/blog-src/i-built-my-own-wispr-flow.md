@@ -1,7 +1,8 @@
 ---
 title: I got fed up with Wispr Flow, so I built my own over a weekend
-description: How I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac. Offline, about twice as fast, and every experiment along the way.
+description: Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.
 date: 2026-10-27
+order: 4
 ---
 
 <div class="cover" aria-hidden="true">
@@ -24,76 +25,52 @@ But a few things kept bugging me.
 - **I never knew when the model changed.** Some weeks it felt sharper, some weeks it didn't, and there was no way to tell why.
 - **And honestly? I didn't want to pay a subscription** for something my Mac should be able to do by itself.
 
-So one weekend I tried to build my own. Speech-to-text models had quietly become tiny and fast enough to run on a laptop, and I wanted to know: can a MacBook Air do what Wispr does, with nothing leaving the machine?
+Speech-to-text models have quietly become tiny and fast enough to run on a laptop. So one weekend I tried to build my own, with one rule: nothing leaves the Mac.
 
-Turns out, mostly yes. Here's how it went, including the bits that didn't work.
+It's called MurmurBee, and it's free.
 
-## The idea: two tiny models and a key
+## What it does
 
-MurmurBee does three things:
+**Hold a key, talk, let go.** Right ⌥ or fn, in any app: Slack, Gmail, Notion, your terminal, ChatGPT. A little flow bar shows it's listening, and you can drag it anywhere along the edge of your screen. Let go, and clean text is pasted where your cursor is, usually in about a third of a second. Your clipboard is put back exactly how it was.
 
-1. **You hold a key and talk.** Right ⌥ or fn, in any app.
-2. **A tiny speech-to-text model** turns your voice into words on the Mac's Neural Engine.
-3. **A small local LLM** (0.8 billion parameters, small enough to run on a laptop) tidies it up: removes the "um"s, follows your corrections, formats lists and emails, and pastes it where your cursor is.
+**It writes what you meant, not what you said.** "Um, so, can we move, sync the meeting to Tuesday, sorry, Wednesday?" becomes "Can we sync the meeting to Wednesday?". It drops the "um"s, follows your corrections ("sorry", "I mean", "actually"), and adds punctuation and capitals.
 
-No servers. No account. After the first model download it works with the Wi‑Fi off.
+**It knows where you are.** This is my favourite part. MurmurBee reads a little context from your screen, on your Mac, to get things right:
 
-## Experiment 1: is speech recognition even fast enough?
+- **Which app you're in.** Emails get proper paragraphs and a sign-off. A Slack message stays casual.
+- **Names on screen.** Replying to an email from Siobhan? It spells "Siobhan", even if it heard "shiv on".
+- **What's already written.** It reads the text around your cursor, so a sentence or a numbered list carries on naturally instead of starting over.
+- **Your selected text, the website you're on, and your local time,** for the little details that make text feel right.
 
-This was the first thing I measured, and the answer surprised me. Transcribing the last 8 seconds of audio took **40 to 64 milliseconds**, at every dictation length. Speech recognition on a modern Mac is effectively free.
+**It formats things properly.** Say a list out loud and you get a list. Dictate an email and you get paragraphs and a sign-off. Spoken times like "nine thirty" come out as 9:30.
 
-Accuracy was the real gap. On raw recognition, my local model got **96.8%** of words right against Wispr's **98.1%**. Almost all of the difference was names and jargon. "Claude" became "claw". My dictionary words got mangled. Not a speed problem, a vocabulary problem.
+**It learns your words.** Fix a name after it's pasted, and MurmurBee notices and adds it to your dictionary automatically. You can add words by hand too.
 
-<figure class="chart">
-<p class="chart__title">Raw speech recognition: words right out of 100</p>
-<div class="chart__rows">
-<div class="chart__row" title="Wispr Flow: 98.1 words right per 100"><span class="chart__name">Wispr Flow</span><span class="chart__track"><i style="--v:98.1%"></i></span><span class="chart__val">98.1</span></div>
-<div class="chart__row is-hi" title="MurmurBee: 96.8 words right per 100"><span class="chart__name">MurmurBee</span><span class="chart__track"><i style="--v:96.8%"></i></span><span class="chart__val">96.8</span></div>
-</div>
-<p class="chart__note">10 of my real dictations, scored against a neutral answer key built from three speech models. Before any clean-up or personal training.</p>
-</figure>
+**It works offline.** After a one-time model download, turn the Wi‑Fi off and it carries on. Your voice and your text never leave your Mac. There's no account and no server.
 
-## Experiment 2: just ask a small model to clean it up
+**It keeps a history.** Everything you've dictated is searchable in the app, stored only on your Mac, and deletable whenever you like.
 
-The obvious move: take an off-the-shelf small model, give it a good prompt, done.
+## Bring your Wispr history with you
 
-It was a disaster, and a funny one. The tiny model read my dictation as a *chat message* and replied to it. I'd dictate a prompt for Claude and it would helpfully answer "I'm ready to help!" instead of cleaning my words. Its output was literally worse than the raw transcript.
+If you've used Wispr Flow, your whole dictation history is sitting on your Mac. MurmurBee can import it (read-only, it never touches Wispr's files) and then **train a personal model on your Mac, overnight**. It learns how *you* talk: your names, your phrasing, how you like emails laid out.
 
-A bigger model (2 billion parameters) behaved better, but on long dictations it took **over 2 seconds**. Wispr takes about 0.65. Not good enough.
+In my tests, the best personal model made **up to 45% fewer mistakes** than the general one. Not every training run is that good, so MurmurBee tests each new model against the one you're using and only switches if it's actually better. You never get a worse model.
 
-The fix was a design change, not a bigger model: **clean the dictation in small chunks while you're still talking.** By the time you let go of the key, most of the work is done.
+## How I got here (the short version)
 
-## Experiment 3: teach it my dictionary (it got worse)
+It took a lot of experiments, and plenty of them failed:
 
-Wispr lets you keep a dictionary of names. So I fed mine straight into the speech model to bias it towards those words.
+- **Speech recognition turned out to be the easy part.** Transcribing the last few seconds of audio takes 40–64 milliseconds on a MacBook Air.
+- **Off-the-shelf small models were a disaster.** The tiny one read my dictations as chat messages and replied "I'm ready to help!" instead of cleaning them up.
+- **Teaching the speech model my dictionary made it worse.** It started hearing "Stacy" instead of "Slack".
+- **Fine-tuning on my own history is what made it good.** That's where it learned corrections, lists, emails and names.
+- **I made every evaluation mistake in the book**, then fixed them and re-ran everything.
 
-Errors went *up*, from 20.6% to 23.0%. It started hearing my dictionary everywhere: "Slack" became "Stacy" eight times, "right" became "Rich" twelve times. Lesson learned. Vocabulary belongs in the clean-up step, where the model can see the context, not in the ears.
-
-## Experiment 4: train it on me
-
-This is where it got good. Wispr keeps a local history of everything you've dictated, so I had 10,535 of my own dictations with the before and after. I fine-tuned the small model on them, and it learned the things that make dictation feel smart:
-
-- **Self-corrections.** "Let's meet Tuesday, sorry, Wednesday" becomes "Let's meet Wednesday."
-- **Lists and emails**, laid out properly.
-- **Sign-offs and names** from whatever's on screen.
-
-I also made every classic mistake. I tested on dictations the model had already seen. I shuffled my data and accidentally leaked answers into the test. Each time, I fixed it, locked the test set away, and re-ran everything. All of it is in [the experiment log](https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md), warts and all.
-
-## Experiment 5: a model anyone can use
-
-My personal model can't be published. It's full of my emails. So I trained a **general model on 12,000 made-up dictations** (invented people, invented companies, all generated for about $11.50) and checked it against my real voice.
-
-It landed within about 2 points of my personal model, and halved the error of the untrained one. That's the model MurmurBee downloads on first run.
-
-## Experiment 6: let everyone train their own
-
-Then the fun part. MurmurBee can import your Wispr Flow history and **train a personal model on your Mac, overnight**. Nothing leaves the machine.
-
-In my tests the best personal model made **up to 45% fewer mistakes** than the general model. Not every run is that good, so the app tests each new model against the one you use and only switches if it's actually better.
+If you like the nerdy details, the exact models, settings and every result are in [the full experiment report](/blog/murmurbee-experiment-report/).
 
 ## So, is it better than Wispr Flow?
 
-For what it does, for me: yes. Here's how they compared on the same MacBook Air:
+For what it does, for me: yes. On the same MacBook Air:
 
 <figure class="chart">
 <p class="chart__title">Time from letting go of the key to text on screen (median, seconds)</p>
@@ -116,9 +93,9 @@ For what it does, for me: yes. Here's how they compared on the same MacBook Air:
 - **About twice as fast**, from letting go of the key to text on screen.
 - **Seven times smaller**, and one background process instead of thirteen.
 - **Works offline.** Your voice never leaves your Mac.
-- **Free and open source.** You can read every line, and you'll always know which model you're running.
+- **Free and open source.** You can read every line, and you'll always know exactly which model you're running.
 
-Where Wispr still wins: it has way more features. iPhone, teams, syncing, styles, more languages. Its raw speech recognition is a touch more accurate out of the box. MurmurBee does one thing: turns what you say into what you meant, in any app on your Mac. It just does that one thing fast, for free, and privately.
+Where Wispr still wins: it has way more features. iPhone, teams, syncing, styles, more languages. Its raw speech recognition is a touch more accurate out of the box (98.1 words right out of 100, against 96.8). MurmurBee does one thing: turns what you say into what you meant, in any app on your Mac. It just does that one thing fast, for free, and privately.
 
 ## Try it
 

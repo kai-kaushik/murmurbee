@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>I got fed up with Wispr Flow, so I built my own over a weekend | MurmurBee</title>
-  <meta name="description" content="How I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac. Offline, about twice as fast, and every experiment along the way.">
+  <meta name="description" content="Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.">
   <meta name="theme-color" content="#16130F">
   <link rel="canonical" href="https://murmurbee.com/blog/i-built-my-own-wispr-flow/">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://murmurbee.com/blog/i-built-my-own-wispr-flow/">
   <meta property="og:site_name" content="MurmurBee">
   <meta property="og:title" content="I got fed up with Wispr Flow, so I built my own over a weekend | MurmurBee">
-  <meta property="og:description" content="How I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac. Offline, about twice as fast, and every experiment along the way.">
+  <meta property="og:description" content="Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.">
   <meta property="og:image" content="https://murmurbee.com/assets/og/i-built-my-own-wispr-flow.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="I got fed up with Wispr Flow, so I built my own over a weekend | MurmurBee">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="I got fed up with Wispr Flow, so I built my own over a weekend | MurmurBee">
-  <meta name="twitter:description" content="How I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac. Offline, about twice as fast, and every experiment along the way.">
+  <meta name="twitter:description" content="Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.">
   <meta name="twitter:image" content="https://murmurbee.com/assets/og/i-built-my-own-wispr-flow.png">
   <link rel="alternate" type="application/rss+xml" title="MurmurBee blog" href="/blog/feed.xml">
   <link rel="icon" type="image/svg+xml" href="/assets/murmurbee-bee.svg">
@@ -33,7 +33,7 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css?v=32">
+  <link rel="stylesheet" href="/styles.css?v=33">
   <script src="/main.js?v=14" defer></script>
   <script src="/analytics.js?v=3" defer></script>
 </head>
@@ -64,7 +64,7 @@
     <article class="post wrap">
       <a class="post__back" href="/blog/">All posts</a>
       <h1 class="post__title">I got fed up with Wispr Flow, so I built my own over a weekend</h1>
-      <p class="post__meta"><time datetime="2026-10-27">27 October 2026</time>, 5 min read</p>
+      <p class="post__meta"><time datetime="2026-10-27">27 October 2026</time>, 4 min read</p>
       <div class="post__body">
 <div class="cover" aria-hidden="true">
 <svg viewBox="0 0 1200 520" role="presentation">
@@ -85,52 +85,37 @@
 <li><strong>I never knew when the model changed.</strong> Some weeks it felt sharper, some weeks it didn&rsquo;t, and there was no way to tell why.</li>
 <li><strong>And honestly? I didn&rsquo;t want to pay a subscription</strong> for something my Mac should be able to do by itself.</li>
 </ul>
-<p>So one weekend I tried to build my own. Speech-to-text models had quietly become tiny and fast enough to run on a laptop, and I wanted to know: can a MacBook Air do what Wispr does, with nothing leaving the machine?</p>
-<p>Turns out, mostly yes. Here&rsquo;s how it went, including the bits that didn&rsquo;t work.</p>
-<h2>The idea: two tiny models and a key</h2>
-<p>MurmurBee does three things:</p>
-<ol>
-<li><strong>You hold a key and talk.</strong> Right ⌥ or fn, in any app.</li>
-<li><strong>A tiny speech-to-text model</strong> turns your voice into words on the Mac&rsquo;s Neural Engine.</li>
-<li><strong>A small local LLM</strong> (0.8 billion parameters, small enough to run on a laptop) tidies it up: removes the &ldquo;um&rdquo;s, follows your corrections, formats lists and emails, and pastes it where your cursor is.</li>
-</ol>
-<p>No servers. No account. After the first model download it works with the Wi‑Fi off.</p>
-<h2>Experiment 1: is speech recognition even fast enough?</h2>
-<p>This was the first thing I measured, and the answer surprised me. Transcribing the last 8 seconds of audio took <strong>40 to 64 milliseconds</strong>, at every dictation length. Speech recognition on a modern Mac is effectively free.</p>
-<p>Accuracy was the real gap. On raw recognition, my local model got <strong>96.8%</strong> of words right against Wispr&rsquo;s <strong>98.1%</strong>. Almost all of the difference was names and jargon. &ldquo;Claude&rdquo; became &ldquo;claw&rdquo;. My dictionary words got mangled. Not a speed problem, a vocabulary problem.</p>
-<figure class="chart">
-<p class="chart__title">Raw speech recognition: words right out of 100</p>
-<div class="chart__rows">
-<div class="chart__row" title="Wispr Flow: 98.1 words right per 100"><span class="chart__name">Wispr Flow</span><span class="chart__track"><i style="--v:98.1%"></i></span><span class="chart__val">98.1</span></div>
-<div class="chart__row is-hi" title="MurmurBee: 96.8 words right per 100"><span class="chart__name">MurmurBee</span><span class="chart__track"><i style="--v:96.8%"></i></span><span class="chart__val">96.8</span></div>
-</div>
-<p class="chart__note">10 of my real dictations, scored against a neutral answer key built from three speech models. Before any clean-up or personal training.</p>
-</figure>
-
-<h2>Experiment 2: just ask a small model to clean it up</h2>
-<p>The obvious move: take an off-the-shelf small model, give it a good prompt, done.</p>
-<p>It was a disaster, and a funny one. The tiny model read my dictation as a <em>chat message</em> and replied to it. I&rsquo;d dictate a prompt for Claude and it would helpfully answer &ldquo;I&rsquo;m ready to help!&rdquo; instead of cleaning my words. Its output was literally worse than the raw transcript.</p>
-<p>A bigger model (2 billion parameters) behaved better, but on long dictations it took <strong>over 2 seconds</strong>. Wispr takes about 0.65. Not good enough.</p>
-<p>The fix was a design change, not a bigger model: <strong>clean the dictation in small chunks while you&rsquo;re still talking.</strong> By the time you let go of the key, most of the work is done.</p>
-<h2>Experiment 3: teach it my dictionary (it got worse)</h2>
-<p>Wispr lets you keep a dictionary of names. So I fed mine straight into the speech model to bias it towards those words.</p>
-<p>Errors went <em>up</em>, from 20.6% to 23.0%. It started hearing my dictionary everywhere: &ldquo;Slack&rdquo; became &ldquo;Stacy&rdquo; eight times, &ldquo;right&rdquo; became &ldquo;Rich&rdquo; twelve times. Lesson learned. Vocabulary belongs in the clean-up step, where the model can see the context, not in the ears.</p>
-<h2>Experiment 4: train it on me</h2>
-<p>This is where it got good. Wispr keeps a local history of everything you&rsquo;ve dictated, so I had 10,535 of my own dictations with the before and after. I fine-tuned the small model on them, and it learned the things that make dictation feel smart:</p>
+<p>Speech-to-text models have quietly become tiny and fast enough to run on a laptop. So one weekend I tried to build my own, with one rule: nothing leaves the Mac.</p>
+<p>It&rsquo;s called MurmurBee, and it&rsquo;s free.</p>
+<h2>What it does</h2>
+<p><strong>Hold a key, talk, let go.</strong> Right ⌥ or fn, in any app: Slack, Gmail, Notion, your terminal, ChatGPT. A little flow bar shows it&rsquo;s listening, and you can drag it anywhere along the edge of your screen. Let go, and clean text is pasted where your cursor is, usually in about a third of a second. Your clipboard is put back exactly how it was.</p>
+<p><strong>It writes what you meant, not what you said.</strong> &ldquo;Um, so, can we move, sync the meeting to Tuesday, sorry, Wednesday?&rdquo; becomes &ldquo;Can we sync the meeting to Wednesday?&rdquo;. It drops the &ldquo;um&rdquo;s, follows your corrections (&ldquo;sorry&rdquo;, &ldquo;I mean&rdquo;, &ldquo;actually&rdquo;), and adds punctuation and capitals.</p>
+<p><strong>It knows where you are.</strong> This is my favourite part. MurmurBee reads a little context from your screen, on your Mac, to get things right:</p>
 <ul>
-<li><strong>Self-corrections.</strong> &ldquo;Let&rsquo;s meet Tuesday, sorry, Wednesday&rdquo; becomes &ldquo;Let&rsquo;s meet Wednesday.&rdquo;</li>
-<li><strong>Lists and emails</strong>, laid out properly.</li>
-<li><strong>Sign-offs and names</strong> from whatever&rsquo;s on screen.</li>
+<li><strong>Which app you&rsquo;re in.</strong> Emails get proper paragraphs and a sign-off. A Slack message stays casual.</li>
+<li><strong>Names on screen.</strong> Replying to an email from Siobhan? It spells &ldquo;Siobhan&rdquo;, even if it heard &ldquo;shiv on&rdquo;.</li>
+<li><strong>What&rsquo;s already written.</strong> It reads the text around your cursor, so a sentence or a numbered list carries on naturally instead of starting over.</li>
+<li><strong>Your selected text, the website you&rsquo;re on, and your local time,</strong> for the little details that make text feel right.</li>
 </ul>
-<p>I also made every classic mistake. I tested on dictations the model had already seen. I shuffled my data and accidentally leaked answers into the test. Each time, I fixed it, locked the test set away, and re-ran everything. All of it is in <a href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md">the experiment log</a>, warts and all.</p>
-<h2>Experiment 5: a model anyone can use</h2>
-<p>My personal model can&rsquo;t be published. It&rsquo;s full of my emails. So I trained a <strong>general model on 12,000 made-up dictations</strong> (invented people, invented companies, all generated for about $11.50) and checked it against my real voice.</p>
-<p>It landed within about 2 points of my personal model, and halved the error of the untrained one. That&rsquo;s the model MurmurBee downloads on first run.</p>
-<h2>Experiment 6: let everyone train their own</h2>
-<p>Then the fun part. MurmurBee can import your Wispr Flow history and <strong>train a personal model on your Mac, overnight</strong>. Nothing leaves the machine.</p>
-<p>In my tests the best personal model made <strong>up to 45% fewer mistakes</strong> than the general model. Not every run is that good, so the app tests each new model against the one you use and only switches if it&rsquo;s actually better.</p>
+<p><strong>It formats things properly.</strong> Say a list out loud and you get a list. Dictate an email and you get paragraphs and a sign-off. Spoken times like &ldquo;nine thirty&rdquo; come out as 9:30.</p>
+<p><strong>It learns your words.</strong> Fix a name after it&rsquo;s pasted, and MurmurBee notices and adds it to your dictionary automatically. You can add words by hand too.</p>
+<p><strong>It works offline.</strong> After a one-time model download, turn the Wi‑Fi off and it carries on. Your voice and your text never leave your Mac. There&rsquo;s no account and no server.</p>
+<p><strong>It keeps a history.</strong> Everything you&rsquo;ve dictated is searchable in the app, stored only on your Mac, and deletable whenever you like.</p>
+<h2>Bring your Wispr history with you</h2>
+<p>If you&rsquo;ve used Wispr Flow, your whole dictation history is sitting on your Mac. MurmurBee can import it (read-only, it never touches Wispr&rsquo;s files) and then <strong>train a personal model on your Mac, overnight</strong>. It learns how <em>you</em> talk: your names, your phrasing, how you like emails laid out.</p>
+<p>In my tests, the best personal model made <strong>up to 45% fewer mistakes</strong> than the general one. Not every training run is that good, so MurmurBee tests each new model against the one you&rsquo;re using and only switches if it&rsquo;s actually better. You never get a worse model.</p>
+<h2>How I got here (the short version)</h2>
+<p>It took a lot of experiments, and plenty of them failed:</p>
+<ul>
+<li><strong>Speech recognition turned out to be the easy part.</strong> Transcribing the last few seconds of audio takes 40–64 milliseconds on a MacBook Air.</li>
+<li><strong>Off-the-shelf small models were a disaster.</strong> The tiny one read my dictations as chat messages and replied &ldquo;I&rsquo;m ready to help!&rdquo; instead of cleaning them up.</li>
+<li><strong>Teaching the speech model my dictionary made it worse.</strong> It started hearing &ldquo;Stacy&rdquo; instead of &ldquo;Slack&rdquo;.</li>
+<li><strong>Fine-tuning on my own history is what made it good.</strong> That&rsquo;s where it learned corrections, lists, emails and names.</li>
+<li><strong>I made every evaluation mistake in the book</strong>, then fixed them and re-ran everything.</li>
+</ul>
+<p>If you like the nerdy details, the exact models, settings and every result are in <a href="/blog/murmurbee-experiment-report/">the full experiment report</a>.</p>
 <h2>So, is it better than Wispr Flow?</h2>
-<p>For what it does, for me: yes. Here&rsquo;s how they compared on the same MacBook Air:</p>
+<p>For what it does, for me: yes. On the same MacBook Air:</p>
 <figure class="chart">
 <p class="chart__title">Time from letting go of the key to text on screen (median, seconds)</p>
 <div class="chart__rows">
@@ -153,14 +138,14 @@
 <li><strong>About twice as fast</strong>, from letting go of the key to text on screen.</li>
 <li><strong>Seven times smaller</strong>, and one background process instead of thirteen.</li>
 <li><strong>Works offline.</strong> Your voice never leaves your Mac.</li>
-<li><strong>Free and open source.</strong> You can read every line, and you&rsquo;ll always know which model you&rsquo;re running.</li>
+<li><strong>Free and open source.</strong> You can read every line, and you&rsquo;ll always know exactly which model you&rsquo;re running.</li>
 </ul>
-<p>Where Wispr still wins: it has way more features. iPhone, teams, syncing, styles, more languages. Its raw speech recognition is a touch more accurate out of the box. MurmurBee does one thing: turns what you say into what you meant, in any app on your Mac. It just does that one thing fast, for free, and privately.</p>
+<p>Where Wispr still wins: it has way more features. iPhone, teams, syncing, styles, more languages. Its raw speech recognition is a touch more accurate out of the box (98.1 words right out of 100, against 96.8). MurmurBee does one thing: turns what you say into what you meant, in any app on your Mac. It just does that one thing fast, for free, and privately.</p>
 <h2>Try it</h2>
 <p>MurmurBee is free for any Apple Silicon Mac on macOS 15 or later. <a href="https://murmurbee.com">Download it here</a>, or poke around <a href="https://github.com/kai-kaushik/murmurbee">the code on GitHub</a>. If you import your Wispr history and train your own model, tell me how it goes. I&rsquo;d love to know.</p>
       </div>
     </article>
-    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "I got fed up with Wispr Flow, so I built my own over a weekend", "description": "How I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac. Offline, about twice as fast, and every experiment along the way.", "datePublished": "2026-10-27", "author": {"@type": "Person", "name": "Kai"}, "mainEntityOfPage": "https://murmurbee.com/blog/i-built-my-own-wispr-flow/"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "I got fed up with Wispr Flow, so I built my own over a weekend", "description": "Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.", "datePublished": "2026-10-27", "author": {"@type": "Person", "name": "Kai"}, "mainEntityOfPage": "https://murmurbee.com/blog/i-built-my-own-wispr-flow/"}</script>
   </main>
   <footer class="footer">
     <div class="wrap footer__inner">

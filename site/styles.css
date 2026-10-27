@@ -1162,14 +1162,18 @@ kbd {
 .blog__lead { margin-top: 18px; max-width: 34rem; color: var(--sand); font-size: 19px; text-wrap: pretty; }
 .bloglist { list-style: none; margin: 56px 0 0; padding: 0; border-top: 1px solid var(--border); }
 .bloglist__item { border-bottom: 1px solid var(--border); }
-.bloglist__link { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 32px; padding: 28px 0; text-decoration: none; color: inherit; }
-.bloglist__title { font-family: var(--font-display); font-weight: 600; font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -0.03em; line-height: 1.2; transition: color .2s; }
+.bloglist__link { display: grid; grid-template-columns: 300px minmax(0, 1fr) auto; grid-template-rows: auto 1fr; gap: 8px 32px; padding: 28px 0; text-decoration: none; color: inherit; align-items: start; }
+.bloglist__img { grid-row: 1 / span 2; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--border); transition: transform .3s var(--ease); }
+.bloglist__link:hover .bloglist__img { transform: translateY(-2px); }
+.bloglist__title { grid-column: 2; font-family: var(--font-display); font-weight: 600; font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -0.03em; line-height: 1.2; transition: color .2s; }
 .bloglist__link:hover .bloglist__title, .bloglist__link:focus-visible .bloglist__title { color: var(--honey-text); }
-.bloglist__desc { grid-column: 1; color: var(--sand); max-width: 40rem; text-wrap: pretty; }
-.bloglist__date { grid-column: 2; grid-row: 1; color: var(--sand); font-size: 14px; white-space: nowrap; padding-top: .5em; }
+.bloglist__desc { grid-column: 2; color: var(--sand); max-width: 40rem; text-wrap: pretty; }
+.bloglist__date { grid-column: 3; grid-row: 1; color: var(--sand); font-size: 14px; white-space: nowrap; padding-top: .5em; }
 .bloglist__empty { padding: 28px 0; color: var(--sand); }
-@media (max-width: 640px) {
-  .bloglist__link { grid-template-columns: 1fr; }
+@media (max-width: 860px) {
+  .bloglist__link { grid-template-columns: 1fr; grid-template-rows: none; }
+  .bloglist__img, .bloglist__title, .bloglist__desc { grid-column: 1; grid-row: auto; }
+  .bloglist__img { margin-bottom: 8px; }
   .bloglist__date { grid-column: 1; grid-row: auto; padding-top: 4px; }
 }
 

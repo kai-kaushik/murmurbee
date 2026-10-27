@@ -2,6 +2,7 @@
 title: Talking is three times faster than typing. Here's how to actually use that
 description: Speech is about 3× faster than typing on a phone and well ahead of most people on a keyboard. What the research says, and how voice typing changed how I work.
 date: 2026-10-27
+order: 2
 ---
 
 <div class="cover" aria-hidden="true">

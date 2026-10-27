@@ -7,6 +7,7 @@ Each post starts with a front-matter block:
     description: One or two sentences for search results and link previews.
     date: 2026-11-02
     draft: true        # optional; drafts are skipped
+    order: 2           # optional; on the same date, higher comes first
     ---
 
 Run from the repo:  uv run --with markdown python site/build_blog.py
@@ -133,7 +134,7 @@ def nice(d):
 
 def main():
     posts = sorted((p for p in map(parse, SRC.glob("*.md")) if p.get("draft", "").lower() != "true"),
-                   key=lambda p: p["date"], reverse=True)
+                   key=lambda p: (p["date"], int(p.get("order", 0))), reverse=True)
     OUT.mkdir(exist_ok=True)
     # remove pages of posts that were deleted or turned back into drafts
     live = {p["slug"] for p in posts}
@@ -164,6 +165,7 @@ def main():
     items = "\n".join(
         f"""        <li class="bloglist__item">
           <a class="bloglist__link" href="/blog/{p['slug']}/">
+            <img class="bloglist__img" src="/assets/og/{p['slug']}.png" alt="" width="1200" height="630" loading="lazy">
             <span class="bloglist__title">{html.escape(p['title'])}</span>
             <span class="bloglist__desc">{html.escape(p['description'])}</span>
             <time class="bloglist__date" datetime="{p['date']}">{nice(p['date'])}</time>

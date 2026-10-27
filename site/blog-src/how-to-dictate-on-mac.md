@@ -2,6 +2,7 @@
 title: How to dictate on a Mac like you talk - 7 habits that make voice typing work
 description: Practical tips for voice typing on a Mac: how to speak, how to correct yourself mid-sentence, lists, emails, names and AI prompts. Learned from 10,000+ dictations.
 date: 2026-10-27
+order: 1
 ---
 
 <div class="cover" aria-hidden="true">
