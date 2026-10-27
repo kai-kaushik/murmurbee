@@ -491,6 +491,7 @@
     if (!g._on) { g._running = false; return; }
     g._running = true;
     g.classList.remove("is-strike", "is-done", "is-reset");
+    measure(g);  // every loop, while the line is faded out: widths stay right after late fonts, zoom or resize
     var cuts = g.querySelectorAll(".m-cut").length;
     var t = 2200;                                   // read what was said
     setTimeout(function () { g.classList.add("is-strike"); }, t);
@@ -512,5 +513,8 @@
     groups.forEach(function (g) { measure(g); io.observe(g); });
   });
   var rt;
-  window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { groups.forEach(measure); }, 200); });
+  function remeasure() { clearTimeout(rt); rt = setTimeout(function () { groups.forEach(measure); }, 200); }
+  window.addEventListener("resize", remeasure);
+  // fonts.ready can resolve before a font this text needs has even started loading; re-measure when it lands
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", remeasure);
 })();
