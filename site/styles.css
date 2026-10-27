@@ -307,7 +307,7 @@ kbd {
 }
 
 /* ---------- Demo: one sentence, cleaned up in place ---------- */
-.say { margin: clamp(36px, 3.4vw, 44px) auto 0; }
+.say { margin: clamp(56px, 5vw, 76px) auto 0; }  /* room for the labels that pop up above the sentence */
 .say__stage { position: relative; }
 .say__line {
   min-height: calc(1.32em + 32px);
