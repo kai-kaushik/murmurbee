@@ -200,6 +200,12 @@
     n.el.appendChild(tip);
     var lr = line.getBoundingClientRect(), tr = tip.getBoundingClientRect();
     if (tr.right > lr.right) tip.classList.add("tip--end");
+    // never let two labels overlap: an earlier label in the way fades out as the new one arrives
+    tr = tip.getBoundingClientRect();
+    line.querySelectorAll(".tip.is-on").forEach(function (old) {
+      var o = old.getBoundingClientRect();
+      if (o.left < tr.right + 8 && tr.left < o.right + 8 && o.top < tr.bottom + 4 && tr.top < o.bottom + 4) old.classList.remove("is-on");
+    });
     requestAnimationFrame(function () { tip.classList.add("is-on"); });
   }
 

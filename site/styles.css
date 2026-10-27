@@ -380,6 +380,17 @@ kbd {
 .say__before s { text-decoration-color: var(--strike); }
 .say__caption { margin: 0; }
 
+/* Phones: the first screen is just the headline and buttons; the demo waits just below it and plays on scroll */
+@media (max-width: 640px) {
+  .hero { min-height: 0; display: block; padding-bottom: 24px; }
+  .hero > .wrap:first-child {
+    min-height: calc(100svh - 69px - 24px);
+    display: flex; flex-direction: column; justify-content: center;
+    padding-bottom: 72px;   /* room for the scroll cue */
+  }
+  .scrollhint { bottom: auto; top: calc(100svh - 69px - 76px); }
+  .say { margin-top: 8px; }
+}
 @media (max-width: 640px) {
   .say__line { line-height: 2.2; padding: 40px 0; min-height: 0; }
   .tip { font-size: 12.5px; padding: 5px 10px; }
