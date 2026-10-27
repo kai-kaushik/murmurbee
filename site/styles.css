@@ -1118,3 +1118,6 @@ kbd {
 /* Phones: the tip button is a round cup in the bottom-right corner (applied once the cup style is in) */
 .kofi-cup .floatingchat-container-wrap-mobi { left: auto !important; right: 16px !important; width: 50px !important; }
 .kofi-cup .floatingchat-container-mobi { width: 50px !important; }
+
+/* no lone words on the last line of the step descriptions */
+.step p { text-wrap: pretty; }
