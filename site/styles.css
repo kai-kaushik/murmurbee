@@ -1121,3 +1121,32 @@ kbd {
 
 /* no lone words on the last line of the step descriptions */
 .step p { text-wrap: pretty; }
+
+/* ---------- Cookie banner: one quiet card, a big OK, a tiny ✕ (= no thanks) ---------- */
+.cookie {
+  position: fixed; right: 20px; bottom: 20px; z-index: 10001;
+  width: min(360px, calc(100vw - 32px));
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 14px; align-items: start;
+  padding: 20px 20px 18px;
+  background: var(--raised); color: var(--linen);
+  border: 1px solid var(--border); border-radius: 22px;
+  box-shadow: 0 24px 60px -24px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.08);
+  opacity: 0; transform: translateY(14px);
+  transition: opacity .45s var(--ease), transform .45s var(--ease);
+}
+.cookie.is-in { opacity: 1; transform: none; }
+.cookie__bee { width: 30px; height: auto; margin-top: 1px; }
+.cookie__text { margin: 0; padding-right: 18px; font-size: 14.5px; line-height: 1.5; color: var(--sand); text-wrap: pretty; }
+.cookie__ok { grid-column: 1 / -1; width: 100%; --h: 46px; font-size: 16px; justify-content: center; }
+.cookie__x {
+  position: absolute; top: 10px; right: 10px;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; color: var(--sand); cursor: pointer; opacity: .7;
+}
+.cookie__x:hover, .cookie__x:focus-visible { opacity: 1; background: var(--tint); }
+.cookie__x svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+@media (max-width: 640px) {
+  .cookie { right: 16px; left: 16px; bottom: 16px; width: auto; }
+  .cookie-open .floatingchat-container-wrap-mobi { display: none !important; }  /* the tip cup waits until the banner is answered */
+}
+@media (prefers-reduced-motion: reduce) { .cookie { transition: none; transform: none; } }
