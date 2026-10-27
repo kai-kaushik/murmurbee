@@ -879,6 +879,7 @@ kbd {
 .faq details[open] summary::after { transform: rotate(45deg); }
 .faq summary:hover::after { background-color: rgba(248,190,52,.08); }
 .faq details p { padding: 0 48px 26px 4px; color: var(--sand); }
+.faq details p a { color: var(--linen); text-decoration-color: var(--honey); text-underline-offset: 3px; text-decoration-thickness: 2px; }
 
 /* ---------- Download ---------- */
 .download {
