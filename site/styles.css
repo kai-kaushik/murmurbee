@@ -1032,3 +1032,9 @@ kbd {
   .vs__note { margin-top: 22px; font-size: 12.5px; color: var(--sand); }
   @media (max-width: 960px) { .vs__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 600px) { .vs__grid { grid-template-columns: 1fr; } }
+
+/* Feature examples: one sentence each */
+.learn__line--said { color: var(--sand); }
+.learn__line--said s { color: var(--struck); text-decoration-color: var(--strike); text-decoration-thickness: 2px; }
+.learn__line--said + .learn__line { margin-top: -4px; }
+.learn__name { color: var(--honey-text); }

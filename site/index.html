@@ -209,25 +209,11 @@
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="clean-title" class="band__title">Cleans up as you&nbsp;speak.</h2>
-            <p class="band__lead">It trims the words you didn’t mean to say, follows your corrections, and turns lists into&nbsp;lists.</p>
           </div>
         </header>
-        <div class="band__visual specimen">
-          <p class="specimen__label">What you said</p>
-          <span aria-hidden="true"></span>
-          <p class="specimen__label">What MurmurBee typed</p>
-
-          <p class="specimen__said"><s>um so</s> can we move the sync to <s>tuesday, sorry,</s> wednesday at 3</p>
-          <span class="specimen__arrow" aria-hidden="true">→</span>
-          <p class="specimen__typed">Can we move the sync to Wednesday at&nbsp;3?</p>
-
-          <p class="specimen__said">first the budget second the hiring plan and third <s>uh</s> the offsite</p>
-          <span class="specimen__arrow" aria-hidden="true">→</span>
-          <ol class="specimen__typed specimen__list">
-            <li>The budget</li>
-            <li>The hiring plan</li>
-            <li>The offsite</li>
-          </ol>
+        <div class="band__visual learn">
+          <p class="learn__line learn__line--said"><s>um so</s> the budget is <s>ten, no,</s> twelve&nbsp;thousand</p>
+          <p class="learn__line">The budget is 12,000.</p>
         </div>
       </div>
     </section>
@@ -238,30 +224,14 @@
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="context-title" class="band__title">Knows the&nbsp;context.</h2>
-            <p class="band__lead">It reads the app, the names on screen and your dictionary, all&nbsp;locally.</p>
           </div>
         </header>
-        <div class="band__visual context">
-          <div class="context__row">
-            <p class="context__text context__text--meta">Mail · Re: Venue for the offsite</p>
-            <span class="context__lead" aria-hidden="true"></span>
-            <span class="tag">App: Mail</span>
-          </div>
-          <div class="context__row">
-            <p class="context__text">Hi <mark>Siobhan</mark>,</p>
-            <span class="context__lead" aria-hidden="true"></span>
-            <span class="tag">Replying to: Siobhan</span>
-          </div>
-          <div class="context__row">
-            <p class="context__text">Thursday works. I’ll share the <mark>Larkspur</mark> board before&nbsp;then.</p>
-            <span class="context__lead" aria-hidden="true"></span>
-            <span class="tag">Your dictionary</span>
-          </div>
-          <div class="context__row">
-            <p class="context__text"><mark>Best, Mara</mark></p>
-            <span class="context__lead" aria-hidden="true"></span>
-            <span class="tag">Your sign&#8209;off</span>
-          </div>
+        <div class="band__visual learn">
+          <p class="learn__line">Thanks <span class="learn__name">Siobhan</span>, Thursday&nbsp;works.</p>
+          <p class="toast" role="img" aria-label="Note: name read from the email you’re replying to">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l2.9 2.8 6.1-6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Name read from the email you’re replying to
+          </p>
         </div>
       </div>
     </section>
@@ -272,7 +242,6 @@
         <header class="band__head band__head--text">
           <div class="band__copy">
             <h2 id="learn-title" class="band__title">Learns from your&nbsp;edits.</h2>
-            <p class="band__lead">Fix a word once and it’s in your dictionary for next&nbsp;time.</p>
           </div>
         </header>
         <div class="band__visual learn">
