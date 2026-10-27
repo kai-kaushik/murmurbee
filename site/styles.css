@@ -1228,3 +1228,46 @@ kbd {
 .cover .c-bar { fill: #16130F; }
 .cover text { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
 .cover .c-strike { stroke: var(--strike); stroke-width: 3; stroke-linecap: round; }
+
+/* ---------- Blog tables: a quiet container, tinted header, aligned numbers ---------- */
+.post__body table {
+  display: block; overflow-x: auto; width: 100%;
+  border-collapse: separate; border-spacing: 0;
+  border: 1px solid var(--border); border-radius: 16px; background: var(--raised);
+  font-size: 15.5px; line-height: 1.45; font-variant-numeric: tabular-nums;
+}
+.post__body thead th { background: var(--tint); color: var(--linen); font-weight: 500; font-size: 14px; white-space: nowrap; }
+.post__body th, .post__body td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.post__body tbody tr:last-child td { border-bottom: 0; }
+.post__body td:first-child { color: var(--linen); }
+.post__body td { color: var(--linen-2); }
+.post__body td strong { color: var(--honey-text); font-weight: 600; }
+.post__body tbody tr:hover td { background: var(--tint-weak); }
+
+/* ---------- Blog flowchart: stages joined by the honey trail ---------- */
+.post__body .flow { margin: 2.2em 0; padding: 26px 24px 22px; border: 1px solid var(--border); border-radius: 20px; background: var(--raised); }
+.flow__ctx, .flow__learn {
+  margin: 0 auto; max-width: 30rem; padding: 10px 16px; border-radius: 14px;
+  border: 1px dashed var(--border-strong); color: var(--sand); font-size: 14px; line-height: 1.4; text-align: center;
+}
+.flow__ctx b, .flow__learn b { color: var(--linen); font-weight: 500; }
+.flow__steps { list-style: none; margin: 18px 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+.flow__step { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px 14px; border-radius: 16px; background: var(--night); border: 1px solid var(--border); }
+.flow__step + .flow__step::before {
+  content: ""; position: absolute; left: -26px; top: 50%; width: 24px; height: 4px; margin-top: -2px;
+  background: radial-gradient(circle, var(--honey-strong) 1.8px, transparent 2.3px) left center / 8px 4px repeat-x;
+}
+.flow__step.is-ctx::after {
+  content: ""; position: absolute; left: 50%; top: -18px; width: 4px; height: 16px; margin-left: -2px;
+  background: radial-gradient(circle, var(--honey-strong) 1.8px, transparent 2.3px) center top / 4px 8px repeat-y;
+}
+.flow__n { font: 600 13px/1 var(--font-display); color: var(--honey-text); }
+.flow__t { font: 600 17px/1.2 var(--font-display); letter-spacing: -0.02em; color: var(--linen); }
+.flow__d { font-size: 13.5px; line-height: 1.4; color: var(--sand); }
+.flow__m { margin-top: auto; padding-top: 6px; font-size: 12.5px; color: var(--sand); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  .flow__steps { grid-template-columns: 1fr; gap: 22px; }
+  .flow__step + .flow__step::before { left: 50%; top: -20px; width: 4px; height: 18px; margin: 0 0 0 -2px;
+    background: radial-gradient(circle, var(--honey-strong) 1.8px, transparent 2.3px) center top / 4px 8px repeat-y; }
+  .flow__step.is-ctx::after { display: none; }
+}

@@ -47,12 +47,16 @@ That history turned out to be the single most valuable thing in the project. It'
 
 ## The architecture
 
-From key-down to ⌘V:
-
-1. **Listen** while the key is held.
-2. **Transcribe** each chunk as soon as there's a natural pause (about 60 ms per chunk).
-3. **Clean up** each chunk with the text already written as context.
-4. **Paste** at the cursor when you let go. Most of the work is already done by then.
+<figure class="flow" aria-label="Pipeline: hold the key and listen, Parakeet transcribes each chunk on the Neural Engine, Qwen3.5-0.8B cleans it up using screen context, then the text is pasted at the cursor. Your edits feed the dictionary.">
+<p class="flow__ctx"><b>Screen context</b>, read on-device through Accessibility: the app, names on screen, text around the cursor, selection, URL, local time</p>
+<ol class="flow__steps">
+<li class="flow__step"><span class="flow__n">1</span><span class="flow__t">Listen</span><span class="flow__d">Hold right ⌥ or fn. Audio is cut into chunks at natural pauses.</span><span class="flow__m">16 kHz, while held</span></li>
+<li class="flow__step"><span class="flow__n">2</span><span class="flow__t">Transcribe</span><span class="flow__d">Parakeet TDT 0.6B on the Neural Engine, via CoreML.</span><span class="flow__m">~40–60 ms per chunk</span></li>
+<li class="flow__step is-ctx"><span class="flow__n">3</span><span class="flow__t">Clean up</span><span class="flow__d">Qwen3.5-0.8B (4-bit) plus a LoRA adapter, in MLX on the GPU.</span><span class="flow__m">while you talk</span></li>
+<li class="flow__step"><span class="flow__n">4</span><span class="flow__t">Paste</span><span class="flow__d">Clipboard plus ⌘V, verified, then your clipboard is restored.</span><span class="flow__m">~0.31 s after release</span></li>
+</ol>
+<p class="flow__learn"><b>Learning:</b> corrections you make after a paste go into your dictionary, and your history can train a personal adapter overnight</p>
+</figure>
 
 - **Speech recognition:** NVIDIA **Parakeet TDT 0.6B** (v2, then v3, then Ultra) as CoreML on the **Apple Neural Engine**, via [FluidAudio](https://github.com/FluidInference/FluidAudio).
 - **Clean-up:** **Qwen3.5-0.8B**, 4-bit, running in **MLX Swift** on the GPU, with a LoRA adapter.
