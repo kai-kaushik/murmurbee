@@ -229,7 +229,7 @@
 <p class="chart__note">10 clips, 748 reference words. Caveats: Wispr is one of the voters, and it had screen context.</p>
 </figure>
 
-<p>Wispr&rsquo;s speech model leads by about 1.3 points, and it had screen context (&ldquo;Brightwell Homes&rdquo; right). The likely way to close that gap is context, not a bigger speech model.</p>
+<p>Wispr&rsquo;s speech model leads by about 1.3 points, and it had screen context, which helps with names. The likely way to close that gap is context, not a bigger speech model.</p>
 <h2>E07–E10: fine-tuning the 0.8B on my history</h2>
 <p><strong>Setup:</strong> LoRA on 16 layers of Qwen3.5-0.8B with <code>mlx-lm</code>, batch 1–2, max sequence 768–1,024 tokens, gradient checkpointing. Inputs are the raw transcript plus an app header; targets are my edit if I made one, otherwise Wispr&rsquo;s output.</p>
 <p><strong>v1 (E07)</strong> was a huge win on short and medium input (short WER 0.052 → <strong>0.024</strong>, medium 0.127 → <strong>0.093</strong>) at about half the latency of the 2B. The fused model hit 157 ms short and 352 ms medium. But it fell apart on long input: repetition loops and dropped content. It was underfit there, because training inputs were capped at 300 words.</p>
@@ -292,7 +292,7 @@
 <li><strong>Unformatted sign-offs</strong>, caused by a length check that counted words by spaces, so &ldquo;Regards,\nKai&rdquo; looked like one word and was rejected.</li>
 <li><strong>Wrong names</strong>, because whole-window screen reading picked up Gmail&rsquo;s menu labels instead of the compose window.</li>
 </ul>
-<p>The fixes were in the app, not the model: proper whitespace word counts, list de-duplication and renumbering, and <strong>nearest-first screen reading</strong> (from the focused field outwards, skipping menus and toolbars). I also added <strong>learning from edits</strong>: the app watches the field for up to 60 seconds after pasting, diffs your corrections, and adds corrected names to the dictionary. It learned &ldquo;Sem&rdquo; → <strong>Sam</strong> from a real correction.</p>
+<p>The fixes were in the app, not the model: proper whitespace word counts, list de-duplication and renumbering, and <strong>nearest-first screen reading</strong> (from the focused field outwards, skipping menus and toolbars). I also added <strong>learning from edits</strong>: the app watches the field for up to 60 seconds after pasting, diffs your corrections, and adds corrected names to the dictionary. It learned a colleague&rsquo;s name from the first time I corrected it.</p>
 <h2>E12: retraining on locked splits</h2>
 <p>Gentler schedule: lr 3e-5 peak (E10 used 1e-4 with no warm-up), 200-step warm-up, cosine decay, 3,000 steps at batch 1. The first attempt died with a Metal out-of-memory error at step ~135, with a Node process eating 5.8 GB. Halving the batch fixed it.</p>
 <figure class="chart">

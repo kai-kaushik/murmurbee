@@ -119,7 +119,7 @@ Scoring against "my final text" is biased towards Wispr: when I didn't edit, my 
 <p class="chart__note">10 clips, 748 reference words. Caveats: Wispr is one of the voters, and it had screen context.</p>
 </figure>
 
-Wispr's speech model leads by about 1.3 points, and it had screen context ("Brightwell Homes" right). The likely way to close that gap is context, not a bigger speech model.
+Wispr's speech model leads by about 1.3 points, and it had screen context, which helps with names. The likely way to close that gap is context, not a bigger speech model.
 
 ## E07–E10: fine-tuning the 0.8B on my history
 
@@ -163,7 +163,7 @@ Live email dictations exposed bugs that no benchmark had:
 - **Unformatted sign-offs**, caused by a length check that counted words by spaces, so "Regards,\nKai" looked like one word and was rejected.
 - **Wrong names**, because whole-window screen reading picked up Gmail's menu labels instead of the compose window.
 
-The fixes were in the app, not the model: proper whitespace word counts, list de-duplication and renumbering, and **nearest-first screen reading** (from the focused field outwards, skipping menus and toolbars). I also added **learning from edits**: the app watches the field for up to 60 seconds after pasting, diffs your corrections, and adds corrected names to the dictionary. It learned "Sem" → **Sam** from a real correction.
+The fixes were in the app, not the model: proper whitespace word counts, list de-duplication and renumbering, and **nearest-first screen reading** (from the focused field outwards, skipping menus and toolbars). I also added **learning from edits**: the app watches the field for up to 60 seconds after pasting, diffs your corrections, and adds corrected names to the dictionary. It learned a colleague's name from the first time I corrected it.
 
 ## E12: retraining on locked splits
 
