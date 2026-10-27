@@ -389,5 +389,21 @@
       <a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a>
     </div>
   </footer>
+  <!-- Ko-fi tip button (bottom left), loaded after the page so it never slows first paint -->
+  <script>
+    addEventListener('load', function () {
+      var k = document.createElement('script');
+      k.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+      k.onload = function () {
+        kofiWidgetOverlay.draw('kaikaushik', {
+          'type': 'floating-chat',
+          'floating-chat.donateButton.text': 'Tip the creator',
+          'floating-chat.donateButton.background-color': '#F8BE34',
+          'floating-chat.donateButton.text-color': '#16130F'
+        });
+      };
+      document.body.appendChild(k);
+    });
+  </script>
 </body>
 </html>
