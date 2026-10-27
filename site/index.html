@@ -100,8 +100,36 @@
       <a class="scrollhint" href="#compare"><span>See how it compares</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </section>
 
+    <!-- 3x faster than typing -->
+    <section class="band" aria-labelledby="wpm-title">
+      <div class="wrap">
+        <header class="band__head">
+          <p class="band__hero band__num" aria-hidden="true">3<span>×</span></p>
+          <div class="band__copy">
+            <h2 id="wpm-title" class="band__title">Three times faster than&nbsp;typing.</h2>
+            <p class="band__lead">Most people type about 40 words a minute and speak&nbsp;120+.</p>
+          </div>
+        </header>
+        <figure class="band__visual wpm" data-wpm>
+          <div class="wpm__rows" role="img" aria-label="Typing at about 40 words per minute versus speaking at about 120 words per minute: three to one.">
+            <div class="wpm__row">
+              <span class="wpm__name">Typing</span>
+              <span class="wpm__trail"><span class="wpm__dots wpm__dots--type" style="--v:40"></span></span>
+              <span class="wpm__val">~40</span>
+            </div>
+            <div class="wpm__row">
+              <span class="wpm__name">Speaking</span>
+              <span class="wpm__trail"><span class="wpm__dots wpm__dots--talk" style="--v:120"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
+              <span class="wpm__val">120+</span>
+            </div>
+          </div>
+          <figcaption class="band__caption">Words per minute.</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <!-- Versus Wispr Flow -->
-    <section class="vs band" id="compare" aria-labelledby="vs-title">
+    <section class="vs band band--raised" id="compare" aria-labelledby="vs-title">
       <div class="wrap">
         <h2 id="vs-title" class="vs__title">Lighter, faster, private.<br><span>Versus Wispr Flow.</span></h2>
         <p class="vs__key"><span><i class="k-mb"></i>MurmurBee</span><span><i class="k-wf"></i>Wispr Flow</span></p>
@@ -167,67 +195,6 @@
         <p class="vs__note">*Plus about 1 GB of AI models, downloaded once (Wispr runs its models on its servers). Measured on a MacBook Air M4, October 2026 (MurmurBee 0.1.1, Wispr Flow 1.6). <a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md">How I measured this →</a></p>
       </div>
     </section>
-
-    <!-- 3x faster than typing -->
-    <section class="band band--raised" aria-labelledby="wpm-title">
-      <div class="wrap">
-        <header class="band__head">
-          <p class="band__hero band__num" aria-hidden="true">3<span>×</span></p>
-          <div class="band__copy">
-            <h2 id="wpm-title" class="band__title">Three times faster than&nbsp;typing.</h2>
-            <p class="band__lead">Most people type about 40 words a minute and speak&nbsp;120+.</p>
-          </div>
-        </header>
-        <figure class="band__visual wpm" data-wpm>
-          <div class="wpm__rows" role="img" aria-label="Typing at about 40 words per minute versus speaking at about 120 words per minute: three to one.">
-            <div class="wpm__row">
-              <span class="wpm__name">Typing</span>
-              <span class="wpm__trail"><span class="wpm__dots wpm__dots--type" style="--v:40"></span></span>
-              <span class="wpm__val">~40</span>
-            </div>
-            <div class="wpm__row">
-              <span class="wpm__name">Speaking</span>
-              <span class="wpm__trail"><span class="wpm__dots wpm__dots--talk" style="--v:120"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
-              <span class="wpm__val">120+</span>
-            </div>
-          </div>
-          <figcaption class="band__caption">Words per minute.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- 0 bytes -->
-    <section class="band" aria-labelledby="local-title">
-      <div class="wrap">
-        <header class="band__head">
-          <p class="band__hero band__num" aria-hidden="true">0&nbsp;bytes</p>
-          <div class="band__copy">
-            <h2 id="local-title" class="band__title">Nothing goes to the&nbsp;cloud.</h2>
-            <p class="band__lead">Speech and cleanup both run on your Mac, even&nbsp;offline.</p>
-          </div>
-        </header>
-        <figure class="band__visual mac">
-          <div class="mac__box">
-            <span class="mac__label">Your Mac</span>
-            <ol class="mac__flow">
-              <li><b>Microphone</b><span>while you hold the key</span></li>
-              <li><b>Parakeet TDT 0.6B</b><span>speech → words</span></li>
-              <li><b>Qwen 0.8B, fine&#8209;tuned</b><span>words → clean text</span></li>
-              <li><b>Your cursor</b><span>pasted in place</span></li>
-            </ol>
-            <span class="mac__chip">Apple Neural Engine + GPU</span>
-          </div>
-          <div class="mac__cloud">
-            <svg viewBox="0 0 120 80" aria-hidden="true">
-              <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round"/>
-              <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <span>Cloud not used</span>
-          </div>
-        </figure>
-      </div>
-    </section>
-
 
     <!-- Features intro -->
     <section class="band band--intro" id="features" aria-labelledby="features-title">
