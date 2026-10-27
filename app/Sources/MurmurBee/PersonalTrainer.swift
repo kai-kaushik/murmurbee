@@ -81,7 +81,19 @@ final class PersonalTrainer {
     func start() {
         guard !running else { return }
         phase = .preparing
+        Self.log("start")
         launch(resume: false, attempt: 1)
+    }
+
+    /// A small local log of training runs (starts, restarts, results), so a run's history can be checked afterwards.
+    nonisolated static func log(_ line: String) {
+        let url = ModelStore.directory.deletingLastPathComponent().appendingPathComponent("training.log")
+        let entry = ISO8601DateFormatter().string(from: Date()) + " " + line + "\n"
+        if let h = try? FileHandle(forWritingTo: url) {
+            h.seekToEndOfFile(); h.write(Data(entry.utf8)); try? h.close()
+        } else {
+            try? Data(entry.utf8).write(to: url)
+        }
     }
 
     func stop() {
@@ -136,12 +148,16 @@ final class PersonalTrainer {
         case ("P", "new"): phase = .checkingNew(done: i(2), total: i(3))
         case ("R", _):
             gotResult = true
+            Self.log("result " + f.dropFirst().joined(separator: " "))
             let o = Outcome(installed: f[1] == "1", currentWER: d(2), newWER: d(3), examples: i(4), heldOut: i(5),
                             minutes: d(6))
             phase = .finished(o)
             if o.installed { NotificationCenter.default.post(name: .personalModelInstalled, object: nil) }
         case ("E", _):
             lastError = f.dropFirst(2).joined(separator: " ")
+            Self.log("error " + f.dropFirst().joined(separator: " "))
+        case ("V", _):
+            Self.log("validation step \(i(1)) wer \(d(2))")
         default: break
         }
     }
@@ -153,6 +169,7 @@ final class PersonalTrainer {
         if stopping { phase = .idle; return }
         // GPU fault (exit 2) or a crash: resume from the last checkpoint, a few times.
         if (status == 2 || crashed) && attempt < 3 {
+            Self.log("restart attempt \(attempt + 1) after status \(status)\(crashed ? " (crashed)" : "")")
             launch(resume: true, attempt: attempt + 1)
             return
         }
@@ -163,7 +180,7 @@ final class PersonalTrainer {
 
     /// Training settings. Environment overrides (MB_*) exist for experiments (E15); the defaults ship.
     struct Hyper: Sendable {
-        var lr = 5e-5, warmup = 60, minLRFraction = 0.1, rank = 8, layers = 16, editWeight = 3, seed: UInt64 = 0  // E15 R2
+        var lr = 5e-5, warmup = 60, minLRFraction = 0.1, rank = 8, layers = 16, editWeight = 3, seed: UInt64 = 1  // E15 R2; fixed seed (E15f), 0 = random
         static var current: Hyper {
             let e = ProcessInfo.processInfo.environment
             var h = Hyper()
@@ -253,7 +270,12 @@ final class PersonalTrainer {
         let heldCount = min(heldLimit ?? 150, max(min(40, heldLimit ?? 40), independent.count / 20), independent.count)
         let held = Array(independent.suffix(heldCount))
         let cutoff = held.first?.date ?? .distantFuture
-        let train = Array(all.filter { $0.date < cutoff }.suffix(6000))
+        // E15f: the newest independent dictations before the held-out ones pick the best checkpoint, so that choice
+        // never sees the gate's test set. They are kept out of training too.
+        let before = all.filter { $0.date < cutoff }
+        let validation = Array(before.filter(\.independent).suffix(60))
+        let valCutoff = validation.first?.date ?? cutoff
+        let train = Array(before.filter { $0.date < valCutoff }.suffix(6000))
 
         let generalDir = ModelStore.directory.appendingPathComponent(generalName)
         guard FileManager.default.fileExists(atPath: generalDir.path) else { throw TrainError.noGeneralModel }
@@ -262,6 +284,7 @@ final class PersonalTrainer {
         let staging = ModelStore.directory.appendingPathComponent(".personal-training")
         let progressURL = staging.appendingPathComponent("progress.json")
         let checkpointURL = staging.appendingPathComponent("checkpoint.safetensors")
+        let optimizerURL = staging.appendingPathComponent("optimizer.safetensors")
         var saved = resume ? (try? JSONDecoder().decode(Progress.self, from: Data(contentsOf: progressURL))) : nil
         if saved != nil && !FileManager.default.fileExists(atPath: checkpointURL.path) { saved?.step = 0 }
         if saved == nil {
@@ -290,17 +313,41 @@ final class PersonalTrainer {
             _ = try LoRAContainer.from(model: model, configuration: config)
             if startStep > 0 { try LoRATrain.loadLoRAWeights(model: model, url: checkpointURL) }
             try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps, from: startStep,
-                          hyper: hyper, checkpoint: { step in
+                          hyper: hyper, optimizerState: startStep > 0 ? optimizerURL : nil,
+                          snapshotAt: Set(snapshotSteps(steps)),
+                          snapshot: { step in
+                              try LoRATrain.saveLoRAWeights(model: model, url: snapshotURL(staging, step))
+                          },
+                          checkpoint: { step, optimizer in
                               try LoRATrain.saveLoRAWeights(model: model, url: checkpointURL)
+                              try optimizer.save(to: optimizerURL)
                               try JSONEncoder().encode(Progress(currentWER: currentWER, step: step, steps: steps))
                                   .write(to: progressURL)
                           }) { step, loss in
                 report(.training(step: step, total: steps, loss: loss))
             }
             model.train(false)
-            try LoRATrain.saveLoRAWeights(model: model, url: staging.appendingPathComponent("adapters.safetensors"))
         }
         try JSONEncoder().encode(config).write(to: staging.appendingPathComponent("adapter_config.json"))
+
+        // E15f: one run's final step is a coin flip (0.093–0.127 across seeds), so score the last few snapshots on the
+        // validation dictations and keep the best one.
+        var bestStep = steps, bestVal = Double.infinity
+        for step in snapshotSteps(steps) {
+            let dir = staging.appendingPathComponent("snapshot-\(step)")
+            try? FileManager.default.removeItem(at: dir)
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: snapshotURL(staging, step), to: dir.appendingPathComponent("adapters.safetensors"))
+            try JSONEncoder().encode(config).write(to: dir.appendingPathComponent("adapter_config.json"))
+            let wer = try await score(try await loadContainer(generalDir, adapter: dir), validation) { _ in }
+            print(String(format: "V %d %.4f", step, wer))
+            if wer < bestVal { bestVal = wer; bestStep = step }
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let adapterURL = staging.appendingPathComponent("adapters.safetensors")
+        try? FileManager.default.removeItem(at: adapterURL)
+        try FileManager.default.copyItem(at: snapshotURL(staging, bestStep), to: adapterURL)
+        for step in snapshotSteps(steps) { try? FileManager.default.removeItem(at: snapshotURL(staging, step)) }
 
         // (Experiments: also score the general model on its own, to measure what personal training adds.)
         if ProcessInfo.processInfo.environment["MB_SCORE_GENERAL"] != nil, currentDir.lastPathComponent != generalName {
@@ -316,12 +363,13 @@ final class PersonalTrainer {
         // 4. Keep it only if it's better than what you use now.
         try? FileManager.default.removeItem(at: progressURL)
         try? FileManager.default.removeItem(at: checkpointURL)
+        try? FileManager.default.removeItem(at: optimizerURL)
         let installed = install && newWER < currentWER
         if installed {
             let meta: [String: Any] = [
                 "prompt": "v3", "rank": 20, "base": generalName, "trained": ISO8601DateFormatter().string(from: Date()),
                 "examples": train.count, "heldOut": held.count, "wer": newWER, "currentWer": currentWER,
-                "replaced": currentDir.lastPathComponent,
+                "replaced": currentDir.lastPathComponent, "bestStep": bestStep, "seed": hyper.seed,
             ]
             try JSONSerialization.data(withJSONObject: meta, options: .prettyPrinted)
                 .write(to: staging.appendingPathComponent("localflow.json"))
@@ -357,11 +405,55 @@ final class PersonalTrainer {
         return cfg["base"] as? String
     }
 
+    /// The steps whose weights are kept as candidates: two thirds, five sixths and the end of the run.
+    nonisolated static func snapshotSteps(_ steps: Int) -> [Int] {
+        Array(Set([steps * 2 / 3, steps * 5 / 6, steps].map { max(1, $0) })).sorted()
+    }
+    nonisolated static func snapshotURL(_ staging: URL, _ step: Int) -> URL {
+        staging.appendingPathComponent("snapshot-\(step).safetensors")
+    }
+
+    /// Adam (no bias correction, like MLX's default) whose moment estimates can be saved and restored, so a run that
+    /// resumes after a GPU fault continues exactly where it stopped. MLX's own Adam keeps its state private.
+    final class ResumableAdam {
+        var learningRate: Float
+        let b1: Float = 0.9, b2: Float = 0.999, eps: Float = 1e-8
+        private var m: [String: MLXArray] = [:], v: [String: MLXArray] = [:]
+        init(learningRate: Float) { self.learningRate = learningRate }
+
+        func update(model: Module, gradients: ModuleParameters) {
+            let params = Dictionary(model.trainableParameters().flattened(), uniquingKeysWith: { a, _ in a })
+            var updated: [(String, MLXArray)] = []
+            for (key, g) in gradients.flattened() {
+                guard let p = params[key] else { continue }
+                let m1 = b1 * (m[key] ?? MLXArray.zeros(like: g)) + (1 - b1) * g
+                let v1 = b2 * (v[key] ?? MLXArray.zeros(like: g)) + (1 - b2) * square(g)
+                m[key] = m1; v[key] = v1
+                updated.append((key, p - learningRate * m1 / (sqrt(v1) + eps)))
+            }
+            model.update(parameters: ModuleParameters.unflattened(updated))
+        }
+        var state: [MLXArray] { Array(m.values) + Array(v.values) }
+        func save(to url: URL) throws {
+            var arrays: [String: MLXArray] = [:]
+            for (k, x) in m { arrays["m." + k] = x }
+            for (k, x) in v { arrays["v." + k] = x }
+            try MLX.save(arrays: arrays, url: url)
+        }
+        func load(from url: URL) throws {
+            for (k, x) in try loadArrays(url: url) {
+                if k.hasPrefix("m.") { m[String(k.dropFirst(2))] = x } else if k.hasPrefix("v.") { v[String(k.dropFirst(2))] = x }
+            }
+        }
+    }
+
     // MARK: - Training loop (answer-only loss, like mlx_lm's mask_prompt)
 
     nonisolated private static func trainLoop(model: any LanguageModel, tokenizer: any MLXLMCommon.Tokenizer, examples: [Example],
                                               steps: Int, from startStep: Int = 0, hyper: Hyper,
-                                              checkpoint: (Int) throws -> Void = { _ in },
+                                              optimizerState: URL? = nil, snapshotAt: Set<Int> = [],
+                                              snapshot: (Int) throws -> Void = { _ in },
+                                              checkpoint: (Int, ResumableAdam) throws -> Void = { _, _ in },
                                               report: (Int, Float?) -> Void) throws {
         // Hand-edited examples can be sampled more often (editWeight copies each).
         let weighted = examples.flatMap { e in Array(repeating: e, count: e.edited ? max(1, hyper.editWeight) : 1) }
@@ -375,7 +467,10 @@ final class PersonalTrainer {
         }
         guard !encoded.isEmpty else { throw TrainError.notEnoughData(0) }
 
-        let optimizer = Adam(learningRate: hyper.learningRate(step: 0, of: steps))
+        let optimizer = ResumableAdam(learningRate: hyper.learningRate(step: 0, of: steps))
+        if let optimizerState, FileManager.default.fileExists(atPath: optimizerState.path) {
+            try optimizer.load(from: optimizerState)
+        }
         var rng = SplitMix(state: hyper.seed == 0 ? UInt64.random(in: 1...UInt64.max) : hyper.seed)
         let lossAndGrad = valueAndGrad(model: model) { model, arrays in
             let (inputs, targets, mask) = (arrays[0], arrays[1], arrays[2])
@@ -400,9 +495,10 @@ final class PersonalTrainer {
             optimizer.update(model: model, gradients: grads)
             // MLX eval materialises the arrays (it is not code evaluation). A GPU fault (e.g. macOS's GPU watchdog)
             // becomes a thrown error here instead of crashing; the helper exits and the app resumes from a checkpoint.
-            do { try withError { eval(model, optimizer, values[0]) } } catch { throw TrainError.gpu(step) }
+            do { try withError { eval(model, optimizer.state, values[0]) } } catch { throw TrainError.gpu(step) }
             recent.append(values[0].item(Float.self))
-            if (step + 1) % 200 == 0 { try checkpoint(step + 1) }
+            if snapshotAt.contains(step + 1) { try snapshot(step + 1) }
+            if (step + 1) % 200 == 0 { try checkpoint(step + 1, optimizer) }
             if (step + 1) % 10 == 0 || step == startStep {
                 report(step + 1, recent.isEmpty ? nil : recent.reduce(0, +) / Float(recent.count))
                 recent.removeAll()
