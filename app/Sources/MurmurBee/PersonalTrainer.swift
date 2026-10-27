@@ -59,29 +59,105 @@ final class PersonalTrainer {
         }
     }
 
+    // MARK: - Helper process
+    //
+    // Training runs in a separate process (`MurmurBee --train-personal`), so a GPU fault (macOS's GPU watchdog can
+    // abort a long training step) only ends the helper, never MurmurBee itself. The helper checkpoints every 200
+    // steps; if it dies, the app restarts it from the last checkpoint, up to 3 attempts.
+
+    @ObservationIgnored private var process: Process?
+    @ObservationIgnored private var gotResult = false
+    @ObservationIgnored private var stopping = false
+    @ObservationIgnored private var lastError: String?
+    nonisolated static let childPID = Counter()
+
+    /// Pause or resume training (e.g. while dictating), in-process and in the helper.
+    nonisolated static func setPaused(_ paused: Bool) {
+        pause.set(paused)
+        let pid = childPID.get()
+        if pid > 0 { kill(pid_t(pid), paused ? SIGUSR1 : SIGUSR2) }
+    }
+
     func start() {
-        guard let store, !running else { return }
-        Self.cancel.set(false)
+        guard !running else { return }
         phase = .preparing
-        let user = userName
-        Task.detached(priority: .utility) {
-            do {
-                let outcome = try await Self.run(store: store, user: user) { p in
-                    Task { @MainActor in PersonalTrainer.shared.phase = p }
-                }
-                await MainActor.run {
-                    PersonalTrainer.shared.phase = .finished(outcome)
-                    if outcome.installed { NotificationCenter.default.post(name: .personalModelInstalled, object: nil) }
-                }
-            } catch is CancellationError {
-                await MainActor.run { PersonalTrainer.shared.phase = .idle }
-            } catch {
-                await MainActor.run { PersonalTrainer.shared.phase = .failed(error.localizedDescription) }
+        launch(resume: false, attempt: 1)
+    }
+
+    func stop() {
+        stopping = true
+        process?.terminate()
+    }
+
+    private func launch(resume: Bool, attempt: Int) {
+        gotResult = false; stopping = false; lastError = nil
+        let p = Process()
+        p.executableURL = Bundle.main.executableURL
+        p.arguments = ["--train-personal", userName] + (resume ? ["--resume"] : [])
+        var env = ProcessInfo.processInfo.environment
+        // Smaller Metal command buffers: each finishes well inside the GPU watchdog's limit.
+        env["MLX_MAX_OPS_PER_BUFFER"] = env["MLX_MAX_OPS_PER_BUFFER"] ?? "30"
+        env["MLX_MAX_MB_PER_BUFFER"] = env["MLX_MAX_MB_PER_BUFFER"] ?? "300"
+        p.environment = env
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = FileHandle.nullDevice
+        let lines = LineBuffer()
+        pipe.fileHandleForReading.readabilityHandler = { h in
+            for line in lines.append(h.availableData) {
+                Task { @MainActor in PersonalTrainer.shared.handle(line) }
             }
+        }
+        p.terminationHandler = { proc in
+            pipe.fileHandleForReading.readabilityHandler = nil
+            let status = proc.terminationStatus, crashed = proc.terminationReason == .uncaughtSignal
+            Task { @MainActor in PersonalTrainer.shared.ended(status: status, crashed: crashed, attempt: attempt) }
+        }
+        do {
+            try p.run()
+            process = p
+            Self.childPID.set(Int(p.processIdentifier))
+            if Self.pause.get() { kill(p.processIdentifier, SIGUSR1) }
+        } catch {
+            phase = .failed(error.localizedDescription)
         }
     }
 
-    func stop() { Self.cancel.set(true) }
+    /// One line of helper output: "P <phase> …", "R <outcome>" or "E <kind> <message>".
+    private func handle(_ line: String) {
+        let f = line.split(separator: " ").map(String.init)
+        guard let tag = f.first else { return }
+        func i(_ k: Int) -> Int { f.count > k ? Int(f[k]) ?? 0 : 0 }
+        func d(_ k: Int) -> Double { f.count > k ? Double(f[k]) ?? 0 : 0 }
+        switch (tag, f.count > 1 ? f[1] : "") {
+        case ("P", "prep"): phase = .preparing
+        case ("P", "cur"): phase = .checkingCurrent(done: i(2), total: i(3))
+        case ("P", "train"): phase = .training(step: i(2), total: i(3), loss: f.count > 4 ? Float(f[4]) : nil)
+        case ("P", "new"): phase = .checkingNew(done: i(2), total: i(3))
+        case ("R", _):
+            gotResult = true
+            let o = Outcome(installed: f[1] == "1", currentWER: d(2), newWER: d(3), examples: i(4), heldOut: i(5),
+                            minutes: d(6))
+            phase = .finished(o)
+            if o.installed { NotificationCenter.default.post(name: .personalModelInstalled, object: nil) }
+        case ("E", _):
+            lastError = f.dropFirst(2).joined(separator: " ")
+        default: break
+        }
+    }
+
+    private func ended(status: Int32, crashed: Bool, attempt: Int) {
+        Self.childPID.set(0)
+        process = nil
+        if gotResult { return }
+        if stopping { phase = .idle; return }
+        // GPU fault (exit 2) or a crash: resume from the last checkpoint, a few times.
+        if (status == 2 || crashed) && attempt < 3 {
+            launch(resume: true, attempt: attempt + 1)
+            return
+        }
+        phase = .failed(lastError ?? "Training stopped unexpectedly. MurmurBee itself kept running; try again later.")
+    }
 
     // MARK: - Settings
 
@@ -158,10 +234,17 @@ final class PersonalTrainer {
 
     // MARK: - The run
 
+    /// Checkpoint state, so a run interrupted by a GPU fault can resume where it stopped.
+    struct Progress: Codable { var currentWER: Double; var step: Int; var steps: Int }
+
     nonisolated static func run(store: Store, user: String, steps stepsOverride: Int? = nil, heldLimit: Int? = nil,
-                                install: Bool = true,
+                                install: Bool = true, resume: Bool = false,
                                 report: @escaping @Sendable (Phase) -> Void) async throws -> Outcome {
         let started = Date()
+        let env = ProcessInfo.processInfo.environment  // MB_STEPS / MB_HELD / MB_NO_INSTALL: test overrides
+        let stepsOverride = stepsOverride ?? env["MB_STEPS"].flatMap(Int.init)
+        let heldLimit = heldLimit ?? env["MB_HELD"].flatMap(Int.init)
+        let install = install && env["MB_NO_INSTALL"] == nil
         let all = examples(from: await store.trainingRows(), user: user).sorted { $0.date < $1.date }
         guard all.count >= 200 else { throw TrainError.notEnoughData(all.count) }
         // Hold out the newest 5% (40–150) of the independent examples: a fair test on dictations the new model
@@ -176,16 +259,28 @@ final class PersonalTrainer {
         guard FileManager.default.fileExists(atPath: generalDir.path) else { throw TrainError.noGeneralModel }
         guard let currentDir = ModelStore.best() else { throw TrainError.noGeneralModel }
 
-        // 1. How well does the model you use now do on the held-out dictations?
-        let current = try await loadContainer(currentDir)
-        let currentWER = try await score(current, held) { report(.checkingCurrent(done: $0, total: held.count)) }
+        let staging = ModelStore.directory.appendingPathComponent(".personal-training")
+        let progressURL = staging.appendingPathComponent("progress.json")
+        let checkpointURL = staging.appendingPathComponent("checkpoint.safetensors")
+        var saved = resume ? (try? JSONDecoder().decode(Progress.self, from: Data(contentsOf: progressURL))) : nil
+        if saved != nil && !FileManager.default.fileExists(atPath: checkpointURL.path) { saved?.step = 0 }
+        if saved == nil {
+            try? FileManager.default.removeItem(at: staging)
+            try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        }
+
+        // 1. How well does the model you use now do on the held-out dictations? (Kept across a resume.)
+        let currentWER: Double
+        if let saved { currentWER = saved.currentWER } else {
+            let current = try await loadContainer(currentDir)
+            currentWER = try await score(current, held) { report(.checkingCurrent(done: $0, total: held.count)) }
+        }
 
         // 2. Train a LoRA on the general model.
         // E15d: 2,400 steps on a full history beat 1,200 clearly (0.105 vs 0.116 held-out WER).
-        let steps = stepsOverride ?? min(2400, max(300, Int(Double(train.count) / 2.5)))
-        let staging = ModelStore.directory.appendingPathComponent(".personal-training")
-        try? FileManager.default.removeItem(at: staging)
-        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        let steps = saved?.steps ?? stepsOverride ?? min(2400, max(300, Int(Double(train.count) / 2.5)))
+        let startStep = saved?.step ?? 0
+        try JSONEncoder().encode(Progress(currentWER: currentWER, step: startStep, steps: steps)).write(to: progressURL)
         let base = try await loadModelContainer(from: generalDir, using: #huggingFaceTokenizerLoader())
         let hyper = Hyper.current
         if hyper.seed != 0 { MLXRandom.seed(hyper.seed) }
@@ -193,7 +288,13 @@ final class PersonalTrainer {
         try await base.perform { context in
             let model = context.model
             _ = try LoRAContainer.from(model: model, configuration: config)
-            try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps, hyper: hyper) { step, loss in
+            if startStep > 0 { try LoRATrain.loadLoRAWeights(model: model, url: checkpointURL) }
+            try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps, from: startStep,
+                          hyper: hyper, checkpoint: { step in
+                              try LoRATrain.saveLoRAWeights(model: model, url: checkpointURL)
+                              try JSONEncoder().encode(Progress(currentWER: currentWER, step: step, steps: steps))
+                                  .write(to: progressURL)
+                          }) { step, loss in
                 report(.training(step: step, total: steps, loss: loss))
             }
             model.train(false)
@@ -213,6 +314,8 @@ final class PersonalTrainer {
         let newWER = try await score(candidate, held) { report(.checkingNew(done: $0, total: held.count)) }
 
         // 4. Keep it only if it's better than what you use now.
+        try? FileManager.default.removeItem(at: progressURL)
+        try? FileManager.default.removeItem(at: checkpointURL)
         let installed = install && newWER < currentWER
         if installed {
             let meta: [String: Any] = [
@@ -257,7 +360,9 @@ final class PersonalTrainer {
     // MARK: - Training loop (answer-only loss, like mlx_lm's mask_prompt)
 
     nonisolated private static func trainLoop(model: any LanguageModel, tokenizer: any MLXLMCommon.Tokenizer, examples: [Example],
-                                              steps: Int, hyper: Hyper, report: (Int, Float?) -> Void) throws {
+                                              steps: Int, from startStep: Int = 0, hyper: Hyper,
+                                              checkpoint: (Int) throws -> Void = { _ in },
+                                              report: (Int, Float?) -> Void) throws {
         // Hand-edited examples can be sampled more often (editWeight copies each).
         let weighted = examples.flatMap { e in Array(repeating: e, count: e.edited ? max(1, hyper.editWeight) : 1) }
         let encoded: [(tokens: [Int], promptLength: Int)] = weighted.compactMap { e in
@@ -266,7 +371,7 @@ final class PersonalTrainer {
                 tools: nil, additionalContext: ["enable_thinking": false]) else { return nil }
             let answer = tokenizer.encode(text: e.target + "<|im_end|>", addSpecialTokens: false)
             let all = prompt + answer
-            return all.count <= 1024 ? (all, prompt.count) : nil
+            return all.count <= 768 ? (all, prompt.count) : nil  // long sequences risk the GPU watchdog
         }
         guard !encoded.isEmpty else { throw TrainError.notEnoughData(0) }
 
@@ -280,7 +385,8 @@ final class PersonalTrainer {
         }
         model.train(true)
         var recent: [Float] = []
-        for step in 0..<steps {
+        for _ in 0..<startStep { _ = rng.next() }  // keep the sampling sequence when resuming
+        for step in startStep..<steps {
             while pause.get() && !cancel.get() { Thread.sleep(forTimeInterval: 0.2) }
             if cancel.get() { throw CancellationError() }
             optimizer.learningRate = hyper.learningRate(step: step, of: steps)
@@ -292,9 +398,12 @@ final class PersonalTrainer {
                 .reshaped(1, -1)
             let (values, grads) = lossAndGrad(model, [inputs, targets, mask])
             optimizer.update(model: model, gradients: grads)
-            eval(model, optimizer, values[0])  // MLX eval: materialises the arrays (not code evaluation)
+            // MLX eval materialises the arrays (it is not code evaluation). A GPU fault (e.g. macOS's GPU watchdog)
+            // becomes a thrown error here instead of crashing; the helper exits and the app resumes from a checkpoint.
+            do { try withError { eval(model, optimizer, values[0]) } } catch { throw TrainError.gpu(step) }
             recent.append(values[0].item(Float.self))
-            if (step + 1) % 10 == 0 || step == 0 {
+            if (step + 1) % 200 == 0 { try checkpoint(step + 1) }
+            if (step + 1) % 10 == 0 || step == startStep {
                 report(step + 1, recent.isEmpty ? nil : recent.reduce(0, +) / Float(recent.count))
                 recent.removeAll()
             }
@@ -343,13 +452,38 @@ final class PersonalTrainer {
     }
 
     enum TrainError: LocalizedError {
-        case notEnoughData(Int), noGeneralModel
+        case notEnoughData(Int), noGeneralModel, gpu(Int)
         var errorDescription: String? {
             switch self {
             case .notEnoughData(let n): "Not enough history yet (\(n) usable dictations; 200 needed)."
             case .noGeneralModel: "The general cleanup model isn't installed yet."
+            case .gpu(let step): "The GPU stopped responding at step \(step)."
             }
         }
+    }
+}
+
+/// A thread-safe integer.
+final class Counter: @unchecked Sendable {
+    private var value = 0
+    private let lock = NSLock()
+    func get() -> Int { lock.lock(); defer { lock.unlock() }; return value }
+    func set(_ v: Int) { lock.lock(); value = v; lock.unlock() }
+}
+
+/// Splits a byte stream into lines (helper output).
+final class LineBuffer: @unchecked Sendable {
+    private var data = Data()
+    private let lock = NSLock()
+    func append(_ chunk: Data) -> [String] {
+        lock.lock(); defer { lock.unlock() }
+        data.append(chunk)
+        var out: [String] = []
+        while let nl = data.firstIndex(of: 0x0A) {
+            out.append(String(decoding: data[data.startIndex..<nl], as: UTF8.self))
+            data.removeSubrange(data.startIndex...nl)
+        }
+        return out
     }
 }
 

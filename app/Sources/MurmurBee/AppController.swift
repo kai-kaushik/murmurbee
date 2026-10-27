@@ -214,7 +214,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         do {
             try s.start(device: AudioDevices.resolve(settings.microphone))
             session = s
-            PersonalTrainer.pause.set(true)  // personal training waits while you dictate
+            PersonalTrainer.setPaused(true)  // personal training waits while you dictate
             pill.model.hint = nil
             pill.show(.listening)
             Sounds.play(.start)
@@ -232,7 +232,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pill.show(.finishing)
         Sounds.play(.stop)
         Task {
-            defer { PersonalTrainer.pause.set(false) }
+            defer { PersonalTrainer.setPaused(false) }
             let r = await s.finish()
             guard !r.cleaned.isEmpty else { pill.flash("No speech heard"); return }
             pill.show(.idle)
@@ -260,7 +260,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if session != nil { Sounds.play(.cancel) }
         session?.cancel()
         session = nil
-        PersonalTrainer.pause.set(false)
+        PersonalTrainer.setPaused(false)
         keyState = .idle
         pill.show(.idle)
     }

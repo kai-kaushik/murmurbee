@@ -7,6 +7,41 @@ final class TimeBox: @unchecked Sendable {
     func startIfNeeded() -> Date { lock.lock(); defer { lock.unlock() }; if start == nil { start = Date() }; return start! }
 }
 
+// The personal-training helper the app launches (see PersonalTrainer): MurmurBee --train-personal <name> [--resume]
+// Prints "P …" progress lines, then "R …" (result) or "E …" (error). Exit 2 = GPU fault, resumable.
+if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--train-personal" {
+    setvbuf(stdout, nil, _IOLBF, 0)
+    signal(SIGUSR1, SIG_IGN); signal(SIGUSR2, SIG_IGN)
+    let pauseSource = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .global())
+    pauseSource.setEventHandler { PersonalTrainer.pause.set(true) }
+    pauseSource.resume()
+    let resumeSource = DispatchSource.makeSignalSource(signal: SIGUSR2, queue: .global())
+    resumeSource.setEventHandler { PersonalTrainer.pause.set(false) }
+    resumeSource.resume()
+    let user = CommandLine.arguments[2], resume = CommandLine.arguments.contains("--resume")
+    Task {
+        do {
+            let o = try await PersonalTrainer.run(store: Store(), user: user, resume: resume) { p in
+                switch p {
+                case .preparing: print("P prep")
+                case .checkingCurrent(let d, let t): print("P cur \(d) \(t)")
+                case .training(let s, let n, let l): print("P train \(s) \(n) \(l.map { String($0) } ?? "")")
+                case .checkingNew(let d, let t): print("P new \(d) \(t)")
+                default: break
+                }
+            }
+            print("R \(o.installed ? 1 : 0) \(o.currentWER) \(o.newWER) \(o.examples) \(o.heldOut) \(o.minutes)")
+            exit(0)
+        } catch let e as PersonalTrainer.TrainError {
+            if case .gpu = e { print("E gpu \(e.localizedDescription)"); exit(2) }
+            print("E error \(e.localizedDescription)"); exit(1)
+        } catch {
+            print("E error \(error.localizedDescription)"); exit(1)
+        }
+    }
+    RunLoop.main.run()
+}
+
 // A short personal-training run that installs nothing:  MurmurBee --train-test <steps> <held-out>
 if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--train-test" {
     let steps = Int(CommandLine.arguments[2]) ?? 30, held = Int(CommandLine.arguments[3]) ?? 10
