@@ -177,7 +177,9 @@
       line.style.fontSize = (parseFloat(getComputedStyle(line).fontSize) * have / need * 0.98) + "px";
     }
   }
-  function isNarrow() { return window.innerWidth < 640; }
+  // same breakpoint as the stylesheet (window.innerWidth can read desktop-wide on iOS while loading)
+  var narrowMQ = window.matchMedia("(max-width: 639.98px)");
+  function isNarrow() { return narrowMQ.matches; }
   function fitHeight(animate) {
     var cur = line.offsetHeight;
     line.style.transition = "none";
@@ -193,7 +195,7 @@
   function strike(n) {
     // above on the first line, below elsewhere (and always below on phones), so bubbles never collide
     var firstLine = n.el.offsetTop <= nodes[0].el.offsetTop + 4;
-    var dir = (window.innerWidth >= 640 && firstLine) ? "up" : "down";
+    var dir = (!isNarrow() && firstLine) ? "up" : "down";
     n.dir = dir;
     n.el.classList.add("is-struck");
     var tip = el("span", "tip tip--" + dir, n.tok.tip);
@@ -298,6 +300,7 @@
         if (document.hidden) stopDemo();
         else if (sayVisible) startDemo();
       });
+      if (narrowMQ.addEventListener) narrowMQ.addEventListener("change", function () { if (demoRunning) { stopDemo(); startDemo(); } });
       var lastW = window.innerWidth, sayResize;
       window.addEventListener("resize", function () {
         if (window.innerWidth === lastW) return;
