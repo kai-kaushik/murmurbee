@@ -27,8 +27,10 @@
   --nav-bg: rgba(22,19,15,.78);
   --tint: rgba(255,255,255,.05);
   --tint-weak: rgba(255,255,255,.02);
-  --privacy-bg: #F7EFE0;
-  --privacy-ink: #16130F;
+  --privacy-bg: #1E1915;
+  --privacy-ink: #F7EFE0;
+  --privacy-muted: #C9BBA3;
+  --privacy-rule: #3A322A;
   color-scheme: dark;
 
   --font-display: "Sora", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -65,6 +67,8 @@
   --tint-weak: rgba(22,19,15,.02);
   --privacy-bg: #EFE4CF;
   --privacy-ink: #16130F;
+  --privacy-muted: #6A5B45;
+  --privacy-rule: #DCCDB2;
   color-scheme: light;
 }
 
@@ -812,13 +816,13 @@ kbd {
 .privacy__inner {
   display: grid; gap: 48px;
 }
-.privacy__lead { margin-top: 22px; color: var(--bark); font-size: 19px; max-width: 30rem; }
+.privacy__lead { margin-top: 22px; color: var(--privacy-muted); font-size: 19px; max-width: 30rem; }
 .privacy__list { list-style: none; margin: 0; padding: 0; display: grid; }
 .privacy__list li {
   padding: 22px 0;
-  border-top: 1px solid #DCCDB2;
+  border-top: 1px solid var(--privacy-rule);
 }
-.privacy__list li:last-child { border-bottom: 1px solid #DCCDB2; }
+.privacy__list li:last-child { border-bottom: 1px solid var(--privacy-rule); }
 .privacy__list h3 {
   font-family: var(--font-display);
   font-weight: 600;
@@ -834,7 +838,7 @@ kbd {
   flex: none;
   margin-top: .45em;
 }
-.privacy__list p { color: var(--bark); }
+.privacy__list p { color: var(--privacy-muted); }
 .privacy__list a { color: var(--privacy-ink); text-decoration-color: var(--honey-deep); text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .privacy .section__title { color: var(--privacy-ink); }
 @media (min-width: 900px) {
