@@ -474,8 +474,9 @@ kbd {
 .band__more { margin-top: 20px; font-size: 16px; }
 .band__caption { margin-top: 24px; color: var(--sand); font-size: 14px; }
 @media (min-width: 900px) {
-  /* Big number, then the headline right after it (the number's column is as wide as the number). */
-  .band__head { grid-template-columns: auto minmax(0, 1fr); column-gap: clamp(40px, 5vw, 80px); }
+  /* Same grid as the feature sections: the big number in the left half, the headline starting on the
+     halfway line where the feature examples start, so every section shares one vertical line. */
+  .band__head { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 72px; }
   .band__head--text { grid-template-columns: minmax(0, 1fr); }
 }
 
