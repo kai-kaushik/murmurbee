@@ -97,58 +97,74 @@
           <span class="sr-only">In the example, “Um, so can we move, sync the meeting to tuesday, sorry, wednesday?” becomes “Can we sync the meeting to Wednesday?”</span>
         </figcaption>
       </figure>
-      <a class="scrollhint" href="#speed"><span>See how it’s twice as fast</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a class="scrollhint" href="#compare"><span>See how it compares</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </section>
 
-    <!-- PROOF -->
-    <section class="proof" aria-label="At a glance">
-      <dl class="wrap proof__list">
-        <div class="proof__item">
-          <dt class="proof__value">2×</dt>
-          <dd class="proof__label">faster than cloud dictation, from letting go of the key to text on screen.</dd>
-        </div>
-        <div class="proof__item">
-          <dt class="proof__value">3×</dt>
-          <dd class="proof__label">faster than typing. Most people type around 40 words a minute and speak around 120+.</dd>
-        </div>
-        <div class="proof__item">
-          <dt class="proof__value">Free</dt>
-          <dd class="proof__label">MIT open source. No account, no subscription, no usage&nbsp;cap.</dd>
-        </div>
-      </dl>
-    </section>
-
-    <!-- Every band below uses the same template:
-         row 1 = hero element (fixed column) + H2 + one sentence; row 2 = full-width visual -->
-
-    <!-- 2x faster than Wispr Flow -->
-    <section class="band" id="speed" aria-labelledby="speed-title">
+    <!-- Versus Wispr Flow -->
+    <section class="vs band" id="compare" aria-labelledby="vs-title">
       <div class="wrap">
-        <header class="band__head">
-          <p class="band__hero band__num" aria-hidden="true">2<span>×</span></p>
-          <div class="band__copy">
-            <h2 id="speed-title" class="band__title">Twice as fast as Wispr&nbsp;Flow.</h2>
-            <p class="band__lead">No round trip to a server, so your words land the moment you let&nbsp;go.</p>
-          </div>
-        </header>
-        <figure class="band__visual race" data-race>
-          <div class="race__chart" role="img" aria-label="Bar chart: MurmurBee 0.31 seconds, Wispr Flow 0.65 seconds, on a 0 to 1 second scale.">
-            <div class="race__axis" aria-hidden="true">
-              <span style="--at:0">0</span><span style="--at:.25">0.25</span><span style="--at:.5">0.5</span><span style="--at:.75">0.75</span><span style="--at:1">1&nbsp;s</span>
+        <h2 id="vs-title" class="vs__title">Lighter, faster, private.<br><span>Versus Wispr Flow.</span></h2>
+        <p class="vs__key"><span><i class="k-mb"></i>MurmurBee</span><span><i class="k-wf"></i>Wispr Flow</span></p>
+
+        <div class="vs__grid">
+          <article class="tile">
+            <p class="tile__big">2×</p>
+            <p class="tile__label">faster</p>
+            <div class="bars" aria-label="0.31 seconds versus 0.65 seconds">
+              <div class="bar bar--mb"><span><i style="width:48%"></i></span><b>0.31 s</b></div>
+              <div class="bar bar--wf"><span><i style="width:100%"></i></span><b>0.65 s</b></div>
             </div>
-            <div class="race__row">
-              <span class="race__name">MurmurBee</span>
-              <span class="race__track"><span class="race__bar race__bar--mb" style="--v:.31"><img src="assets/murmurbee-bee.svg" alt="" width="34" height="33" loading="lazy"></span></span>
-              <span class="race__val">0.31&nbsp;s</span>
+          </article>
+
+          <article class="tile">
+            <p class="tile__big">7×</p>
+            <p class="tile__label">smaller app</p>
+            <div class="bars" aria-label="70 megabytes versus 515 megabytes">
+              <div class="bar bar--mb"><span><i style="width:13.6%"></i></span><b>70 MB*</b></div>
+              <div class="bar bar--wf"><span><i style="width:100%"></i></span><b>515 MB</b></div>
             </div>
-            <div class="race__row">
-              <span class="race__name">Wispr Flow</span>
-              <span class="race__track"><span class="race__bar race__bar--them" style="--v:.65"></span></span>
-              <span class="race__val">0.65&nbsp;s</span>
+          </article>
+
+          <article class="tile">
+            <p class="tile__big">1<small>vs 13</small></p>
+            <p class="tile__label">background processes</p>
+            <div class="dots" aria-label="1 process versus 13 processes">
+              <div class="mb"><i></i></div>
+              <div class="wf"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             </div>
-          </div>
-          <figcaption class="band__caption">Median time from key release to text, MacBook Air&nbsp;M4.</figcaption>
-        </figure>
+          </article>
+
+          <article class="tile">
+            <p class="tile__big">200×</p>
+            <p class="tile__label">less disk space</p>
+            <div class="bars" aria-label="12 megabytes versus 2.5 gigabytes">
+              <div class="bar bar--mb"><span><i style="width:1.5%"></i></span><b>12 MB</b></div>
+              <div class="bar bar--wf"><span><i style="width:100%"></i></span><b>2.5 GB</b></div>
+            </div>
+          </article>
+
+          <article class="tile">
+            <p class="tile__big">0<small>bytes</small></p>
+            <p class="tile__label">sent to the cloud</p>
+            <div class="cloud">
+              <svg viewBox="0 0 120 80" aria-hidden="true">
+                <path d="M30 64h62a18 18 0 0 0 2-35.9A26 26 0 0 0 44 22a20 20 0 0 0-14 42z" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>
+                <path d="M22 72 100 10" stroke="#F2A07B" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <span>Wispr sends your audio to its servers.</span>
+            </div>
+          </article>
+
+          <article class="tile">
+            <p class="tile__big">≈</p>
+            <p class="tile__label">same accuracy</p>
+            <div class="bars" aria-label="96.8 versus 98.1 words right per 100">
+              <div class="bar bar--mb"><span><i style="width:96.8%"></i></span><b>96.8%</b></div>
+              <div class="bar bar--wf"><span><i style="width:98.1%"></i></span><b>98.1%</b></div>
+            </div>
+          </article>
+        </div>
+        <p class="vs__note">*Plus about 1 GB of AI models, downloaded once (Wispr runs its models on its servers). Measured on a MacBook Air M4, October 2026 (MurmurBee 0.1.1, Wispr Flow 1.6). <a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md">How I measured this →</a></p>
       </div>
     </section>
 
@@ -212,19 +228,6 @@
       </div>
     </section>
 
-    <!-- Accuracy -->
-    <section class="band band--raised" aria-labelledby="acc-title">
-      <div class="wrap">
-        <header class="band__head band__head--text">
-          <div class="band__copy">
-            <h2 id="acc-title" class="band__title">Accuracy close to the best cloud&nbsp;dictation.</h2>
-            <p class="band__lead">Both get about 97–98 of every 100 words&nbsp;right.</p>
-            <p class="band__more"><a class="textlink" href="https://github.com/kai-kaushik/murmurbee/blob/main/docs/EXPERIMENTS.md" rel="noopener">How I measured this <span aria-hidden="true">→</span></a></p>
-          </div>
-        </header>
-        <div class="band__visual acc__grid" data-acc-grid role="img" aria-label="About 97 to 98 of every 100 words right, for both MurmurBee and Wispr Flow."></div>
-      </div>
-    </section>
 
     <!-- Features intro -->
     <section class="band band--intro" id="features" aria-labelledby="features-title">
