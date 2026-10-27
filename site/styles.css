@@ -254,6 +254,15 @@ kbd {
 .hero__sub { max-width: 42rem; color: var(--sand); font-size: clamp(18px, 1.7vw, 20px); line-height: 1.5; }
 .hero__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 20px; }
 .hero__dl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* Phones: Download and GitHub sit side by side, slightly smaller */
+@media (max-width: 480px) {
+  .hero__actions { flex-wrap: nowrap; gap: 10px; }
+  .hero__actions .btn--lg { --h: 50px; padding: 0 20px; font-size: 16px; }
+}
+@media (max-width: 360px) {
+  .hero__actions { gap: 8px; }
+  .hero__actions .btn--lg { padding: 0 14px; font-size: 15px; }
+}
 .hero__meta { color: var(--sand); font-size: 14px; }
 .hero__free {
   color: var(--linen);
@@ -1089,3 +1098,6 @@ kbd {
 
 /* Ko-fi tip button: its frame is a fixed 195px, narrower than the button. The loader script in index.html measures the button and sets --kofi-w */
 .floatingchat-container-wrap .floatingchat-container { width: var(--kofi-w, 216px) !important; }
+/* Phones: the tip button is a round cup in the bottom-right corner (applied once the cup style is in) */
+.kofi-cup .floatingchat-container-wrap-mobi { left: auto !important; right: 16px !important; width: 50px !important; }
+.kofi-cup .floatingchat-container-mobi { width: 50px !important; }

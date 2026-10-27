@@ -31,7 +31,7 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=21">
   <script src="main.js?v=11" defer></script>
 </head>
 <body>
@@ -404,11 +404,21 @@
         // Ko-fi draws the button in a fixed 195px frame, which cuts off the right end of a wider
         // button. Once it renders, size the frame to the button (via a stylesheet rule, since Ko-fi
         // rewrites the frame's inline style).
-        var tries = 0, fit = setInterval(function () {
-          var f = document.querySelector('.floatingchat-container'), btn;
+        // On phones Ko-fi uses a separate frame; there the pill becomes a round cup-only button, bottom right.
+        var tries = 0, sized = false, cupped = false, fit = setInterval(function () {
+          var f = document.querySelector('.floatingchat-container'), m = document.querySelector('.floatingchat-container-mobi'), btn, doc;
           try { btn = f && f.contentDocument.querySelector('.floatingchat-donate-button'); } catch (e) {}
-          if (btn && btn.scrollWidth) { document.documentElement.style.setProperty('--kofi-w', (btn.scrollWidth + 12) + 'px'); clearInterval(fit); }
-          else if (++tries > 40) clearInterval(fit);
+          if (!sized && btn && btn.scrollWidth) { document.documentElement.style.setProperty('--kofi-w', (btn.scrollWidth + 12) + 'px'); sized = true; }
+          try { doc = m && m.contentDocument; } catch (e) {}
+          if (!cupped && doc && doc.querySelector('.floatingchat-donate-button')) {
+            var st = doc.createElement('style');
+            st.textContent = '.floatingchat-donate-button{width:46px!important;padding:0!important;justify-content:center!important}' +
+              '.floatingchat-donate-button span{display:none!important}.floatingchat-donate-button img{width:28px!important;height:auto!important;margin:0!important}';
+            doc.head.appendChild(st);
+            document.documentElement.classList.add('kofi-cup');
+            cupped = true;
+          }
+          if ((sized && cupped) || ++tries > 40) clearInterval(fit);
         }, 150);
       };
       document.body.appendChild(k);
