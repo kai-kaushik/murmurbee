@@ -97,8 +97,7 @@
       '<button class="cookie__x" type="button" aria-label="No thanks, decline cookies" title="No thanks">' +
         '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>' +
       '<img class="cookie__bee" src="/assets/murmurbee-bee.svg" alt="" width="30" height="29">' +
-      '<p class="cookie__text">I use a few cookies to see which parts of this site people find useful. ' +
-        'The app itself never tracks&nbsp;you.</p>' +
+      '<p class="cookie__text">Buzz buzz, I\u2019m collecting cookies.</p>' +
       '<button class="btn btn--honey cookie__ok" type="button">OK</button>';
     document.body.appendChild(box);
     document.documentElement.classList.add("cookie-open");
