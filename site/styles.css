@@ -1122,12 +1122,12 @@ kbd {
 /* no lone words on the last line of the step descriptions */
 .step p { text-wrap: pretty; }
 
-/* ---------- Cookie banner: one quiet card, a big OK, a tiny ✕ (= no thanks) ---------- */
+/* ---------- Cookie banner: one line, a quiet "Nah" and a honey OK ---------- */
 .cookie {
   position: fixed; right: 20px; bottom: 20px; z-index: 10001;
   width: max-content; max-width: calc(100vw - 32px);
   display: flex; align-items: center; gap: 14px;
-  padding: 12px 44px 12px 16px;
+  padding: 10px 10px 10px 16px;
   background: var(--raised); color: var(--linen);
   border: 1px solid var(--border); border-radius: 22px;
   box-shadow: 0 24px 60px -24px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.08);
@@ -1137,17 +1137,21 @@ kbd {
 .cookie.is-in { opacity: 1; transform: none; }
 .cookie__bee { width: 28px; height: auto; flex: none; }
 .cookie__text { margin: 0; font-size: 15px; color: var(--linen); }
-.cookie__ok { --h: 40px; padding: 0 22px; font-size: 15px; flex: none; }
-.cookie__x {
-  position: absolute; top: 50%; right: 10px; margin-top: -13px;
-  width: 26px; height: 26px; display: grid; place-items: center;
-  border: 0; border-radius: 50%; background: none; color: var(--sand); cursor: pointer; opacity: .7;
+.cookie__btns { display: flex; gap: 6px; flex: none; }
+.cookie__ok { --h: 40px; padding: 0 22px; font-size: 15px; }
+.cookie__nah {
+  height: 40px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--tint); color: var(--sand); font: 500 15px/1 var(--font-body);
 }
-.cookie__x:hover, .cookie__x:focus-visible { opacity: 1; background: var(--tint); }
-.cookie__x svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.cookie__nah:hover, .cookie__nah:focus-visible { color: var(--linen); background: var(--border); }
 @media (max-width: 640px) {
   .cookie { right: 16px; left: 16px; bottom: 16px; width: auto; }
-  .cookie__ok { margin-left: auto; }
+  .cookie__btns { margin-left: auto; }
+  .cookie { gap: 10px; padding-left: 14px; }
+  .cookie__bee { width: 22px; }
+  .cookie__text { font-size: 14px; line-height: 1.35; }
+  .cookie__nah { padding: 0 12px; font-size: 14px; }
+  .cookie__ok { padding: 0 16px; font-size: 14px; }
   .cookie-open .floatingchat-container-wrap-mobi { display: none !important; }  /* the tip cup waits until the banner is answered */
 }
 @media (prefers-reduced-motion: reduce) { .cookie { transition: none; transform: none; } }

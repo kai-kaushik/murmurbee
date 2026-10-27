@@ -94,11 +94,10 @@
     box.setAttribute("role", "region");
     box.setAttribute("aria-label", "Cookies");
     box.innerHTML =
-      '<button class="cookie__x" type="button" aria-label="No thanks, decline cookies" title="No thanks">' +
-        '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>' +
       '<img class="cookie__bee" src="/assets/murmurbee-bee.svg" alt="" width="30" height="29">' +
       '<p class="cookie__text">Buzz buzz, I\u2019m collecting cookies.</p>' +
-      '<button class="btn btn--honey cookie__ok" type="button">OK</button>';
+      '<span class="cookie__btns"><button class="cookie__nah" type="button">Nah</button>' +
+        '<button class="btn btn--honey cookie__ok" type="button">OK</button></span>';
     document.body.appendChild(box);
     document.documentElement.classList.add("cookie-open");
     requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("is-in"); }); });
@@ -109,7 +108,7 @@
       setTimeout(function () { box.remove(); }, 400);
     }
     box.querySelector(".cookie__ok").addEventListener("click", function () { close(accept); });
-    box.querySelector(".cookie__x").addEventListener("click", function () { close(decline); });
+    box.querySelector(".cookie__nah").addEventListener("click", function () { close(decline); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { setTimeout(showBanner, 900); });
   else setTimeout(showBanner, 900);
