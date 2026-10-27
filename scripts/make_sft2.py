@@ -299,7 +299,7 @@ for _ in range(900):
 allx = [x for v in out.values() for x in v]
 rng.shuffle(allx)
 # Stable split: an example's side depends only on its content, so adding data never moves examples
-# between train and validation (methodology rule 4 in docs/EXPERIMENTS.md). ~2.5% goes to validation.
+# between train and validation (so adding data never moves examples between splits). ~2.5% goes to validation.
 import hashlib
 def is_valid(x):
     key = x["messages"][1]["content"] + "\x00" + x["messages"][2]["content"]

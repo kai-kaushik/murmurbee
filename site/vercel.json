@@ -1,0 +1,6 @@
+{
+  "redirects": [
+    { "source": "/blog/murmurbee-experiment-report", "destination": "/blog/how-i-built-murmurbee/", "permanent": true },
+    { "source": "/blog/murmurbee-experiment-report/", "destination": "/blog/how-i-built-murmurbee/", "permanent": true }
+  ]
+}

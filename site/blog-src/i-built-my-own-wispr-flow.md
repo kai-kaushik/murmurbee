@@ -66,7 +66,7 @@ It took a lot of experiments, and plenty of them failed:
 - **Fine-tuning on my own history is what made it good.** That's where it learned corrections, lists, emails and names.
 - **I made every evaluation mistake in the book**, then fixed them and re-ran everything.
 
-If you like the nerdy details, the exact models, settings and every result are in [the full experiment report](/blog/murmurbee-experiment-report/).
+If you like the nerdy details, the exact models, settings and results are in [how I built it](/blog/how-i-built-murmurbee/).
 
 ## So, is it better than Wispr Flow?
 

@@ -4,9 +4,9 @@
   <item><title>I got fed up with Wispr Flow, so I built my own over a weekend</title><link>https://murmurbee.com/blog/i-built-my-own-wispr-flow/</link>
     <guid>https://murmurbee.com/blog/i-built-my-own-wispr-flow/</guid><pubDate>Tue, 27 Oct 2026 09:00:00 +0000</pubDate>
     <description>Why I built MurmurBee, a free, open-source Wispr Flow alternative that runs entirely on my Mac, and what it does - screen context, corrections, personal training, all offline.</description></item>
-  <item><title>Building a local Wispr Flow alternative - the full experiment report</title><link>https://murmurbee.com/blog/murmurbee-experiment-report/</link>
-    <guid>https://murmurbee.com/blog/murmurbee-experiment-report/</guid><pubDate>Tue, 27 Oct 2026 09:00:00 +0000</pubDate>
-    <description>Every experiment behind MurmurBee, in detail. Parakeet on the Neural Engine, Qwen3.5-0.8B fine-tuned with LoRA in MLX, evaluation mistakes, synthetic data, and on-device training on a MacBook Air.</description></item>
+  <item><title>How I built a private, personal Wispr Flow on my MacBook</title><link>https://murmurbee.com/blog/how-i-built-murmurbee/</link>
+    <guid>https://murmurbee.com/blog/how-i-built-murmurbee/</guid><pubDate>Tue, 27 Oct 2026 09:00:00 +0000</pubDate>
+    <description>The full story of building MurmurBee - the goal, my own Wispr data, picking the models, training on a MacBook Air, every experiment that worked and the ones that didn&#x27;t.</description></item>
   <item><title>Talking is three times faster than typing. Here&#x27;s how to actually use that</title><link>https://murmurbee.com/blog/talking-is-faster-than-typing/</link>
     <guid>https://murmurbee.com/blog/talking-is-faster-than-typing/</guid><pubDate>Tue, 27 Oct 2026 09:00:00 +0000</pubDate>
     <description>Speech is about 3× faster than typing on a phone and well ahead of most people on a keyboard. What the research says, and how voice typing changed how I work.</description></item>

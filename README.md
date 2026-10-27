@@ -22,7 +22,7 @@ Speech recognition and cleanup both run on your Mac. No account, no server, noth
    inventing, dropping or repeating content.
 3. **Paste:** clipboard plus ⌘V at the cursor, verified through Accessibility, with your previous clipboard restored.
 
-The full lab notebook (datasets, splits, every experiment and result) is in [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
+How it was built, with the models, experiments and results: [How I built MurmurBee](https://murmurbee.com/blog/how-i-built-murmurbee/).
 
 ## Download
 **[Download MurmurBee for Mac](https://github.com/kai-kaushik/murmurbee/releases/latest/download/MurmurBee.dmg)** (beta, Apple Silicon, macOS 15+).
