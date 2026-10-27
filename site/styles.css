@@ -883,7 +883,7 @@ kbd {
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px 24px;
 }
 .footer__gh { justify-self: end; }
-.download .hero__ctas { margin-top: 36px; }
+.download .hero__ctas { margin-top: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px 20px; }
 .footer .brand__mark { width: 28px; }
 .footer .wordmark { font-size: 19px; }
 .footer__copy { color: var(--sand); font-size: 14px; text-align: center; }
