@@ -45,7 +45,7 @@ def parse(path):
     return meta
 
 
-def page(title, description, canonical, body, og_type="website"):
+def page(title, description, canonical, body, og_type="website", image="home"):
     t, d = html.escape(title), html.escape(description)
     return f"""<!doctype html>
 <html lang="en">
@@ -61,7 +61,14 @@ def page(title, description, canonical, body, og_type="website"):
   <meta property="og:site_name" content="MurmurBee">
   <meta property="og:title" content="{t}">
   <meta property="og:description" content="{d}">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="{BASE}/assets/og/{image}.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{t}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{t}">
+  <meta name="twitter:description" content="{d}">
+  <meta name="twitter:image" content="{BASE}/assets/og/{image}.png">
   <link rel="alternate" type="application/rss+xml" title="MurmurBee blog" href="/blog/feed.xml">
   <link rel="icon" type="image/svg+xml" href="/assets/murmurbee-bee.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -152,7 +159,7 @@ def main():
     {ld}"""
         d = OUT / p["slug"]
         d.mkdir(exist_ok=True)
-        (d / "index.html").write_text(page(f"{p['title']} | MurmurBee", p["description"], url, body, "article"))
+        (d / "index.html").write_text(page(f"{p['title']} | MurmurBee", p["description"], url, body, "article", p["slug"]))
 
     items = "\n".join(
         f"""        <li class="bloglist__item">

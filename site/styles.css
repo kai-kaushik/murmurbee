@@ -1195,3 +1195,32 @@ kbd {
 .post__body th, .post__body td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
 .post__body th { color: var(--linen); font-weight: 500; }
 .nav__links a[aria-current="page"] { color: var(--linen); }
+
+/* ---------- Blog charts: one highlighted bar (MurmurBee, honey) against neutral context bars ---------- */
+:root { --bar-hi: #EBAE2A; --bar-lo: #5E5242; }
+:root[data-theme="light"] { --bar-hi: #B47716; --bar-lo: #D3C6AF; }
+.post__body .chart { margin: 2.2em 0; padding: 22px 24px 18px; border: 1px solid var(--border); border-radius: 18px; background: var(--raised); }
+.chart__title { margin: 0 0 16px; font: 500 15px/1.35 var(--font-body); color: var(--linen); }
+.chart__rows { display: grid; gap: 10px; }
+.chart__row { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 4.5rem; align-items: center; gap: 12px; font-size: 15px; line-height: 1.2; }
+.chart__name { color: var(--sand); }
+.chart__row.is-hi .chart__name { color: var(--linen); font-weight: 500; }
+.chart__track { height: 12px; }
+.chart__track i { display: block; height: 100%; width: var(--v); min-width: 3px; border-radius: 0 4px 4px 0; background: var(--bar-lo); }
+.chart__row.is-hi .chart__track i { background: var(--bar-hi); }
+.chart__val { text-align: right; color: var(--linen); font-variant-numeric: tabular-nums; }
+.chart__note { margin: 14px 0 0; font-size: 13px; line-height: 1.45; color: var(--sand); }
+@media (max-width: 520px) { .chart__row { grid-template-columns: 5.6rem minmax(0, 1fr) 3.8rem; gap: 8px; font-size: 14px; } }
+
+/* ---------- Blog covers: small drawn scenes in the site's palette ---------- */
+.post__body .cover { margin: 0 0 2.4em; border-radius: 22px; background: var(--raised); border: 1px solid var(--border); overflow: hidden; }
+.cover svg { display: block; width: 100%; height: auto; }
+.cover .c-line { fill: none; stroke: var(--border-strong); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.cover .c-fill { fill: var(--night); }
+.cover .c-honey { fill: var(--honey); }
+.cover .c-trail { fill: none; stroke: var(--honey-strong); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 0.1 14; }
+.cover .c-ink { fill: var(--linen); }
+.cover .c-sand { fill: var(--sand); }
+.cover .c-bar { fill: #16130F; }
+.cover text { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
+.cover .c-strike { stroke: var(--strike); stroke-width: 3; stroke-linecap: round; }
