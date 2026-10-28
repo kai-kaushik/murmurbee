@@ -56,6 +56,7 @@ actor Store {
         sqlite3_open(path, &db)
         sqlite3_exec(db, """
             PRAGMA journal_mode=WAL;
+            PRAGMA secure_delete=ON;
             CREATE TABLE IF NOT EXISTS dictations (
               id INTEGER PRIMARY KEY, created_at TEXT, app_bundle TEXT, app_name TEXT, app_type TEXT,
               window_title TEXT, before_cursor TEXT, selected_text TEXT, duration_s REAL, chunks INTEGER,
@@ -184,12 +185,14 @@ actor Store {
         return Int(sqlite3_total_changes(db) - before)
     }
 
+    // Deletes overwrite the freed pages (secure_delete) and flush the write-ahead log, so deleted text doesn't
+    // linger in the database files.
     func delete(_ id: Int64) {
-        sqlite3_exec(db, "DELETE FROM dictations WHERE id = \(id)", nil, nil, nil)
+        sqlite3_exec(db, "DELETE FROM dictations WHERE id = \(id); PRAGMA wal_checkpoint(TRUNCATE);", nil, nil, nil)
     }
 
     func deleteAll() {
-        sqlite3_exec(db, "DELETE FROM dictations; VACUUM;", nil, nil, nil)
+        sqlite3_exec(db, "DELETE FROM dictations; VACUUM; PRAGMA wal_checkpoint(TRUNCATE);", nil, nil, nil)
     }
 
     /// Edit capture: the field's contents some time after the paste (diffed offline by scripts/learn.py).

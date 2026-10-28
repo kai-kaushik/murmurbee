@@ -65,6 +65,9 @@ if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--train-test" 
     RunLoop.main.run()
 }
 
+#if DEBUG
+// Developer test modes, left out of release builds.
+
 // Imports Wispr Flow's history into a scratch database twice (to check nothing is added twice); never touches the
 // real history or dictionary:  MurmurBee --import-wispr-test <scratch.sqlite>
 if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--import-wispr-test" {
@@ -167,6 +170,8 @@ if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--snapshot" {
     MainActor.assumeIsolated { Snapshots.render(to: URL(fileURLWithPath: CommandLine.arguments[2])) }
     exit(0)
 }
+
+#endif
 
 // A regular app (Dock icon, main window) that also lives in the menu bar and keeps running when its window closes.
 let app = NSApplication.shared

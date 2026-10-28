@@ -1,11 +1,15 @@
 import AppKit
 import AVFoundation
 import ApplicationServices
+import Sparkle
 import SwiftUI
 
 @MainActor
 final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    /// Sparkle: checks murmurbee.com/appcast.xml in the background and offers signed updates.
+    private lazy var updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil,
+                                                            userDriverDelegate: nil)
     private let settings = Settings.shared
     private let permissions = Permissions()
     private let windows = WindowManager()
@@ -33,6 +37,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.autosaveName = "MurmurBeeStatusItem"  // remembers its spot if you ⌘-drag it
+        _ = updater  // start the update checks
         statusItem.button?.image = Brand.menuBarIcon ?? NSImage(systemSymbolName: "waveform", accessibilityDescription: "MurmurBee")
         rebuildMenu()
 
@@ -238,11 +243,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pill.show(.idle)
             let ctx = context
             // Security: never paste a line break into a terminal, where it would run whatever text came before it.
-            let terminals: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable",
-                                          "com.mitchellh.ghostty", "org.alacritty", "net.kovidgoyal.kitty",
-                                          "com.github.wez.wezterm"]
+            // Code editors too, because they host integrated terminals and REPLs.
             var text = r.cleaned
-            if terminals.contains(ctx.bundleId) {
+            if Self.terminals.contains(ctx.bundleId) || ctx.appType == "code editor" {
                 text = text.components(separatedBy: .newlines).filter { !$0.isEmpty }.joined(separator: " ")
             }
             // Latency is release → ⌘V sent; verification happens after, off the critical path.
@@ -265,9 +268,24 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pill.show(.idle)
     }
 
+    static let terminals: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable",
+                                         "com.mitchellh.ghostty", "org.alacritty", "net.kovidgoyal.kitty",
+                                         "com.github.wez.wezterm"]
+
+    /// Only the text around our paste is ever stored, never a whole field: in a terminal or a long document the
+    /// field holds far more than what was dictated (scrollback, secrets, the rest of the document).
+    static func around(_ field: String?, _ inserted: String, radius: Int = 300) -> String? {
+        guard let field else { return nil }
+        guard let r = field.range(of: inserted, options: .backwards) else { return String(field.suffix(radius * 2)) }
+        let start = field.index(r.lowerBound, offsetBy: -radius, limitedBy: field.startIndex) ?? field.startIndex
+        let end = field.index(r.upperBound, offsetBy: radius, limitedBy: field.endIndex) ?? field.endIndex
+        return String(field[start..<end])
+    }
+
     private func record(_ r: Session.Result, context: ContextSnapshot, totalMs: Double, outcome: Inserter.Outcome) {
         if outcome.method == .clipboardOnly { pill.flash("Couldn't paste here. Press ⌘V", seconds: 2.5) }
-        let learn = settings.learnFromEdits
+        // No edit capture in terminals at all.
+        let learn = settings.learnFromEdits && !Self.terminals.contains(context.bundleId)
         Task {
             var rec = DictationRecord()
             rec.context = context
@@ -283,7 +301,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             rec.latencyCleanupFinalMs = r.cleanFinalMs
             rec.cleanupOrigin = await cleaner.origin
             rec.vocab = r.vocab.joined(separator: "; ")
-            if learn { rec.fieldAfter = outcome.fieldAfter }
+            if learn { rec.fieldAfter = Self.around(outcome.fieldAfter, r.cleaned) }
             let id = await store.save(rec)
             NotificationCenter.default.post(name: .historyChanged, object: nil)
             if learn, let field = outcome.field, let after = outcome.fieldAfter {
@@ -309,7 +327,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let later = latest,
                   let span = EditLearner.editedSpan(inserted: inserted, after: after, later: later),
                   span != inserted else { return }
-            await store.setText(row, "field_later", later)
+            await store.setText(row, "field_later", Self.around(later, span))
             await store.setText(row, "edited_text", span)
             let known = Set(Vocabulary.dictionary())
             let terms = EditLearner.learnedTerms(inserted: inserted, edited: span, known: known)
@@ -471,6 +489,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(menu, "Set Up MurmurBee…", #selector(showSetup as () -> Void))
         let s = add(menu, "Settings…", #selector(showSettings))
         s.keyEquivalent = ","
+        let u = NSMenuItem(title: "Check for Updates…", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+                           keyEquivalent: "")
+        u.target = updater
+        menu.addItem(u)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit MurmurBee", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.delegate = self

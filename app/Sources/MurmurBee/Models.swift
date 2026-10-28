@@ -92,6 +92,9 @@ enum ModelStore {
         }
         guard fm.fileExists(atPath: root.appendingPathComponent("config.json").path) else { throw DownloadError.missing }
 
+        // A model name is a single folder name, never a path (no "/" or "..").
+        guard !remote.name.isEmpty, !remote.name.contains("/"), !remote.name.contains(".."),
+              !remote.name.hasPrefix(".") else { throw URLError(.cannotCreateFile) }
         let dest = directory.appendingPathComponent(remote.name)
         try? fm.removeItem(at: dest)
         try fm.moveItem(at: root, to: dest)

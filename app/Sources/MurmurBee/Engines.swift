@@ -12,7 +12,10 @@ actor Transcriber {
     private var asr: AsrManager?
 
     func load() async throws {
-        let models = try await AsrModels.downloadAndLoad(version: .ultra)
+        // Download, verify every file against the pinned hashes, and only then load (see SpeechModelPin).
+        let dir = try await AsrModels.download(version: .ultra)
+        try SpeechModelPin.verify(dir)
+        let models = try await AsrModels.load(from: dir, version: .ultra)
         let manager = AsrManager(config: .default)
         try await manager.loadModels(models)
         asr = manager
@@ -243,10 +246,18 @@ actor Cleaner {
         func words(_ s: String) -> [String] {
             s.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init).filter { !$0.isEmpty }
         }
-        let source = Set(words(raw + " " + vocab.joined(separator: " ")).map { String($0.prefix(4)) })
+        // What you said, plus your own dictionary, is fully trusted. Words that only appear on screen (names read from
+        // the window, which a crafted email or web page controls) can fix a few misheard names but can't pad the text.
+        let key = { (w: String) in String(w.prefix(4)) }
+        let source = Set((words(raw) + words(Vocabulary.dictionary().joined(separator: " "))).map(key))
+        let screen = Set(words(vocab.joined(separator: " ")).map(key)).subtracting(source)
         let outWords = words(out).filter { !($0.allSatisfy(\.isNumber) && $0.count <= 2) }  // list numbers
         guard outWords.count >= 4 else { return true }
-        let grounded = outWords.filter { source.contains(String($0.prefix(4))) }.count
+        var grounded = 0, fromScreen = 0
+        for w in outWords {
+            if source.contains(key(w)) { grounded += 1 }
+            else if screen.contains(key(w)), fromScreen < 3 { grounded += 1; fromScreen += 1 }
+        }
         return Double(grounded) / Double(outWords.count) >= 0.6
     }
 
