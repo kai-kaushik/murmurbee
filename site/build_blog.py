@@ -10,7 +10,7 @@ Each post starts with a front-matter block:
     order: 2           # optional; on the same date, higher comes first
     ---
 
-Run from the repo:  uv run --with markdown python site/build_blog.py
+Run from the repo:  uv run --with markdown==3.11.2 python site/build_blog.py
 """
 import datetime as dt
 import html
@@ -120,7 +120,7 @@ def page(title, description, canonical, body, og_type="website", image="home"):
         <span class="wordmark">Murmur<span class="wordmark__bee">Bee</span></span>
       </a>
       <p class="footer__copy">Made with <span role="img" aria-label="love">❤️</span> by Kai</p>
-      <span class="footer__links"><a class="footer__gh" href="/privacy/">Privacy</a><a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a></span>
+      <span class="footer__links"><a class="footer__gh" href="/privacy/">Privacy</a><a class="footer__gh" href="/terms/">Terms</a><a class="footer__gh" href="/licenses/">Licences</a><a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a></span>
     </div>
   </footer>
 </body>

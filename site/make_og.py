@@ -1,6 +1,6 @@
 """Link-preview images (1200x630 PNG) for the homepage and every blog post, rendered with headless Chrome.
 
-    uv run --with markdown python site/make_og.py
+    uv run --with markdown==3.11.2 python site/make_og.py
 
 Writes site/assets/og/home.png and site/assets/og/<slug>.png. build_blog.py points each post's og:image at its file.
 """
