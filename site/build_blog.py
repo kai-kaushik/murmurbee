@@ -25,6 +25,7 @@ SRC, OUT = SITE / "blog-src", SITE / "blog"
 BASE = "https://murmurbee.com"
 STYLE_V = re.search(r"styles\.css\?v=(\d+)", (SITE / "index.html").read_text()).group(1)
 ANALYTICS_V = re.search(r"analytics\.js\?v=(\d+)", (SITE / "index.html").read_text()).group(1)
+KOFI_V = re.search(r"kofi\.js\?v=(\d+)", (SITE / "index.html").read_text()).group(1)
 MAIN_V = re.search(r"main\.js\?v=(\d+)", (SITE / "index.html").read_text()).group(1)
 
 
@@ -91,6 +92,7 @@ def page(title, description, canonical, body, og_type="website", image="home"):
   <link rel="stylesheet" href="/styles.css?v={STYLE_V}">
   <script src="/main.js?v={MAIN_V}" defer></script>
   <script src="/analytics.js?v={ANALYTICS_V}" defer></script>
+  <script src="/kofi.js?v={KOFI_V}" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
