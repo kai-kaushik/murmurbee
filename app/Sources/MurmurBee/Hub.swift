@@ -23,6 +23,7 @@ final class HubModel {
     /// Settings opens as a sheet over the window, on General or Privacy.
     var settingsPane: Pane?
     var toast: String?
+    var feedbackOpen = false
 
     func show(_ p: Pane) {
         switch p {
@@ -86,6 +87,12 @@ struct HubView: View {
             SettingsSheet(initial: pane, settings: settings, permissions: permissions,
                           deleteHistory: deleteHistory, close: { model.settingsPane = nil })
         }
+        .sheet(isPresented: $model.feedbackOpen) {
+            FeedbackSheet { sent in
+                model.feedbackOpen = false
+                if sent { model.flash("Thanks! Your feedback was sent.") }
+            }
+        }
         .frame(minWidth: 820, minHeight: 540)
         .brandWindow()
     }
@@ -104,6 +111,7 @@ struct HubView: View {
             Rectangle().fill(Brand.border).frame(height: 1).padding(.vertical, 8)
             ThemeToggle()
             navButton("Settings", "gearshape") { model.show(.settings) }
+            navButton("Send feedback", "bubble.left") { model.feedbackOpen = true }
             navButton("Help", "questionmark.circle") {
                 NSWorkspace.shared.open(URL(string: "https://github.com/kai-kaushik/murmurbee#readme")!)
             }
@@ -723,6 +731,17 @@ private struct SettingsSheet: View {
                 Spacer()
                 Text("MurmurBee \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
                     .font(.system(size: 11)).foregroundStyle(Brand.sand).padding(.horizontal, 8)
+                HStack(spacing: 10) {
+                    Button("Licences") {
+                        if let url = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    Button("Terms") { NSWorkspace.shared.open(URL(string: "https://murmurbee.com/terms/")!) }
+                    Button("Privacy") { NSWorkspace.shared.open(URL(string: "https://murmurbee.com/privacy/")!) }
+                }
+                .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Brand.sand)
+                .padding(.horizontal, 8).padding(.top, 2)
             }
             .padding(14).padding(.top, 8)
             .frame(width: 180)
