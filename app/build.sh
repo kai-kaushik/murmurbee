@@ -22,6 +22,12 @@ cp -R Resources/sounds "$APP/Contents/Resources/sounds"
 cp -R Resources/brand "$APP/Contents/Resources/brand"
 cp Resources/brand/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/fonts "$APP/Contents/Resources/fonts"
+# Licences and credits for the models and open-source components (Apache 2.0 requires shipping the texts).
+cp Resources/ThirdPartyNotices.txt "$APP/Contents/Resources/ThirdPartyNotices.txt"
+# Sparkle (auto-updates) lives in Contents/Frameworks; ditto keeps the framework's symlinks intact.
+mkdir -p "$APP/Contents/Frameworks"
+ditto "$PRODUCTS/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/MurmurBee" 2>/dev/null || true
 # MLX finds its shaders in Resources/mlx-swift_Cmlx.bundle (default.metallib). No copy next to the binary:
 # anything in Contents/MacOS must be code, and a loose .metallib there breaks Developer ID signing.
 
@@ -34,9 +40,13 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>MurmurBee</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.2</string>
-  <key>CFBundleVersion</key><string>3</string>
+  <key>CFBundleShortVersionString</key><string>0.1.3</string>
+  <key>CFBundleVersion</key><string>4</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
+  <key>SUFeedURL</key><string>https://murmurbee.com/appcast.xml</string>
+  <key>SUPublicEDKey</key><string>RefVcQGGvefHH5JAxg5BFPRGZD1Z4A4YHtBG03PEKfA=</string>
+  <key>SUEnableAutomaticChecks</key><true/>
+  <key>SUScheduledCheckInterval</key><integer>86400</integer>
   <key>NSMicrophoneUsageDescription</key><string>MurmurBee listens while you hold the dictation key and transcribes on this Mac.</string>
 </dict></plist>
 PLIST
@@ -45,6 +55,13 @@ PLIST
 # self-signed identity, so macOS permissions survive local rebuilds; otherwise ad-hoc.
 DEVID=$(security find-identity -v -p codesigning | awk -F'"' '/Developer ID Application/{print $2; exit}')
 if [[ -n "$DEVID" ]]; then
+  # Sign Sparkle inside-out (its XPC services and helpers first), as Sparkle's docs require for Developer ID.
+  SPK="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+  codesign --force --options runtime --timestamp --sign "$DEVID" "$SPK/XPCServices/Installer.xpc"
+  codesign --force --options runtime --timestamp --preserve-metadata=entitlements --sign "$DEVID" "$SPK/XPCServices/Downloader.xpc"
+  codesign --force --options runtime --timestamp --sign "$DEVID" "$SPK/Autoupdate"
+  codesign --force --options runtime --timestamp --sign "$DEVID" "$SPK/Updater.app"
+  codesign --force --options runtime --timestamp --sign "$DEVID" "$APP/Contents/Frameworks/Sparkle.framework"
   codesign --force --options runtime --timestamp --entitlements MurmurBee.entitlements --sign "$DEVID" "$APP"
 else
   IDENTITY=$(security find-identity -p codesigning | awk '/"Local Flow Dev"/{print $2; exit}')
