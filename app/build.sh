@@ -40,8 +40,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>MurmurBee</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.3</string>
-  <key>CFBundleVersion</key><string>4</string>
+  <key>CFBundleShortVersionString</key><string>0.1.4</string>
+  <key>CFBundleVersion</key><string>5</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
   <key>SUFeedURL</key><string>https://murmurbee.com/appcast.xml</string>
   <key>SUPublicEDKey</key><string>RefVcQGGvefHH5JAxg5BFPRGZD1Z4A4YHtBG03PEKfA=</string>

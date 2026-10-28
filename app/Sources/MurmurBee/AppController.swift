@@ -7,9 +7,8 @@ import SwiftUI
 @MainActor
 final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    /// Sparkle: checks murmurbee.com/appcast.xml in the background and offers signed updates.
-    private lazy var updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil,
-                                                            userDriverDelegate: nil)
+    /// Sparkle: checks murmurbee.com/appcast.xml in the background and offers signed updates (see Updates).
+    private var updater: SPUStandardUpdaterController { Updates.controller }
     private let settings = Settings.shared
     private let permissions = Permissions()
     private let windows = WindowManager()
@@ -420,6 +419,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         submenu("MurmurBee", [
             item("About MurmurBee", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+            item("Check for Updates…", #selector(SPUStandardUpdaterController.checkForUpdates(_:)), target: updater),
             .separator(),
             item("Settings…", #selector(showSettings), ",", target: self),
             item("Set Up MurmurBee…", #selector(showSetup as () -> Void), target: self),

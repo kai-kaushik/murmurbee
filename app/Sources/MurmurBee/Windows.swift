@@ -274,6 +274,7 @@ struct GeneralTab: View {
     let permissions: Permissions
     @State private var mics = AudioDevices.inputs()
     @State private var appearance = Theme.mode
+    @State private var autoUpdate = Updates.automatic
 
     var body: some View {
         ScrollView {
@@ -322,6 +323,16 @@ struct GeneralTab: View {
                     SettingsRow(title: "Launch at login") {
                         Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin },
                                                                 set: { settings.launchAtLogin = $0 })).settingsToggle()
+                    }
+                }
+
+                SettingsSection(title: "Updates") {
+                    SettingsRow(title: "Check automatically", detail: "Looks for a new version once a day. Updates are signed and verified before they install.", divider: false) {
+                        Toggle("Check automatically", isOn: Binding(get: { autoUpdate }, set: { autoUpdate = $0; Updates.automatic = $0 }))
+                            .settingsToggle()
+                    }
+                    SettingsRow(title: "Check for updates", detail: "You're on MurmurBee \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "").") {
+                        Button("Check now") { Updates.checkNow() }.buttonStyle(HoneyButton())
                     }
                 }
 

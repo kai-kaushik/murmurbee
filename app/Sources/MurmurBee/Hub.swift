@@ -741,6 +741,7 @@ private struct SettingsSheet: View {
                     Button("Privacy") { NSWorkspace.shared.open(URL(string: "https://murmurbee.com/privacy/")!) }
                 }
                 .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Brand.sand)
+                .lineLimit(1).fixedSize()  // keep "Licences" on one line in the narrow sidebar
                 .padding(.horizontal, 8).padding(.top, 2)
             }
             .padding(14).padding(.top, 8)
