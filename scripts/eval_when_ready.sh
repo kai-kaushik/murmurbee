@@ -15,5 +15,5 @@ cp $CK adapters/eval-resumed600/adapters.safetensors
   echo "== v1 on v2 structure set (v2 prompt)"; .venv/bin/python scripts/eval_v2.py models/qwen35-0.8b-kai-v1 --prompt v2 | sed -n '/STRUCTURE/,$p'
   echo "== v2 first run, step 600"; .venv/bin/python scripts/eval_v2.py mlx-community/Qwen3.5-0.8B-4bit --adapter adapters/eval-first600
   echo "== v2 resumed (with self-corrections), checkpoint"; .venv/bin/python scripts/eval_v2.py mlx-community/Qwen3.5-0.8B-4bit --adapter adapters/eval-resumed600
-} > bench/eval_round3.txt 2>&1
+} > bench/eval_round3.txt 2>>bench/stderr.log
 echo done >> bench/eval_round3.txt

@@ -27,9 +27,10 @@ How it was built, with the models, experiments and results: [How I built MurmurB
 ## Download
 **[Download MurmurBee for Mac](https://github.com/kai-kaushik/murmurbee/releases/latest/download/MurmurBee.dmg)** (beta, Apple Silicon, macOS 15+).
 Open the DMG and drag MurmurBee into Applications. It's signed and notarized by Apple, so it opens like any other
-app. On first run MurmurBee downloads its speech model and the
+app, and it updates itself (signed updates via Sparkle). On first run MurmurBee downloads its speech model and the
 [general cleanup model](https://github.com/kai-kaushik/murmurbee/releases/tag/models-v1) (trained only on synthetic
-data, verified by checksum); after that it works offline.
+data); every model file is checked against SHA-256 hashes built into the app before it's loaded. After that it works
+offline. See the [privacy policy](https://murmurbee.com/privacy/) for exactly what does and doesn't leave your Mac.
 
 ## Status
 Beta. Signed and notarized. You can import your Wispr Flow history (read-only) and train a personal model on your own
@@ -58,3 +59,9 @@ MIT, see [LICENSE](LICENSE). The bundled Sora font is under the SIL Open Font Li
 Model weights keep their own licences (Parakeet: CC-BY-4.0; Qwen: Apache-2.0).
 
 MurmurBee is an independent project and isn't affiliated with Wispr.
+
+## Credits
+MurmurBee builds on open models and software: NVIDIA's Parakeet TDT 0.6B v3 (post-trained as Parakeet Ultra by
+Moondream, Core ML by FluidInference; CC BY 4.0), Qwen3.5-0.8B by the Qwen team (Apache 2.0), FluidAudio, MLX Swift,
+Sparkle and Hugging Face's Swift libraries. Full list and licence texts: [murmurbee.com/licenses](https://murmurbee.com/licenses/)
+and [app/Resources/ThirdPartyNotices.txt](app/Resources/ThirdPartyNotices.txt).

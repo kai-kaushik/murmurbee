@@ -24,3 +24,12 @@ __pycache__/
 # Private lab notes (names from my dictations): never commit
 docs/EXPERIMENTS.md
 bench/RESULTS.md
+
+# Secrets and keys: never commit
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.mobileprovision
+.vercel
