@@ -33,7 +33,7 @@
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css?v=35">
+  <link rel="stylesheet" href="/styles.css?v=36">
   <script src="/main.js?v=14" defer></script>
   <script src="/analytics.js?v=3" defer></script>
 </head>
@@ -107,6 +107,7 @@
 <h2>Choosing the models</h2>
 <p>Dictation is really two separate problems, turning sound into words and then turning those words into what you actually meant, so I picked a model for each.</p>
 <p>For speech recognition I went with NVIDIA&rsquo;s <strong>Parakeet TDT 0.6B</strong>, running as CoreML on the Mac&rsquo;s <strong>Neural Engine</strong> through <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a>. The Neural Engine mostly sits idle on a Mac, so running ASR there means it never competes with the GPU, which matters once you also want a language model and training running on the same machine. I compared three versions of it:</p>
+<div class="table">
 <table>
 <thead>
 <tr>
@@ -137,6 +138,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <p>Ultra won by a small margin, and it also covers 25 European languages, which was a nice bonus.</p>
 <p>For the clean-up step I wanted a small language model, so I tried Qwen3.5 at 0.8B and 2B parameters and Google&rsquo;s Gemma 4 E2B, all quantised to 4-bit in MLX, and in the end I went with the smallest one, <strong>Qwen3.5-0.8B</strong>, with a LoRA adapter trained on my data on top. It&rsquo;s small enough to respond in a couple of hundred milliseconds and small enough to fine-tune on a laptop overnight, and as you&rsquo;ll see, with the right data it ended up being more than enough.</p>
 <p>This is how it all fits together:</p>
@@ -158,6 +160,7 @@
 <h2>Step 2: zero-shot clean-up with a prompt</h2>
 <p>My first instinct was to give an off-the-shelf small model a good prompt and see how far that got me, and the answer was not very far, but in a pretty funny way. The 0.8B model treated my dictations as chat messages and replied to them, so I&rsquo;d dictate a prompt meant for Claude and it would cheerfully answer &ldquo;I&rsquo;m ready to help!&rdquo; instead of cleaning up my words, which is a real problem when 18 of my 20 test dictations were prompts going into an AI assistant. Its WER was actually worse than leaving the raw transcript alone.</p>
 <p>Reframing the task in the prompt as a transcription cleaner rather than an assistant, with an instruction to keep every word, fixed the behaviour:</p>
+<div class="table">
 <table>
 <thead>
 <tr>
@@ -192,6 +195,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <p>The bigger models were more accurate but far too slow on long dictations, considering Wispr takes about 0.65 seconds, and the small one was quick but no better than doing nothing. That led to the two decisions that shaped everything after it:</p>
 <ol>
 <li><strong>Run the clean-up on small chunks while the user is still talking</strong>, so there&rsquo;s almost nothing left to do at key release.</li>
@@ -219,6 +223,7 @@
 <p>From there I kept widening the training data, adding screen context (names on screen and the text before the cursor), structured examples like lists, emails and quotes built from my own sentences, and self-corrections, both 994 real ones from my history (&ldquo;Tuesday, sorry, Wednesday&rdquo;) and 900 synthetic ones. Self-correction error dropped a lot, but longer dictations regressed, most likely because I&rsquo;d resumed training with a fresh optimiser at full learning rate and no warm-up, which shakes an adapter early on. That was also the point where I decided the project needed a much stricter evaluation protocol before I trusted any more numbers.</p>
 <h2>Step 6: a proper evaluation protocol</h2>
 <p>A weekend prototype can get away with a quick test set, but once I knew I wanted to publish numbers, I rebuilt the evaluation the way I&rsquo;d want to see it done at work, so I audited my own setup with the same eye I&rsquo;d use reviewing someone else&rsquo;s work, and man, there was a lot to tighten up. My validation split could shift whenever I added data, my behaviour tests were drawn from that same validation pool, and twenty test clips with no error bars just isn&rsquo;t enough to make claims on. So I locked it all down:</p>
+<div class="table">
 <table>
 <thead>
 <tr>
@@ -257,6 +262,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <p>It&rsquo;s slower to work this way, but it&rsquo;s the only way I&rsquo;d stand behind the numbers in this post.</p>
 <h2>Step 7: what real use catches that benchmarks don&rsquo;t</h2>
 <p>Using it for real emails turned up a few bugs that no benchmark had caught:</p>
@@ -285,6 +291,7 @@
 <li>names and words from the screen, as vocabulary</li>
 </ul>
 <p>During training each of those fields gets dropped 10 to 20% of the time so the model copes gracefully when the app can&rsquo;t read something, and I added targeted examples for misheard names, misheard sign-off names and spoken times:</p>
+<div class="table">
 <table>
 <thead>
 <tr>
@@ -316,6 +323,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <p>That became my personal model.</p>
 <h2>Step 9: a general model trained on synthetic data</h2>
 <p>My personal model is trained on my emails, so publishing it was never an option, and for everyone else I trained a <strong>general model on 12,000 synthetic dictations</strong>. I generated them with GPT-5-mini from seeded scenario cards covering invented people and companies, nine English-speaking locales, 36 kinds of jobs and 14 behaviours, from lists and emails to code, terminal commands and instruction-like text that has to be cleaned rather than obeyed. The generator writes the clean target first and then derives a noisy, ASR-style transcript from it, and the whole dataset cost about <strong>$11.50</strong>.</p>
@@ -348,6 +356,7 @@
 
 <p>Not every training run turns out that well, which is exactly why that gate exists, so you only ever end up with a model that&rsquo;s better than the one you had.</p>
 <h2>Where it landed</h2>
+<div class="table">
 <table>
 <thead>
 <tr>
@@ -389,6 +398,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <h2>What I learned</h2>
 <ul>
 <li><strong>Your own data beats a bigger model.</strong> A 0.8-billion-parameter model trained on my history does what I need better than much larger general-purpose ones.</li>

@@ -41,6 +41,8 @@ def parse(path):
     meta["slug"] = path.stem
     meta["date"] = dt.date.fromisoformat(meta["date"])
     meta["html"] = markdown.markdown(m.group(2), extensions=["fenced_code", "tables", "smarty"])
+    # tables scroll sideways inside their own box on narrow screens, and fill the full width otherwise
+    meta["html"] = meta["html"].replace("<table>", '<div class="table">\n<table>').replace("</table>", "</table>\n</div>")
     art = re.search(r"<svg.*?</svg>", m.group(2), re.S)  # the cover drawing doubles as the list thumbnail
     meta["thumb"] = (f'<span class="bloglist__img cover" aria-hidden="true">{art.group(0)}</span>' if art else
                      f'<img class="bloglist__img" src="/assets/og/{path.stem}.png" alt="" width="1200" height="630" loading="lazy">')

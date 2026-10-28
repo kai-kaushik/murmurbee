@@ -1195,7 +1195,6 @@ kbd {
 .post__body pre { padding: 18px 20px; border-radius: 14px; background: var(--raised); border: 1px solid var(--border); overflow-x: auto; font-size: 15px; line-height: 1.55; }
 .post__body pre code { padding: 0; background: none; }
 .post__body img { max-width: 100%; height: auto; border-radius: 14px; }
-.post__body table { width: 100%; border-collapse: collapse; font-size: 16px; }
 .post__body th, .post__body td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
 .post__body th { color: var(--linen); font-weight: 500; }
 .nav__links a[aria-current="page"] { color: var(--linen); }
@@ -1230,10 +1229,9 @@ kbd {
 .cover .c-strike { stroke: var(--strike); stroke-width: 3; stroke-linecap: round; }
 
 /* ---------- Blog tables: a quiet container, tinted header, aligned numbers ---------- */
+.post__body .table { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--raised); }
 .post__body table {
-  display: block; overflow-x: auto; width: 100%;
-  border-collapse: separate; border-spacing: 0;
-  border: 1px solid var(--border); border-radius: 16px; background: var(--raised);
+  width: 100%; border-collapse: separate; border-spacing: 0;
   font-size: 15.5px; line-height: 1.45; font-variant-numeric: tabular-nums;
 }
 .post__body thead th { background: var(--tint); color: var(--linen); font-weight: 500; font-size: 14px; white-space: nowrap; }
