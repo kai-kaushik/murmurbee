@@ -101,7 +101,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let t = Date()
         do {
             permissions.modelStatus = "Loading speech model…"
-            try await transcriber.load()
+            try await transcriber.load { line in
+                Task { @MainActor [weak self] in self?.permissions.modelStatus = line }
+            }
         } catch {
             status = "Speech model failed to load: \(error.localizedDescription)"
             permissions.modelStatus = status
@@ -344,7 +346,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func startHotkey() {
-        if !hotkey.start() {
+        // Creating the event tap without Input Monitoring makes macOS pop its permission prompt, so don't try until
+        // it's granted: the prompt should only appear when the user clicks that step in setup.
+        if !CGPreflightListenEventAccess() || !hotkey.start() {
             // Input Monitoring not granted yet: retry quietly until it is.
             Task {
                 try? await Task.sleep(for: .seconds(2))

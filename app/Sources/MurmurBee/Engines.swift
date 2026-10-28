@@ -11,10 +11,19 @@ actor Transcriber {
     static let origin = "parakeet-tdt-ultra@fluidaudio"
     private var asr: AsrManager?
 
-    func load() async throws {
+    /// `status` gets short progress lines for setup ("Downloading speech model… 42%").
+    func load(status: @escaping @Sendable (String) -> Void = { _ in }) async throws {
         // Download, verify every file against the pinned hashes, and only then load (see SpeechModelPin).
-        let dir = try await AsrModels.download(version: .ultra)
+        let dir = try await AsrModels.download(version: .ultra) { p in
+            switch p.phase {
+            case .listing: status("Downloading speech model…")
+            case .downloading: status(String(format: "Downloading speech model… %.0f%%", min(p.fractionCompleted, 1) * 100))
+            case .compiling: status("Preparing speech model…")
+            }
+        }
+        status("Checking speech model…")
         try SpeechModelPin.verify(dir)
+        status("Loading speech model…")
         let models = try await AsrModels.load(from: dir, version: .ultra)
         let manager = AsrManager(config: .default)
         try await manager.loadModels(models)

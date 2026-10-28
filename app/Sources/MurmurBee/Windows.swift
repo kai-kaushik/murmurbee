@@ -45,7 +45,9 @@ struct SetupView: View {
     @State private var confetti = 0
     private let importer = WisprImporter.shared
 
-    private var allSet: Bool { permissions.allGranted && permissions.listening }
+    private var permissionsDone: Bool { permissions.allGranted && permissions.listening }
+    /// Only "all set" (and confetti) once dictation actually works, models included.
+    private var allSet: Bool { permissionsDone && permissions.modelsReady }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -57,6 +59,10 @@ struct SetupView: View {
                     if allSet {
                         Text("You’re all set").font(Brand.sora(26)).foregroundStyle(Brand.linen)
                         Text("Hold \(settings.holdKey.rawValue) in any app and start talking.")
+                            .foregroundStyle(Brand.sand)
+                    } else if permissionsDone {
+                        Text("Almost there").font(Brand.sora(26)).foregroundStyle(Brand.linen)
+                        Text("Downloading the models. This takes a few minutes the first time.")
                             .foregroundStyle(Brand.sand)
                     } else {
                         Wordmark(size: 26)
