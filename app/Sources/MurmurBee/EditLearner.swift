@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Learns from what the user changes after a paste: finds the inserted span in the field's later contents,
 /// diffs it word by word, and turns name corrections ("Priyanca" → "Priyanka") into dictionary entries.
@@ -19,7 +19,24 @@ enum EditLearner {
             guard let s = later.range(of: suffix, range: start..<later.endIndex) else { return nil }
             end = s.lowerBound
         }
-        return String(later[start..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let span = String(later[start..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+        return resembles(inserted, span) ? span : nil
+    }
+
+    /// An edit keeps most of the dictated words. Without this, a chat box that's emptied by sending (where the
+    /// dictation was the whole field, so there's no surrounding text to anchor on) reads as "edited to nothing".
+    static func resembles(_ inserted: String, _ span: String) -> Bool {
+        let x = inserted.split(whereSeparator: \.isWhitespace), y = span.split(whereSeparator: \.isWhitespace)
+        guard !x.isEmpty, !y.isEmpty, x.count < 400, y.count < 400 else { return false }
+        var dp = Array(repeating: Array(repeating: 0, count: y.count + 1), count: x.count + 1)
+        for i in stride(from: x.count - 1, through: 0, by: -1) {
+            for j in stride(from: y.count - 1, through: 0, by: -1) {
+                dp[i][j] = x[i] == y[j] ? dp[i + 1][j + 1] + 1 : max(dp[i + 1][j], dp[i][j + 1])
+            }
+        }
+        let kept = Double(dp[0][0])
+        if x.count <= 3 { return kept >= Double(x.count - 1) && y.count <= x.count + 2 }
+        return kept / Double(x.count) >= 0.5 && kept / Double(y.count) >= 0.5
     }
 
     /// Word-level replacements of one or two words, via a small LCS alignment.
@@ -49,18 +66,28 @@ enum EditLearner {
         return out
     }
 
-    /// Names worth remembering: the replacement is capitalised, differs from the original, and sounds alike.
+    /// Terms worth remembering: the replacement differs from the original, sounds alike, and is a name or other
+    /// unusual word (capitalised, or not in the system dictionary, like "kubectl"). Ordinary words are skipped so
+    /// grammar fixes ("their" → "there") don't fill the dictionary.
+    @MainActor
     static func learnedTerms(inserted: String, edited: String, known: Set<String>) -> [String] {
         let strip = CharacterSet.punctuationCharacters.union(.whitespaces)
         var terms: [String] = []
         for (old, new) in replacements(inserted, edited) {
             let o = old.trimmingCharacters(in: strip), n = new.trimmingCharacters(in: strip)
-            guard let first = n.first, first.isUppercase, n.count >= 3, o.lowercased() != n.lowercased(),
+            guard let first = n.first, first.isUppercase || unusual(n), n.count >= 3, o.lowercased() != n.lowercased(),
                   !known.contains(n), !terms.contains(n),
                   Vocabulary.similarity(o.lowercased(), n.lowercased()) >= 0.5 else { continue }
             terms.append(n)
         }
         return terms
+    }
+
+    @MainActor
+    static func unusual(_ word: String) -> Bool {
+        if word.contains(where: { $0.isNumber || $0.isUppercase }) { return true }
+        return NSSpellChecker.shared.checkSpelling(of: word, startingAt: 0, language: "en",
+                                                   wrap: false, inSpellDocumentWithTag: 0, wordCount: nil).location != NSNotFound
     }
 
     /// Append auto-learned terms to the dictionary file, tagged so the Dictionary tab can show them.

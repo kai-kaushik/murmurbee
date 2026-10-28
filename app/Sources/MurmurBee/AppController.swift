@@ -309,15 +309,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    /// Learning from edits: watch the field for a minute after pasting (every 2 s), keeping the last version
+    /// Learning from edits: watch the field for a minute after pasting (twice a second), keeping the last version
     /// that still contains the text around our paste, i.e. before the user sends or clears it. When it settles,
     /// save the edited text, add corrected names to the dictionary, and say so on the bar, like Wispr.
     private func watchEdits(_ field: AXUIElement, row: Int64, inserted: String, after: String) {
         Task { @MainActor in
             var latest: String?
             var lastChange = Date()
-            for _ in 0..<30 {
-                try? await Task.sleep(for: .seconds(2))
+            for _ in 0..<120 {
+                try? await Task.sleep(for: .milliseconds(500))  // often enough to catch a fix made just before Enter
                 guard let now = Inserter.value(field) else { break }
                 guard EditLearner.editedSpan(inserted: inserted, after: after, later: now) != nil else { break }
                 if now != (latest ?? after) { latest = now; lastChange = Date() }
