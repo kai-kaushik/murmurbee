@@ -40,19 +40,22 @@ export async function POST(request) {
 
   // Plain text only. The From address is whatever the email claims, so it's labelled as unverified, used for Reply-To
   // only when it's a single well-formed address, and shown next to the SPF/DKIM/DMARC results Resend reports (if any).
-  const claimed = String(email.from || event.data.from || "").trim();
+  // Anything the sender controls is flattened to one short line, so it can't forge extra lines in the header block.
+  const oneLine = (v, max = 200) => String(v ?? "").replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ").trim().slice(0, max);
+  const claimed = oneLine(email.from || event.data.from);
   const wellFormed = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/.test(claimed);
   const auth = email.authentication && typeof email.authentication === "object" ? email.authentication : null;
   const checks = auth
-    ? ["spf", "dkim", "dmarc"].filter((k) => auth[k] != null).map((k) => `${k.toUpperCase()}: ${String(auth[k])}`).join(", ")
+    ? ["spf", "dkim", "dmarc"].filter((k) => auth[k] != null).map((k) => `${k.toUpperCase()}: ${oneLine(JSON.stringify(auth[k]), 80)}`).join(", ")
     : "";
   const body = {
     from: FROM,
     to: [FORWARD_TO],
-    subject: `[murmurbee.com] ${email.subject || "(no subject)"}`.replace(/[\r\n]+/g, " ").slice(0, 200),
-    text: `Forwarded from ${to.join(", ")}\n` +
+    subject: `[murmurbee.com] ${oneLine(email.subject, 180) || "(no subject)"}`,
+    text: `Forwarded from ${oneLine(to.join(", "))}\n` +
           `From (as claimed by the email, not verified): ${claimed || "(none)"}\n` +
-          (checks ? `Sender authentication reported by Resend: ${checks}\n` : "") +
+          `Sender authentication reported by Resend: ${checks || "not reported"}\n` +
+          `----- original message below -----\n` +
           `Treat links in this message with care: it came from outside.\n\n` +
           (email.text || "(This message had no plain-text version. Open it in the Resend dashboard to read it.)"),
   };
