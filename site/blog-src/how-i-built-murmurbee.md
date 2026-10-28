@@ -1,79 +1,73 @@
 ---
 title: How I built a private, personal Wispr Flow on my MacBook
-description: The full story of building MurmurBee - the goal, my own Wispr data, picking the models, training on a MacBook Air, every experiment that worked and the ones that didn't.
+description: The full story of building MurmurBee - my own Wispr data, Parakeet on the Neural Engine, Qwen3.5-0.8B fine-tuned with LoRA in MLX, a proper evaluation protocol, synthetic data, and on-device training on a MacBook Air.
 date: 2026-10-27
 order: 3
 ---
 
 <div class="cover" aria-hidden="true">
 <svg viewBox="0 0 1200 520" role="presentation">
-  <g class="c-line">
-    <rect x="110" y="170" width="220" height="150" rx="22"/>
-    <rect x="490" y="170" width="220" height="150" rx="22"/>
-    <rect x="870" y="170" width="220" height="150" rx="22"/>
-  </g>
+  <path class="c-line" d="M250 410h640"/>
   <g class="c-honey">
-    <rect x="160" y="236" width="10" height="20" rx="5"/><rect x="180" y="222" width="10" height="48" rx="5"/><rect x="200" y="214" width="10" height="64" rx="5"/>
-    <rect x="220" y="228" width="10" height="36" rx="5"/><rect x="240" y="218" width="10" height="56" rx="5"/><rect x="260" y="232" width="10" height="28" rx="5"/>
+    <rect x="290" y="150" width="56" height="260" rx="10"/>
+    <rect x="390" y="200" width="56" height="210" rx="10"/>
+    <rect x="490" y="250" width="56" height="160" rx="10"/>
+    <rect x="590" y="290" width="56" height="120" rx="10"/>
+    <rect x="690" y="325" width="56" height="85" rx="10"/>
+    <rect x="790" y="352" width="56" height="58" rx="10"/>
   </g>
-  <text class="c-sand" x="526" y="232" font-size="26">um, so</text>
-  <line class="c-strike" x1="522" y1="223" x2="612" y2="223"/>
-  <text class="c-ink" x="526" y="276" font-size="26">So can we…</text>
-  <text class="c-ink" x="910" y="256" font-size="30">⌘V</text>
-  <path class="c-trail" d="M330 245h160M710 245h160"/>
-  <image href="/assets/murmurbee-bee.svg" x="1010" y="80" width="100" height="97"/>
+  <path class="c-trail" d="M846 330c60-40 80-120 160-150"/>
+  <image href="/assets/murmurbee-bee.svg" x="990" y="90" width="120" height="116"/>
 </svg>
 </div>
 
-This is the long version. If you just want to know what MurmurBee does, [the short story is here](/blog/i-built-my-own-wispr-flow/). This one is for the curious: what I was trying to build, how I went about it, which models I picked and why, and the experiments along the way, including the ones that failed.
+If you just want to know what MurmurBee does, I wrote [a shorter post about that here](/blog/i-built-my-own-wispr-flow/), but this one is for the people who are curious about how it actually got built, so I go through what I was aiming for, how I went about it, which models I picked and why, and the experiments along the way, including the ones that didn't work out.
 
 ## The goal
 
-I had a simple belief going in: **the best dictation model is the one trained on you.**
+I've been working in AI for about a decade now, a good chunk of that as a computer vision engineer, and if there's one thing I've learnt over and over again it's that the best model for a job is usually the one trained on the right data, which for dictation basically means a model trained on you, on your names and your jargon and the way you write emails and correct yourself halfway through a sentence.
 
-Not the biggest model, not the one in the cloud. The one that knows your names, your jargon, how you write emails and how you correct yourself mid-sentence. So I wanted a dictation app that was:
+So what I wanted was a dictation app that was:
 
-- **Local.** It works offline, and nothing I say leaves my Mac.
-- **Free.** No subscription for something my laptop can do itself.
-- **Fast.** Faster than Wispr Flow, from letting go of the key to text on screen.
-- **Light.** Not another 500 MB app with a dozen background processes.
-- **Personal.** Trained on *me*.
+- **Local**, so it works offline and nothing I say ever leaves my Mac.
+- **Free**, because I didn't want to pay a subscription for something my laptop should be able to do by itself.
+- **Fast**, ideally faster than Wispr Flow from the moment I let go of the key to the moment the text shows up.
+- **Light**, rather than yet another 500 MB app with a dozen background processes.
+- **Personal**, and this was the big one, actually trained on me.
 
-## My unfair advantage: my own data
+## My own data, sitting right there
 
-Here's the thing that made this possible. Wispr Flow keeps a local history of everything you dictate, on your Mac. I'd been using it for ages, so I had a treasure trove of personal data sitting right there:
+What made this whole thing possible is that Wispr Flow keeps a local history of everything you dictate, and since I'd been using it for ages, I basically had a treasure trove of personal training data sitting on my laptop the whole time. It had:
 
-- **10,535 dictations**, each with Wispr's raw transcript, its cleaned-up version, and my own edit when I'd corrected it.
-- **880 of them still with audio**, about 7.2 hours (Wispr only keeps recent recordings).
-- The **app** I was in, and some of what was on screen.
+- **10,535 dictations**, each with Wispr's raw transcript, its cleaned-up output and my own edit whenever I'd corrected something.
+- **880 of them with audio** still attached, about 7.2 hours in total, because Wispr only keeps recent recordings.
+- **The app I was in** for most rows, plus some of what was on screen.
 
-That's a ready-made training set of exactly how one person talks and what they actually wanted typed. I exported it read-only, so Wispr's own files were never touched.
+That's a ready-made supervised dataset of exactly how one person talks and what they actually wanted typed, which is pretty much the dream. I exported it read-only, so Wispr's own files were never touched.
 
 ## Everything on one MacBook
 
-I set myself one more rule: **everything happens on my laptop**, including the training. No cloud GPUs. If a MacBook Air can't do it, normal people can't use it.
+I also gave myself one more rule, which was that everything had to happen on my laptop, training included, with no cloud GPUs at all, because if a MacBook Air can't do it then normal people won't be able to use it either. The machine was a MacBook Air with an M4 chip and 32 GB of memory, and I kept my usual apps open the whole time because that's what real life looks like.
 
-- **The machine:** a MacBook Air with an M4 chip and 32 GB of memory, with my usual apps open the whole time, because that's real life.
-- **Training:** Apple's [MLX](https://github.com/ml-explore/mlx) framework. First `mlx-lm` in Python, later MLX Swift inside the app itself.
-- **The app:** a native Swift menu-bar app. It reads the focused app and nearby screen text through the macOS Accessibility API, and pastes with the clipboard plus ⌘V, then restores whatever was on your clipboard.
+For training I used Apple's [MLX](https://github.com/ml-explore/mlx) framework, first `mlx-lm` in Python for the research phase and later MLX Swift inside the app itself, and the app is a native Swift menu-bar app that reads the focused app and the nearby screen text through the macOS Accessibility API and pastes with the clipboard plus ⌘V, putting back whatever you had on your clipboard afterwards.
 
 ## Choosing the models
 
-Dictation is really two jobs: **turning sound into words**, and **turning words into what you meant**. I picked a model for each.
+Dictation is really two separate problems, turning sound into words and then turning those words into what you actually meant, so I picked a model for each.
 
-**For speech, NVIDIA's Parakeet TDT 0.6B**, run as CoreML on the Mac's **Neural Engine** through [FluidAudio](https://github.com/FluidInference/FluidAudio). The Neural Engine is a part of the chip that mostly sits idle, so recognition doesn't fight the GPU. I tried three versions:
+For speech recognition I went with NVIDIA's **Parakeet TDT 0.6B**, running as CoreML on the Mac's **Neural Engine** through [FluidAudio](https://github.com/FluidInference/FluidAudio). The Neural Engine mostly sits idle on a Mac, so running ASR there means it never competes with the GPU, which matters once you also want a language model and training running on the same machine. I compared three versions of it:
 
-| Version | Disagreement with Wispr | Error rate vs my final text | Time for the last 8 s of audio |
+| Version | Disagreement with Wispr | WER vs my final text | Latency, last 8 s of audio |
 |---|---|---|---|
 | v2 | 6.2% | 20.6% | ~55 ms |
 | v3 | 5.7% | 21.8% | ~59 ms |
 | **Ultra** | **5.5%** | 21.3% | ~61 ms |
 
-Ultra won, narrowly. It also understands 25 European languages, which is a nice bonus.
+Ultra won by a small margin, and it also covers 25 European languages, which was a nice bonus.
 
-**For clean-up, a small language model.** I tried Qwen3.5 at 0.8B and 2B parameters, and Google's Gemma 4 E2B, all 4-bit in MLX. I ended up with the smallest, **Qwen3.5-0.8B**, plus a LoRA adapter trained on my data. Small enough to answer in a couple of hundred milliseconds, and small enough to train on a laptop overnight.
+For the clean-up step I wanted a small language model, so I tried Qwen3.5 at 0.8B and 2B parameters and Google's Gemma 4 E2B, all quantised to 4-bit in MLX, and in the end I went with the smallest one, **Qwen3.5-0.8B**, with a LoRA adapter trained on my data on top. It's small enough to respond in a couple of hundred milliseconds and small enough to fine-tune on a laptop overnight, and as you'll see, with the right data it ended up being more than enough.
 
-Here's how it all fits together:
+This is how it all fits together:
 
 <figure class="flow" aria-label="Pipeline: hold the key and listen, Parakeet transcribes each chunk on the Neural Engine, Qwen3.5-0.8B cleans it up using screen context, then the text is pasted at the cursor. Your edits feed the dictionary.">
 <p class="flow__ctx"><b>Screen context</b>, read on-device through Accessibility: the app, names on screen, text around the cursor, selection, URL, local time</p>
@@ -86,48 +80,40 @@ Here's how it all fits together:
 <p class="flow__learn"><b>Learning:</b> corrections you make after a paste go into your dictionary, and your history can train a personal adapter overnight</p>
 </figure>
 
-Now the fun part: how I actually got there, step by step.
+With that in place, here's how I actually got there, step by step.
 
-## Step 1: is speech recognition even fast enough?
+## Step 1: is on-device ASR fast enough?
 
-This was the first thing I had to know. If transcription took a second, the whole idea was dead.
+This was the first thing I needed to know, because if transcription took a second the whole idea was dead on arrival. It turned out to take **39 to 64 milliseconds** to transcribe the last 8 seconds of audio, at every dictation length, and even a 7-minute ramble took 1.7 seconds in one go. So as long as you transcribe in chunks while someone is still talking, speech recognition is basically free at the moment they let go of the key.
 
-It took **39 to 64 milliseconds** to transcribe the last 8 seconds of audio, at every dictation length. A 7-minute ramble took 1.7 seconds in one go. So the answer was: if you transcribe in chunks while someone's still talking, speech recognition is basically free at the moment they let go.
+The real gap was accuracy, and when I looked at the errors they were almost all names and jargon, so "Claude" turned into "claw", ChatGPT got mangled and colleagues' surnames came out wrong, which told me it wasn't a speed problem at all but a vocabulary and context problem.
 
-Accuracy was the real gap. Most of my errors were names and jargon: "Claude" became "claw", ChatGPT got mangled, colleagues' surnames came out wrong. Not a speed problem, a vocabulary problem.
+## Step 2: zero-shot clean-up with a prompt
 
-## Step 2: can a small model just… clean it up?
+My first instinct was to give an off-the-shelf small model a good prompt and see how far that got me, and the answer was not very far, but in a pretty funny way. The 0.8B model treated my dictations as chat messages and replied to them, so I'd dictate a prompt meant for Claude and it would cheerfully answer "I'm ready to help!" instead of cleaning up my words, which is a real problem when 18 of my 20 test dictations were prompts going into an AI assistant. Its WER was actually worse than leaving the raw transcript alone.
 
-My first instinct: give an off-the-shelf small model a good prompt and see what happens.
+Reframing the task in the prompt as a transcription cleaner rather than an assistant, with an instruction to keep every word, fixed the behaviour:
 
-It was a disaster, and a really funny one. The tiny model read my dictations as **chat messages and replied to them**. I'd dictate a prompt meant for Claude, and it would answer "I'm ready to help!" instead of tidying my words. That's a real problem, because 18 of my 20 test dictations were prompts going into an AI assistant. Its output was literally worse than the raw transcript.
-
-Rewriting the prompt as "you are a transcription cleaner, not an assistant, keep every word" fixed the behaviour:
-
-| Model | Error rate (raw transcript: 0.149) | Short | Medium | Long |
+| Model | WER (raw transcript: 0.149) | Short p50 | Medium p50 | Long p50 |
 |---|---|---|---|---|
 | Qwen3.5-0.8B | 0.161 | 169 ms | 393 ms | 829 ms |
 | Qwen3.5-2B | **0.129** | 380 ms | 814 ms | 2.26 s |
 | Gemma 4 E2B | 0.130 | 394 ms | 855 ms | 2.81 s |
 
-The bigger models were more accurate but way too slow on long dictations (Wispr takes about 0.65 seconds). The small one was quick but still no better than doing nothing. That pushed me into two decisions that shaped everything after:
+The bigger models were more accurate but far too slow on long dictations, considering Wispr takes about 0.65 seconds, and the small one was quick but no better than doing nothing. That led to the two decisions that shaped everything after it:
 
-1. **Clean up in small chunks while you're still talking**, so there's almost nothing left to do at the end.
-2. **Make the small model good by training it**, rather than reaching for a bigger one.
+1. **Run the clean-up on small chunks while the user is still talking**, so there's almost nothing left to do at key release.
+2. **Make the small model good through fine-tuning**, instead of reaching for a bigger one.
 
-## Step 3: teaching it my dictionary (it backfired)
+## Step 3: acoustic vocabulary biasing
 
-Wispr lets you keep a dictionary of names, so I fed my 54 words straight into the speech model to nudge it towards them.
+Wispr lets you keep a dictionary of names, so I tried feeding my 54 dictionary terms into the speech model through a CTC keyword spotter to bias recognition towards them, and it actually made things worse. WER went up from 20.6% to 23.0%, latency went from about 240 to 840 ms, and it started hallucinating my dictionary everywhere, so "Slack" became "Stacy" eight times and "right" became "Rich" twelve times. On top of that, most of the words the model was missing weren't in my dictionary in the first place.
 
-Errors went **up**, from 20.6% to 23.0%, and it got four times slower. It started hearing my dictionary everywhere: "Slack" became "Stacy" eight times, and "right" became "Rich" twelve times. Most of the words it missed weren't even in my dictionary.
+The takeaway was that vocabulary belongs in the clean-up step, where the model can see the surrounding context, rather than in the acoustic model, so I dropped biasing completely.
 
-Lesson: vocabulary belongs in the clean-up step, where the model can see the context, not in the ears. I dropped this idea entirely.
+## Step 4: removing label bias from the evaluation
 
-## Step 4: a fair way to keep score
-
-At this point I realised my scoring was biased. I was comparing everything against "my final text", but when I hadn't edited a dictation, my final text *was* Wispr's output. Of course Wispr looked good.
-
-So I built a neutral answer key: three independent speech models (Wispr, Parakeet and Qwen3-ASR-1.7B, which I used only as a referee) each transcribed the same recordings, and the majority won.
+Early on I realised there was a bias baked into my labels, because I was scoring everything against my final text, and for any dictation I hadn't edited, my final text simply was Wispr's output, so any comparison with Wispr was tilted in its favour. To get around that I built a neutral reference by majority vote across three independent ASR systems on the raw audio (Wispr, Parakeet and Qwen3-ASR-1.7B, which I only ever used as a referee), and scored everyone against that.
 
 <figure class="chart">
 <p class="chart__title">Raw speech recognition vs the neutral key: words right out of 100</p>
@@ -139,60 +125,45 @@ So I built a neutral answer key: three independent speech models (Wispr, Parakee
 <p class="chart__note">10 recordings, 748 words. Caveats: Wispr is one of the three voters, and it had screen context.</p>
 </figure>
 
-Wispr's speech model leads by about 1.3 points, partly because it sees your screen, which helps with names. That told me where to spend my effort: **context**, not a bigger speech model.
+Wispr's speech model leads by about 1.3 points, and part of that comes from it seeing your screen, which helps a lot with names. That pointed me straight at where to spend my effort, which was context rather than a bigger acoustic model.
 
-## Step 5: training it on me
+## Step 5: fine-tuning on my own history
 
-This is where it all came together. I fine-tuned Qwen3.5-0.8B with LoRA on my own history: the raw transcript plus which app I was in as the input, and my edit (or Wispr's output, if I hadn't edited) as the answer.
+This is where it all started coming together. I fine-tuned Qwen3.5-0.8B with LoRA (16 layers) on my history, using the raw transcript plus an app header as the input and my edit, or Wispr's output if I hadn't edited it, as the target.
 
-The first version was a huge jump on short and medium dictations. Errors on short ones halved (0.052 → **0.024**), and it was about twice as fast as the 2B model. When I plugged it into the app, release-to-paste was **112 to 388 milliseconds** on dictations up to 31 seconds long, against Wispr's 650 ms on my history.
+The first adapter was a big jump on short and medium dictations, with WER on short ones dropping from 0.052 to **0.024**, at roughly half the latency of the 2B model, and once I plugged it into the app, release-to-paste came in at **112 to 388 milliseconds** on dictations up to 31 seconds long, against Wispr's median of 650 ms on my history.
 
-Then I gave it more to learn:
+From there I kept widening the training data, adding screen context (names on screen and the text before the cursor), structured examples like lists, emails and quotes built from my own sentences, and self-corrections, both 994 real ones from my history ("Tuesday, sorry, Wednesday") and 900 synthetic ones. Self-correction error dropped a lot, but longer dictations regressed, most likely because I'd resumed training with a fresh optimiser at full learning rate and no warm-up, which shakes an adapter early on. That was also the point where I decided the project needed a much stricter evaluation protocol before I trusted any more numbers.
 
-- **Screen context:** names on screen and the text before the cursor.
-- **Structure:** lists, emails and quotes, built from my own sentences.
-- **Self-corrections:** 994 real ones from my history ("Tuesday, sorry, Wednesday"), plus 900 built ones.
+## Step 6: a proper evaluation protocol
 
-It got much better at corrections. But it also got worse on longer dictations, and that's when I had to stop and look hard at how I was testing.
+A weekend prototype can get away with a quick test set, but once I knew I wanted to publish numbers, I rebuilt the evaluation the way I'd want to see it done at work, so I audited my own setup with the same eye I'd use reviewing someone else's work, and man, there was a lot to tighten up. My validation split could shift whenever I added data, my behaviour tests were drawn from that same validation pool, and twenty test clips with no error bars just isn't enough to make claims on. So I locked it all down:
 
-## Step 6: where I'd been fooling myself
-
-I audited my own setup, and honestly, it wasn't pretty:
-
-| Check | What I found |
+| Piece | How it works |
 |---|---|
-| Test recordings kept out of training | ✅ |
-| Near-duplicates leaking into training | ✅ none above 63% similarity |
-| Validation stable between runs | ❌ adding data reshuffled it, so the model had seen some "validation" examples |
-| Behaviour tests independent of training | ❌ drawn from the validation set, so contaminated |
-| Test set only used for final numbers | ❌ I'd been picking models with it |
-| Test set measures genuinely new dictations | ❌ random dates, mixed in with training data |
-| Enough data to be confident | ❌ only 20 recordings, no error bars |
+| Train / validation split | Deterministic, by a hash of each example's content, so adding data never moves an example between splits |
+| Dev set | 80 stratified clips, used only for checkpoint and model selection |
+| Test set | A temporal hold-out: every clip recorded after a fixed cut-off date, never trained on, scored only at milestones |
+| Leakage control | Near-duplicates (over 80% similarity) are kept in the same split, and dev and test sentences are excluded from all synthetic training data |
+| Behaviour suites | Corrections, lists, emails, sign-offs and continuations, generated from held-out sentence pools |
+| Statistics | Bootstrap 95% confidence intervals on every headline number |
+| Promotion rule | Written down in advance: a model only ships if it beats the current one on dev and test with no suite regressions |
 
-So I rebuilt the whole setup:
+It's slower to work this way, but it's the only way I'd stand behind the numbers in this post.
 
-- **A split that never moves:** each example goes to training or validation by a hash of its content.
-- **A dev set** of 80 recordings, for choosing between models.
-- **A test set split by time:** every recording made after a cut-off date, never trained on, only scored at milestones.
-- **Behaviour tests** (corrections, lists, emails, sign-offs) built from sentences held out of training.
-- **95% confidence intervals** on every headline number.
-- **A rule written down in advance:** a new model only ships if it beats the old one on dev *and* test, without getting worse at anything.
+## Step 7: what real use catches that benchmarks don't
 
-It's slower to work this way. But it's the only way I'd trust the numbers I'm showing you here.
+Using it for real emails turned up a few bugs that no benchmark had caught:
 
-## Step 7: real life breaks benchmarks
+- **A list item got duplicated across a chunk boundary** ("2. Implementation / 3. Implementation").
+- **Sign-offs came out unformatted**, because a length check counted words by spaces, so "Regards,\nKai" looked like a single word and got rejected.
+- **Names came out wrong**, because reading the whole window picked up Gmail's menu labels instead of the email I was actually writing.
 
-Using it for real emails exposed bugs no test had caught:
+All of those were fixed in the app rather than the model, with proper whitespace-aware word counting, list de-duplication and renumbering, and nearest-first screen reading that starts at the field you're typing in and works outwards while skipping menus and toolbars. I also added learning from edits, where the app quietly watches the field for up to a minute after pasting, diffs your corrections and adds any corrected names to your dictionary.
 
-- A **duplicated list item** where two chunks met ("2. Implementation / 3. Implementation").
-- **Unformatted sign-offs**, because a length check counted words by spaces, so "Regards,\nKai" looked like one word and got rejected.
-- **Wrong names**, because reading the whole window picked up Gmail's menu labels instead of the email I was writing.
+## Step 8: corrections, emails and full screen context
 
-The fixes were in the app, not the model: proper word counting, list de-duplication and renumbering, and **reading the screen nearest-first**, from the field you're typing in outwards, skipping menus and toolbars. I also added **learning from edits**: after pasting, the app quietly watches the field for up to a minute, notices if you fix a name, and adds it to your dictionary.
-
-## Step 8: corrections, emails and the screen
-
-With a proper test setup, I retrained more gently (a lower learning rate with a warm-up), which fixed the regression on longer dictations. Self-corrections improved enormously:
+With the new protocol in place I retrained more gently, with a 3e-5 peak learning rate, a 200-step warm-up and cosine decay, and I started scoring long dictations the way the app actually processes them, in chunks with the already-written text as context. That kept the self-correction gains without the earlier regression, and the behaviour gains held up on the held-out test suites.
 
 <figure class="chart">
 <p class="chart__title">Self-correction error on the test set (lower is better)</p>
@@ -203,16 +174,16 @@ With a proper test setup, I retrained more gently (a lower learning rate with a 
 <p class="chart__note">Emails laid out correctly also went from 31 to 39 out of 40.</p>
 </figure>
 
-Then I gave the model **everything the app can see**:
+After that I gave the model everything the app can see, so the prompt now carries:
 
 - your name, locale, time zone and local time (no GPS)
-- the website you're on
+- the URL when you're in a browser
 - your selected text, and the text before and after the cursor
-- names and words from the screen
+- names and words from the screen, as vocabulary
 
-In training I randomly left each of these out now and then, so the model copes when the app can't read something. I added targeted examples for misheard names, misheard sign-offs and spoken times:
+During training each of those fields gets dropped 10 to 20% of the time so the model copes gracefully when the app can't read something, and I added targeted examples for misheard names, misheard sign-off names and spoken times:
 
-| Test | Before | After |
+| Test suite (WER) | Before | After |
 |---|---|---|
 | Fixing a misheard name | 0.168 | **0.080** |
 | Misheard sign-off name | 0.120 | **0.043** |
@@ -221,9 +192,9 @@ In training I randomly left each of these out now and then, so the model copes w
 
 That became my personal model.
 
-## Step 9: a model anyone can download
+## Step 9: a general model trained on synthetic data
 
-My personal model is full of my emails, so I can't publish it. For everyone else, I trained a **general model on 12,000 made-up dictations**: invented people, invented companies, nine English-speaking locales, 36 kinds of jobs, and 14 behaviours, from lists and emails to code and terminal commands. GPT-5-mini wrote the clean version first, then a messy speech-style version of it. The whole dataset cost about **$11.50**.
+My personal model is trained on my emails, so publishing it was never an option, and for everyone else I trained a **general model on 12,000 synthetic dictations**. I generated them with GPT-5-mini from seeded scenario cards covering invented people and companies, nine English-speaking locales, 36 kinds of jobs and 14 behaviours, from lists and emails to code, terminal commands and instruction-like text that has to be cleaned rather than obeyed. The generator writes the clean target first and then derives a noisy, ASR-style transcript from it, and the whole dataset cost about **$11.50**.
 
 <figure class="chart">
 <p class="chart__title">Error rate on my real test recordings (lower is better)</p>
@@ -235,21 +206,16 @@ My personal model is full of my emails, so I can't publish it. For everyone else
 <p class="chart__note">72 recordings. The general model has never seen my data, yet lands within about 2 points of my own model.</p>
 </figure>
 
-One trap I nearly fell into: the training numbers kept improving all the way to the end, but on real speech the best version was **less than halfway through**. After that, it was learning GPT's idea of how people talk, not how people actually talk.
+The interesting part was the distribution shift. Validation loss on the synthetic data kept going down right to the end of training, but on real speech the best checkpoint was at step 2,000 out of 5,000, and after that the model was getting better at GPT's idea of a transcript rather than real ASR output, so I early-stopped on the real dev set instead of the synthetic one.
 
 ## Step 10: training on your Mac, overnight
 
-The last piece was the one I was most excited about: letting *anyone* train their own model, inside the app, on their own Mac.
+The last piece, and honestly the one I was most excited about, was letting anyone train their own model inside the app, on their own Mac. The way it works is:
 
-**How it works:**
+- **Data:** MurmurBee imports your Wispr Flow history (read-only) along with its own history, and takes up to 6,000 recent examples, with your hand edits weighted three times.
+- **Training:** a LoRA adapter (rank 8, 16 layers) on top of the general model in MLX Swift, with an answer-only loss, a short warm-up and a cosine schedule, which pauses whenever you start dictating.
 
-- MurmurBee imports your Wispr Flow history (read-only) and its own history.
-- It takes up to 6,000 recent examples, and your hand-edited ones count three times.
-- It trains a LoRA adapter on the general model in MLX Swift, and pauses whenever you're dictating.
-- It runs in a separate background process, so if macOS's GPU watchdog interrupts a long training step (it happens), the app itself never crashes, and training picks up from the last checkpoint.
-- **The safety net:** your newest dictations are held back as a test. The new model is only switched on if it beats the one you're using.
-
-**The result:**
+Training runs in a separate background process with a checkpoint every 200 steps, because macOS's GPU watchdog can occasionally kill a long Metal command buffer, and that should never take the app down with it. Your newest dictations are held out as a test set, and the new model is only switched on if it beats the one you're already using, which acts as a safety net.
 
 <figure class="chart">
 <p class="chart__title">Error rate on 150 held-back dictations (lower is better)</p>
@@ -260,7 +226,7 @@ The last piece was the one I was most excited about: letting *anyone* train thei
 <p class="chart__note">The best personal model trained inside the app made 47% fewer mistakes than the general one.</p>
 </figure>
 
-Not every training run turns out that well, which is exactly why the safety net exists: you only ever get a model that's better than the one you had.
+Not every training run turns out that well, which is exactly why that gate exists, so you only ever end up with a model that's better than the one you had.
 
 ## Where it landed
 
@@ -275,15 +241,15 @@ Not every training run turns out that well, which is exactly why the safety net 
 
 ## What I learned
 
-- **Your own data beats a bigger model.** A 0.8-billion-parameter model trained on my history does what I need better than much bigger general ones.
-- **Context is the secret ingredient.** Knowing the app, the names on screen and what's already written fixed more errors than any model upgrade.
-- **Measure honestly, or you'll fool yourself.** Most of my early wins shrank once I tested properly. The ones left are the ones I trust.
-- **A laptop is enough.** Everything here, training included, ran on a MacBook Air with my other apps open.
+- **Your own data beats a bigger model.** A 0.8-billion-parameter model trained on my history does what I need better than much larger general-purpose ones.
+- **Context is the secret ingredient.** Knowing the app, the names on screen and what's already written fixed more errors than any model upgrade did.
+- **Measuring properly matters.** The numbers I'm showing here are the ones that survived a strict protocol, which is why I trust them.
+- **A laptop really is enough.** Everything in this post, training included, ran on a MacBook Air with my other apps open, which is maybe the most fun one.
 
 ## Finally
 
-So I made this, and for me it works much better in a bunch of ways: it's faster, it's lighter, it works on a plane, and it knows my words. I wanted everyone to be able to use it at no cost, so I turned it into a proper Mac app, fully free, and added a way to train the model on your own Mac and make it yours with the click of a button.
+So I made this, and for me it works much better in a bunch of ways, it's faster, it's lighter, it works on a plane and it knows my words. I wanted everyone to be able to use it at no cost, so I turned it into a proper Mac app, fully free, and added a way to train the model on your own Mac and make it yours with the click of a button.
 
-I hope you enjoy it. [Download MurmurBee here](https://murmurbee.com), and the code is all [on GitHub](https://github.com/kai-kaushik/murmurbee) if you want to poke around.
+I hope you enjoy it. You can [download MurmurBee here](https://murmurbee.com), and the code is all [on GitHub](https://github.com/kai-kaushik/murmurbee) if you want to poke around.
 
-And if you like it and you're feeling generous, [buy me a coffee](https://ko-fi.com/kaikaushik) with the little cup button on the website. Feeling selfish? Don't! No hard feelings. It's free either way.
+And if you like it and you're feeling generous, [buy me a coffee](https://ko-fi.com/kaikaushik) with the little cup button on the website, and if you're feeling selfish, don't, no hard feelings, it's free either way.

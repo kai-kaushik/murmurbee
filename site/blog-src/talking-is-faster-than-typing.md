@@ -22,15 +22,13 @@ order: 2
 </svg>
 </div>
 
-Here's a slightly embarrassing fact: I think much faster than I type. Most people do. Your brain has the whole email ready, and then your fingers spend two minutes catching up.
-
-Talking doesn't have that problem.
+I've noticed for a long time that I think a lot faster than I type, and I'm pretty sure most people are the same, because your brain already has the whole email ready to go and then your fingers spend the next two minutes trying to catch up. Talking just doesn't have that problem, and once I properly switched to dictating, the difference was big enough that I wanted to look into the actual research behind it.
 
 ## What the research says
 
-The most quoted study is from Stanford, the University of Washington and Baidu in 2016. They had people enter the same everyday phrases on a phone, either by typing or by speaking. [Speech was about **3 times faster** for English](https://hci.stanford.edu/research/speech/paper.html), and the error rate was 20.4% *lower*.
+The study everyone quotes comes from Stanford, the University of Washington and Baidu in 2016, where they had people enter the same everyday phrases on a phone either by typing or by speaking, and [speech came out about **three times faster** for English](https://hci.stanford.edu/research/speech/paper.html), with a 20.4% *lower* error rate on top of that.
 
-To be fair, that was against a phone keyboard, and a real keyboard is quicker. But even on a laptop, most of us aren't fast typists. A study of [136 million keystrokes from 168,000 people](https://userinterfaces.aalto.fi/136Mkeystrokes/) found the average was about 52 words a minute. Meanwhile, people comfortably speak at 120 words a minute or more.
+To be fair, that comparison was against a phone keyboard, and a proper keyboard is a lot quicker, but even on a laptop most of us aren't particularly fast typists. A study of [136 million keystrokes from 168,000 people](https://userinterfaces.aalto.fi/136Mkeystrokes/) found the average was about 52 words a minute, whereas people comfortably speak at 120 words a minute or more.
 
 <figure class="chart">
 <p class="chart__title">Words per minute, roughly</p>
@@ -41,33 +39,33 @@ To be fair, that was against a phone keyboard, and a real keyboard is quicker. B
 <p class="chart__note">Typing: average from Dhakal et al., CHI 2018 (136M keystrokes). Talking: typical conversational pace.</p>
 </figure>
 
-So talking is two to three times faster. That's the whole pitch. But speed is only half the story.
+So talking ends up being somewhere between two and three times faster than typing, and that's really the whole pitch, but in my experience the speed is only half of it.
 
-## Why it's more than speed
+## Why it's about more than speed
 
-**You write how you think.** When I type, I edit as I go: delete, reword, delete again. When I talk, I just say the thing. The first draft comes out more like me and less like a corporate memo.
+The first thing I noticed is that you end up writing the way you actually think. When I type, I'm constantly editing as I go, deleting and rewording and deleting again, whereas when I talk I just say the thing, so the first draft comes out sounding a lot more like me and a lot less like a corporate memo.
 
-**Long messages stop being scary.** That detailed reply you've been putting off? It's 90 seconds of talking. I now send the thorough version of things I used to shorten because typing it felt like a chore.
+Long messages also stop feeling like a chore, because that detailed reply you've been putting off for a day is really just about 90 seconds of talking, so it's much easier to send the thorough version of something rather than cutting it short because typing it all out felt like too much effort.
 
-**Prompts get better.** This one surprised me. In my own testing, 18 of 20 random dictations went into an AI assistant. When you talk to ChatGPT or Claude, you naturally give more context, more examples, more "and by the way". Better input, better answers.
+This next one honestly surprised me, but your prompts to AI get a lot better too. In my own testing, 18 out of 20 random dictations were prompts going into an AI assistant, and when you talk to ChatGPT or Claude you naturally give it more context, more examples and more "oh, and by the way", which means better input and better answers. And on top of all that, your hands get a break, which if you're on a keyboard eight hours a day is something your wrists will definitely thank you for.
 
-**Your hands get a break.** If you're on a keyboard eight hours a day, your wrists will thank you.
+## What used to go wrong (and doesn't anymore)
 
-## What used to go wrong (and doesn't now)
+Voice typing used to be pretty painful for three reasons, really:
 
-Voice typing used to be painful for three reasons:
+1. **It typed out exactly what you said**, every "um" and every false start, with no punctuation.
+2. **It was slow**, so you'd sit there waiting for the text to appear, which completely kills your flow.
+3. **Corrections were awkward**, so if you said the wrong day you'd have to go back and fix it by hand.
 
-1. **It typed exactly what you said.** Every "um", every false start, no punctuation.
-2. **It was slow.** You'd wait for the text to show up, which kills the flow.
-3. **Corrections were awkward.** Say the wrong day, and you'd have to go back and fix it by hand.
+Modern dictation fixes all three of those, because a small language model now tidies things up after the speech model, so "um, so, can we move, sync the meeting to Tuesday, sorry, Wednesday" lands as "Can we sync the meeting to Wednesday?", and on a recent Mac it all happens in about a third of a second.
 
-Modern dictation fixes all three. A small language model tidies up after the speech model, so "um, so, can we move, sync the meeting to Tuesday, sorry, Wednesday" lands as "Can we sync the meeting to Wednesday?". And on a recent Mac, it happens in about a third of a second.
+## How I'd get started
 
-## How I'd start
+If you want to give it a go, this is what I'd do:
 
-- **Pick one place to try it for a week.** Slack or email is perfect. Short, frequent, low stakes.
-- **Talk to it like a friend, not a robot.** Natural sentences work better than careful word-by-word dictation.
-- **Don't stop to fix mistakes.** Just say "sorry" and the right thing, and keep going.
-- **Use it for your AI prompts.** This is where the speed shows up the most.
+- **Pick one place to try it for a week.** Slack or email is perfect for that, since the messages are short, frequent and pretty low stakes.
+- **Talk to it the way you'd talk to a friend** rather than a robot, because natural sentences actually work better than careful word-by-word dictation.
+- **Don't stop to fix your mistakes**, just say "sorry" and the right thing and keep going.
+- **Definitely use it for your AI prompts**, because that's where you'll feel the speed difference the most.
 
-I built [MurmurBee](https://murmurbee.com) to do all of this on your own Mac, for free, without your voice ever leaving the machine. But honestly, whatever you use, try talking for a week. It's one of the few productivity tips that actually stuck for me.
+I built [MurmurBee](https://murmurbee.com) to do all of this on your own Mac, for free, without your voice ever leaving the machine, but honestly, whatever you end up using, I'd really recommend trying talking instead of typing for a week, because it's one of the very few productivity tips that has actually stuck for me.

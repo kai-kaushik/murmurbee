@@ -18,51 +18,49 @@ order: 1
 </svg>
 </div>
 
-I've dictated more than 10,000 messages, emails and prompts on my Mac. Most people who try voice typing give up after a day, and it's almost always for the same few reasons. Here's what actually made it stick for me.
+I've dictated more than 10,000 messages, emails and prompts on my Mac by now, and I've noticed that most people who try voice typing give up after a day or so, almost always for the same handful of reasons. So I thought I'd write down the habits that actually made it stick for me, in case they help you too.
 
 ## 1. Talk like you're explaining it to a friend
 
-The biggest mistake is speaking like a robot: slow, word by word, saying "comma" and "full stop". Modern dictation is built for normal speech. Speak in full sentences at your normal pace and let the app handle punctuation and capital letters.
+The biggest mistake I see is people speaking like a robot, slowly and word by word, saying "comma" and "full stop" out loud. Modern dictation is built for normal speech, so you're much better off talking in full sentences at your normal pace and letting the app take care of the punctuation and capital letters. If it helps, just imagine you're leaving a voice note for a colleague, because that's pretty much the energy you want.
 
-If it helps, imagine you're leaving a voice note for a colleague. That's the energy.
+## 2. Don't stop to fix mistakes, just correct yourself out loud
 
-## 2. Don't stop to fix mistakes. Correct yourself out loud
-
-Said the wrong thing? Don't let go of the key and start editing. Just keep talking:
+If you say the wrong thing, don't let go of the key and start editing, just keep talking, something like:
 
 > "Let's meet on Tuesday, sorry, Wednesday at three."
 
-A good dictation app hears the correction and types "Let's meet on Wednesday at three." It works with "I mean", "no wait" and "actually" too. Once you trust this, you stop pausing, and dictation gets really fast.
+A good dictation app hears the correction and types "Let's meet on Wednesday at three.", and it works with "I mean", "no wait" and "actually" as well. Once you start trusting this you stop pausing all the time, and that's when dictation gets really fast.
 
-## 3. Thinking pauses are fine
+## 3. Thinking pauses are completely fine
 
-You don't need to have the whole sentence ready. "Um", "so", "like" and little pauses are removed automatically. Keep holding the key while you think. It's often quicker than stopping and starting again.
+You don't need to have the whole sentence figured out before you start, because the "um"s, the "so"s, the "like"s and the little pauses all get removed automatically. Just keep holding the key while you think, since that's often quicker than stopping and starting again.
 
 ## 4. Say lists the way you'd say them out loud
 
-You don't need special commands. Just say:
+You don't need any special commands for lists, you can just say something like:
 
 > "We need three things: the contract, the invoice and the signed NDA."
 
-and you'll get a proper list. For longer lists, saying "first", "second", "third" makes it even clearer.
+and you'll get a proper list back. For longer lists, saying "first", "second" and "third" makes it even clearer.
 
 ## 5. Teach it your names once
 
-Names and jargon are where every speech model struggles. My first tests turned "Claude" into "claw" and mangled my colleagues' surnames. Two things fix this:
+Names and jargon are where every speech model struggles, and in my first tests "Claude" kept turning into "claw" and my colleagues' surnames got properly mangled. There are two things that fix this:
 
-- **Add the words to your dictionary** once. In MurmurBee, if you correct a name after it's typed, it learns it automatically.
-- **Let it read the screen.** If you're replying to an email from Siobhan, a smart app sees her name and spells it right, even if it sounds like "shiv on".
+- **Add those words to your dictionary once.** In MurmurBee, if you correct a name after it's been typed, it actually learns it automatically.
+- **Let the app read your screen**, so if you're replying to an email from Siobhan, a smart app can see her name and spell it right even when it sounds like "shiv on".
 
-## 6. Use it for AI prompts first
+## 6. Use it for your AI prompts first
 
-If you only change one thing, dictate your prompts to ChatGPT or Claude. In my own testing, 18 of 20 random dictations went into an AI assistant. Talking makes you give more context, and more context gets you better answers. It's also where the speed difference is most obvious, because prompts are long.
+If you only change one thing, I'd start by dictating your prompts to ChatGPT or Claude. In my own testing, 18 out of 20 random dictations were going into an AI assistant, and talking makes you naturally give a lot more context, which gets you better answers. It's also where the speed difference is the most obvious, simply because prompts tend to be long.
 
 ## 7. Pick a key you can hold without thinking
 
-You'll press it hundreds of times a day, so it needs to be effortless. MurmurBee uses the right ⌥ (Option) key or fn: both sit right under your fingers and you rarely use them for anything else. Hold to talk, let go to paste.
+You'll be pressing it hundreds of times a day, so it really needs to be effortless. MurmurBee uses the right ⌥ (Option) key or fn, both of which sit right under your fingers and don't get used for much else, and you just hold to talk and let go to paste.
 
 ## Bonus: keep it on your Mac
 
-A lot of dictation apps send your voice to a server to transcribe it. That's fine for some things, but I say a lot of private stuff out loud: emails, client names, half-formed ideas. I prefer it never leaving my laptop. That's why I built [MurmurBee](https://murmurbee.com) to run entirely on the Mac, offline, for free.
+A lot of dictation apps send your voice off to a server to transcribe it, which is fine for some things, but I say a lot of private stuff out loud, emails, client names and half-formed ideas, and I'd much rather none of that ever left my laptop. That's a big part of why I built [MurmurBee](https://murmurbee.com) to run entirely on the Mac, offline and for free.
 
-Whatever you use, give these a week. The first day feels weird. By day three you'll wonder why you were typing everything.
+Whatever you end up using, give these a week. The first day honestly feels a bit weird, but by day three you'll probably be wondering why you were typing everything in the first place.
