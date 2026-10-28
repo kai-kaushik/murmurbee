@@ -81,14 +81,7 @@ def page(title, description, canonical, body, og_type="website", image="home"):
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Sora:wght@600&display=swap">
-  <script>
-    (function () {{
-      var t = null;
-      try {{ t = localStorage.getItem("mb-theme"); }} catch (e) {{}}
-      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", t);
-    }})();
-  </script>
+  <script src="/theme.js"></script>
   <link rel="stylesheet" href="/styles.css?v={STYLE_V}">
   <script src="/main.js?v={MAIN_V}" defer></script>
   <script src="/analytics.js?v={ANALYTICS_V}" defer></script>
@@ -127,7 +120,7 @@ def page(title, description, canonical, body, og_type="website", image="home"):
         <span class="wordmark">Murmur<span class="wordmark__bee">Bee</span></span>
       </a>
       <p class="footer__copy">Made with <span role="img" aria-label="love">❤️</span> by Kai</p>
-      <a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a>
+      <span class="footer__links"><a class="footer__gh" href="/privacy/">Privacy</a><a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a></span>
     </div>
   </footer>
 </body>
@@ -197,7 +190,20 @@ def main():
 </channel></rss>
 """)
 
-    urls = [f"{BASE}/"] + ([f"{BASE}/blog/"] if posts else []) + [f"{BASE}/blog/{p['slug']}/" for p in posts]
+    # standalone pages (site/pages-src/*.md -> site/<slug>/index.html), e.g. the privacy page
+    for src in sorted((SITE / "pages-src").glob("*.md")):
+        p = parse(src)
+        body = f"""    <article class="post wrap">
+      <h1 class="post__title">{html.escape(p['title'])}</h1>
+      <p class="post__meta">Last updated {nice(p['date'])}</p>
+      <div class="post__body">
+{p['html']}
+      </div>
+    </article>"""
+        (SITE / p["slug"]).mkdir(exist_ok=True)
+        (SITE / p["slug"] / "index.html").write_text(page(f"{p['title']} | MurmurBee", p["description"], f"{BASE}/{p['slug']}/", body))
+
+    urls = [f"{BASE}/"] + ([f"{BASE}/blog/"] if posts else []) + [f"{BASE}/{s.stem}/" for s in sorted((SITE / "pages-src").glob("*.md"))] + [f"{BASE}/blog/{p['slug']}/" for p in posts]
     (SITE / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                                       + "".join(f"  <url><loc>{u}</loc></url>\n" for u in urls) + "</urlset>\n")
     print(f"{len(posts)} post(s) built")

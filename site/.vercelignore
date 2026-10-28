@@ -1,2 +1,14 @@
-blog-src/
-build_blog.py
+# Allowlist: only the site's own files are deployed, so a stray file in this folder never goes live.
+/*
+!/index.html
+!/styles.css
+!/main.js
+!/analytics.js
+!/kofi.js
+!/theme.js
+!/robots.txt
+!/sitemap.xml
+!/vercel.json
+!/assets
+!/blog
+!/privacy

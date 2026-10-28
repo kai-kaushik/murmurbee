@@ -25,18 +25,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Sora:wght@600&display=swap">
-  <script>
-    (function () {
-      var t = null;
-      try { t = localStorage.getItem("mb-theme"); } catch (e) {}
-      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", t);
-    })();
-  </script>
-  <link rel="stylesheet" href="/styles.css?v=36">
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/styles.css?v=37">
   <script src="/main.js?v=14" defer></script>
-  <script src="/analytics.js?v=3" defer></script>
-  <script src="/kofi.js?v=1" defer></script>
+  <script src="/analytics.js?v=4" defer></script>
+  <script src="/kofi.js?v=2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -149,7 +142,7 @@
         <span class="wordmark">Murmur<span class="wordmark__bee">Bee</span></span>
       </a>
       <p class="footer__copy">Made with <span role="img" aria-label="love">❤️</span> by Kai</p>
-      <a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a>
+      <span class="footer__links"><a class="footer__gh" href="/privacy/">Privacy</a><a class="footer__gh" href="https://github.com/kai-kaushik/murmurbee" rel="noopener">GitHub</a></span>
     </div>
   </footer>
 </body>

@@ -1,8 +1,9 @@
 /* Website analytics with consent.
  *
- * Before anyone answers the cookie banner (and after "no thanks"), PostHog runs cookieless: it keeps its ids in
- * memory only, so visits and clicks are counted but nothing is stored on the device. After "OK", PostHog switches to
- * normal persistence and session recordings, and Google Analytics loads. The choice is kept in localStorage.
+ * Before anyone answers the cookie banner, PostHog runs cookieless: ids live in memory only and the project discards
+ * IP addresses, so visits and clicks are counted anonymously and nothing is stored on the device. "Nah" stops
+ * PostHog completely. "OK" switches it to normal persistence and session recordings, and loads Google Analytics.
+ * The choice is kept in localStorage.
  *
  * These keys are public by design: they can only send events, not read data.
  */
@@ -31,7 +32,8 @@
     persistence: choice === "yes" ? "localStorage+cookie" : "memory",
     disable_session_recording: choice !== "yes",
     capture_pageview: true,
-    capture_pageleave: true
+    capture_pageleave: true,
+    opt_out_capturing_by_default: choice === "no"  // "Nah" earlier: send nothing, not even this page view
   });
 
   // ---- Google Analytics: only after "OK" ----
@@ -58,7 +60,8 @@
   }
   function decline() {
     setChoice("no");
-    posthog.capture("cookies_answered", { choice: "no" });
+    posthog.capture("cookies_answered", { choice: "no" });  // the last event this visitor ever sends
+    posthog.opt_out_capturing();
   }
   if (choice === "yes") loadGA();
 
@@ -79,7 +82,7 @@
     var href = a.getAttribute("href") || "";
     if (/\.dmg($|\?)/.test(href)) track("download_clicked", { placement: placement(a), page: location.pathname });
     else if (/github\.com\/kai-kaushik\/murmurbee\/?$/.test(href)) track("github_clicked", { placement: placement(a), page: location.pathname });
-    else if (/ko-fi\.com/.test(href)) track("tip_clicked", { placement: placement(a) });
+    else if (/ko-fi\.com/.test(href)) track("tip_clicked", { placement: a.classList.contains("coffee") ? "button" : placement(a) });
     else if (a.tagName === "SUMMARY" && a.closest(".faq")) {
       if (!a.parentNode.open) track("faq_opened", { question: a.textContent.trim() });
     }
