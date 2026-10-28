@@ -38,20 +38,25 @@ export async function POST(request) {
   if (!got.ok) return new Response("could not fetch the message", { status: 502 });
   const email = await got.json();
 
-  // Plain text only, and the real envelope sender (not the display name the email claims), with the sender's
-  // SPF/DKIM/DMARC results, so a spoofed or phishing email can't pass itself off once it's in Kai's inbox.
-  const auth = email.authentication || {};
-  const checks = ["spf", "dkim", "dmarc"].map((k) => `${k.toUpperCase()} ${auth[k] ?? "unknown"}`).join(", ");
-  const sender = email.from || event.data.from || "unknown sender";
+  // Plain text only. The From address is whatever the email claims, so it's labelled as unverified, used for Reply-To
+  // only when it's a single well-formed address, and shown next to the SPF/DKIM/DMARC results Resend reports (if any).
+  const claimed = String(email.from || event.data.from || "").trim();
+  const wellFormed = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/.test(claimed);
+  const auth = email.authentication && typeof email.authentication === "object" ? email.authentication : null;
+  const checks = auth
+    ? ["spf", "dkim", "dmarc"].filter((k) => auth[k] != null).map((k) => `${k.toUpperCase()}: ${String(auth[k])}`).join(", ")
+    : "";
   const body = {
     from: FROM,
     to: [FORWARD_TO],
-    reply_to: [sender],
-    subject: `[murmurbee.com, from ${sender}] ${email.subject || "(no subject)"}`.slice(0, 250),
-    text: `Forwarded from ${to.join(", ")}\nSender (envelope): ${sender}\nAuthentication: ${checks}\n` +
+    subject: `[murmurbee.com] ${email.subject || "(no subject)"}`.replace(/[\r\n]+/g, " ").slice(0, 200),
+    text: `Forwarded from ${to.join(", ")}\n` +
+          `From (as claimed by the email, not verified): ${claimed || "(none)"}\n` +
+          (checks ? `Sender authentication reported by Resend: ${checks}\n` : "") +
           `Treat links in this message with care: it came from outside.\n\n` +
           (email.text || "(This message had no plain-text version. Open it in the Resend dashboard to read it.)"),
   };
+  if (wellFormed) body.reply_to = [claimed];
 
   const sent = await fetch("https://api.resend.com/emails", {
     method: "POST",
