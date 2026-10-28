@@ -50,13 +50,7 @@ See [app/README.md](app/README.md) for permissions, settings and debugging.
 | `app/` | The Swift menu-bar app |
 | `scripts/` | Data export, training-set builders, evaluation, sounds and icons |
 | `bench/` | Benchmark harnesses and results |
-| `docs/` | Experiment log |
-| `site/` | The murmurbee.com landing page |
 | `brand/` | Logo and icon sources |
-
-## Licence
-MIT, see [LICENSE](LICENSE). The bundled Sora font is under the SIL Open Font License (`app/Resources/fonts/OFL.txt`).
-Model weights keep their own licences (Parakeet: CC-BY-4.0; Qwen: Apache-2.0).
 
 MurmurBee is an independent project and isn't affiliated with Wispr.
 
@@ -69,4 +63,6 @@ and [app/Resources/ThirdPartyNotices.txt](app/Resources/ThirdPartyNotices.txt).
 ## Licence
 The code in this repository is released under the [MIT licence](LICENSE). The MurmurBee name, the bee logo and the
 app icon are not covered by that licence: please don't use them in a way that suggests your project is MurmurBee or
-is endorsed by it. The website, murmurbee.com, lives in a separate repository.
+is endorsed by it. The bundled Sora font is under the SIL Open Font License (`app/Resources/fonts/OFL.txt`), and model
+weights keep their own licences (Parakeet: CC BY 4.0; Qwen: Apache 2.0). The website, murmurbee.com, lives in a
+separate repository.
