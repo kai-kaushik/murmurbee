@@ -1283,3 +1283,23 @@ kbd {
   .coffee span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 }
 @media print { .coffee { display: none; } }
+/* Ko-fi tipping panel, opened by the coffee button */
+.coffee-panel {
+  position: fixed; left: 16px; bottom: 74px; z-index: 10001;
+  width: 360px; height: min(640px, calc(100vh - 100px));
+  border-radius: 18px; overflow: hidden; background: #fff;
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.08);
+  opacity: 0; transform: translateY(12px); pointer-events: none;
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+.coffee-panel.is-open { opacity: 1; transform: none; pointer-events: auto; }
+.coffee-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
+.coffee-panel__close {
+  position: absolute; top: 10px; right: 10px; z-index: 1; width: 30px; height: 30px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: rgba(22,19,15,.75); color: #fff; cursor: pointer;
+}
+.coffee-panel__close svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; fill: none; }
+@media (max-width: 640px) {
+  .coffee-panel { left: 12px; right: 12px; width: auto; bottom: 78px; height: min(600px, calc(100vh - 110px)); }
+}
+@media (prefers-reduced-motion: reduce) { .coffee-panel { transition: none; } }

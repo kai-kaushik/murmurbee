@@ -30,7 +30,7 @@ MurmurBee is made by Kai Kaushik, an individual developer based in the United Ki
 | Nothing | After you click "Nah" | | |
 
 - Your choice is remembered in your browser's local storage. To change your mind, clear this site's data and the banner will ask again.
-- Fonts are loaded from Google Fonts, which means your browser fetches them from Google's servers. The "Buy me a coffee" button is a plain link to Ko-fi and loads nothing from Ko-fi until you click it.
+- Fonts are loaded from Google Fonts, which means your browser fetches them from Google's servers. The "Buy me a coffee" button opens Ko-fi's tipping panel when you click it; nothing from Ko-fi loads before that, and once open, Ko-fi's own privacy policy applies inside the panel.
 
 ## Who processes data for me
 
