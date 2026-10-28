@@ -180,7 +180,9 @@ final class PersonalTrainer {
 
     /// Training settings. Environment overrides (MB_*) exist for experiments (E15); the defaults ship.
     struct Hyper: Sendable {
-        var lr = 5e-5, warmup = 60, minLRFraction = 0.1, rank = 8, layers = 16, editWeight = 3, seed: UInt64 = 1  // E15 R2; fixed seed (E15f), 0 = random
+        var lr = 5e-5, warmup = 30, minLRFraction = 0.1, rank = 8, layers = 16, editWeight = 3, seed: UInt64 = 1  // E15 R2; fixed seed (E15f), 0 = random
+        // E15g: average gradients over a few examples per update, and keep an exponential moving average of the weights
+        var accumulate = 4, emaDecay = 0.99
         static var current: Hyper {
             let e = ProcessInfo.processInfo.environment
             var h = Hyper()
@@ -191,6 +193,8 @@ final class PersonalTrainer {
             if let v = e["MB_LAYERS"].flatMap(Int.init) { h.layers = v }
             if let v = e["MB_EDIT_WEIGHT"].flatMap(Int.init) { h.editWeight = v }
             if let v = e["MB_SEED"].flatMap(UInt64.init) { h.seed = v }
+            if let v = e["MB_ACCUM"].flatMap(Int.init) { h.accumulate = max(1, v) }
+            if let v = e["MB_EMA"].flatMap(Double.init) { h.emaDecay = v }
             return h
         }
         /// Linear warm-up, then cosine decay to minLRFraction × lr.
@@ -273,7 +277,7 @@ final class PersonalTrainer {
         // E15f: the newest independent dictations before the held-out ones pick the best checkpoint, so that choice
         // never sees the gate's test set. They are kept out of training too.
         let before = all.filter { $0.date < cutoff }
-        let validation = Array(before.filter(\.independent).suffix(60))
+        let validation = Array(before.filter(\.independent).suffix(150))
         let valCutoff = validation.first?.date ?? cutoff
         let train = Array(before.filter { $0.date < valCutoff }.suffix(6000))
 
@@ -285,6 +289,7 @@ final class PersonalTrainer {
         let progressURL = staging.appendingPathComponent("progress.json")
         let checkpointURL = staging.appendingPathComponent("checkpoint.safetensors")
         let optimizerURL = staging.appendingPathComponent("optimizer.safetensors")
+        let emaURL = staging.appendingPathComponent("ema.safetensors")
         var saved = resume ? (try? JSONDecoder().decode(Progress.self, from: Data(contentsOf: progressURL))) : nil
         if saved != nil && !FileManager.default.fileExists(atPath: checkpointURL.path) { saved?.step = 0 }
         if saved == nil {
@@ -300,8 +305,9 @@ final class PersonalTrainer {
         }
 
         // 2. Train a LoRA on the general model.
-        // E15d: 2,400 steps on a full history beat 1,200 clearly (0.105 vs 0.116 held-out WER).
-        let steps = saved?.steps ?? stepsOverride ?? min(2400, max(300, Int(Double(train.count) / 2.5)))
+        // E15d: more training helped (2,400 single-example steps); E15g keeps that budget as 1,200 updates of 4.
+        // Steps are optimiser updates, each averaging `accumulate` examples (E15g: 1,200 updates × 4 for a full history).
+        let steps = saved?.steps ?? stepsOverride ?? min(1200, max(150, train.count / 5))
         let startStep = saved?.step ?? 0
         try JSONEncoder().encode(Progress(currentWER: currentWER, step: startStep, steps: steps)).write(to: progressURL)
         let base = try await loadModelContainer(from: generalDir, using: #huggingFaceTokenizerLoader())
@@ -314,13 +320,16 @@ final class PersonalTrainer {
             if startStep > 0 { try LoRATrain.loadLoRAWeights(model: model, url: checkpointURL) }
             try trainLoop(model: model, tokenizer: context.tokenizer, examples: train, steps: steps, from: startStep,
                           hyper: hyper, optimizerState: startStep > 0 ? optimizerURL : nil,
+                          emaState: startStep > 0 ? emaURL : nil,
                           snapshotAt: Set(snapshotSteps(steps)),
-                          snapshot: { step in
-                              try LoRATrain.saveLoRAWeights(model: model, url: snapshotURL(staging, step))
+                          snapshot: { step, ema in
+                              // snapshots (and so the final model) are the averaged weights
+                              try MLX.save(arrays: ema, url: snapshotURL(staging, step))
                           },
-                          checkpoint: { step, optimizer in
+                          checkpoint: { step, optimizer, ema in
                               try LoRATrain.saveLoRAWeights(model: model, url: checkpointURL)
                               try optimizer.save(to: optimizerURL)
+                              try MLX.save(arrays: ema, url: emaURL)
                               try JSONEncoder().encode(Progress(currentWER: currentWER, step: step, steps: steps))
                                   .write(to: progressURL)
                           }) { step, loss in
@@ -364,6 +373,7 @@ final class PersonalTrainer {
         try? FileManager.default.removeItem(at: progressURL)
         try? FileManager.default.removeItem(at: checkpointURL)
         try? FileManager.default.removeItem(at: optimizerURL)
+        try? FileManager.default.removeItem(at: emaURL)
         let installed = install && newWER < currentWER
         if installed {
             let meta: [String: Any] = [
@@ -421,10 +431,10 @@ final class PersonalTrainer {
         private var m: [String: MLXArray] = [:], v: [String: MLXArray] = [:]
         init(learningRate: Float) { self.learningRate = learningRate }
 
-        func update(model: Module, gradients: ModuleParameters) {
+        func update(model: Module, gradients: [String: MLXArray]) {
             let params = Dictionary(model.trainableParameters().flattened(), uniquingKeysWith: { a, _ in a })
             var updated: [(String, MLXArray)] = []
-            for (key, g) in gradients.flattened() {
+            for (key, g) in gradients {
                 guard let p = params[key] else { continue }
                 let m1 = b1 * (m[key] ?? MLXArray.zeros(like: g)) + (1 - b1) * g
                 let v1 = b2 * (v[key] ?? MLXArray.zeros(like: g)) + (1 - b2) * square(g)
@@ -451,9 +461,9 @@ final class PersonalTrainer {
 
     nonisolated private static func trainLoop(model: any LanguageModel, tokenizer: any MLXLMCommon.Tokenizer, examples: [Example],
                                               steps: Int, from startStep: Int = 0, hyper: Hyper,
-                                              optimizerState: URL? = nil, snapshotAt: Set<Int> = [],
-                                              snapshot: (Int) throws -> Void = { _ in },
-                                              checkpoint: (Int, ResumableAdam) throws -> Void = { _, _ in },
+                                              optimizerState: URL? = nil, emaState: URL? = nil, snapshotAt: Set<Int> = [],
+                                              snapshot: (Int, [String: MLXArray]) throws -> Void = { _, _ in },
+                                              checkpoint: (Int, ResumableAdam, [String: MLXArray]) throws -> Void = { _, _, _ in },
                                               report: (Int, Float?) -> Void) throws {
         // Hand-edited examples can be sampled more often (editWeight copies each).
         let weighted = examples.flatMap { e in Array(repeating: e, count: e.edited ? max(1, hyper.editWeight) : 1) }
@@ -479,26 +489,46 @@ final class PersonalTrainer {
             return [ce]
         }
         model.train(true)
+        // Exponential moving average of the trainable weights: the model that's kept is this smoothed copy, not
+        // wherever the last noisy update happened to land.
+        var ema = Dictionary(model.trainableParameters().flattened(), uniquingKeysWith: { a, _ in a })
+        if let emaState, FileManager.default.fileExists(atPath: emaState.path) {
+            for (k, v) in try loadArrays(url: emaState) where ema[k] != nil { ema[k] = v }
+        }
+        let decay = Float(hyper.emaDecay), accumulate = max(1, hyper.accumulate)
         var recent: [Float] = []
-        for _ in 0..<startStep { _ = rng.next() }  // keep the sampling sequence when resuming
+        for _ in 0..<(startStep * accumulate) { _ = rng.next() }  // keep the sampling sequence when resuming
         for step in startStep..<steps {
             while pause.get() && !cancel.get() { Thread.sleep(forTimeInterval: 0.2) }
             if cancel.get() { throw CancellationError() }
             optimizer.learningRate = hyper.learningRate(step: step, of: steps)
-            let (tokens, promptLength) = encoded[Int.random(in: 0..<encoded.count, using: &rng)]
-            let inputs = MLXArray(tokens.dropLast().map(Int32.init)).reshaped(1, -1)
-            let targets = MLXArray(tokens.dropFirst().map(Int32.init)).reshaped(1, -1)
-            // Position i predicts token i+1: learn only the answer (positions from promptLength-1 on).
-            let mask = (MLXArray(0..<Int32(tokens.count - 1)) .>= Int32(promptLength - 1)).asType(.float32)
-                .reshaped(1, -1)
-            let (values, grads) = lossAndGrad(model, [inputs, targets, mask])
-            optimizer.update(model: model, gradients: grads)
-            // MLX eval materialises the arrays (it is not code evaluation). A GPU fault (e.g. macOS's GPU watchdog)
-            // becomes a thrown error here instead of crashing; the helper exits and the app resumes from a checkpoint.
-            do { try withError { eval(model, optimizer.state, values[0]) } } catch { throw TrainError.gpu(step) }
-            recent.append(values[0].item(Float.self))
-            if snapshotAt.contains(step + 1) { try snapshot(step + 1) }
-            if (step + 1) % 200 == 0 { try checkpoint(step + 1, optimizer) }
+            // Gradient accumulation: average the gradients of `accumulate` examples into one update.
+            var summed: [String: MLXArray] = [:]
+            var lossSum: Float = 0
+            for _ in 0..<accumulate {
+                let (tokens, promptLength) = encoded[Int.random(in: 0..<encoded.count, using: &rng)]
+                let inputs = MLXArray(tokens.dropLast().map(Int32.init)).reshaped(1, -1)
+                let targets = MLXArray(tokens.dropFirst().map(Int32.init)).reshaped(1, -1)
+                // Position i predicts token i+1: learn only the answer (positions from promptLength-1 on).
+                let mask = (MLXArray(0..<Int32(tokens.count - 1)) .>= Int32(promptLength - 1)).asType(.float32)
+                    .reshaped(1, -1)
+                let (values, grads) = lossAndGrad(model, [inputs, targets, mask])
+                for (k, g) in grads.flattened() { summed[k] = summed[k].map { $0 + g } ?? g }
+                // MLX eval materialises the arrays (it is not code evaluation). A GPU fault (e.g. macOS's GPU
+                // watchdog) becomes a thrown error here instead of crashing; the helper exits and the app resumes
+                // from a checkpoint.
+                do { try withError { eval(Array(summed.values), values[0]) } } catch { throw TrainError.gpu(step) }
+                lossSum += values[0].item(Float.self)
+            }
+            let scale = 1 / Float(accumulate)
+            optimizer.update(model: model, gradients: summed.mapValues { $0 * scale })
+            for (k, p) in model.trainableParameters().flattened() {
+                if let e = ema[k] { ema[k] = decay * e + (1 - decay) * p }
+            }
+            do { try withError { eval(model, optimizer.state, Array(ema.values)) } } catch { throw TrainError.gpu(step) }
+            recent.append(lossSum / Float(accumulate))
+            if snapshotAt.contains(step + 1) { try snapshot(step + 1, ema) }
+            if (step + 1) % 100 == 0 { try checkpoint(step + 1, optimizer, ema) }
             if (step + 1) % 10 == 0 || step == startStep {
                 report(step + 1, recent.isEmpty ? nil : recent.reduce(0, +) / Float(recent.count))
                 recent.removeAll()
