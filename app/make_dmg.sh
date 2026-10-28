@@ -44,6 +44,11 @@ SIGN=build.noindex/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update
 if [[ -x "$SIGN" ]]; then
   BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP/Contents/Info.plist")
   SIG=$("$SIGN" "$DMG")   # sparkle:edSignature="..." length="..."
-  python3 make_appcast.py "$VERSION" "$BUILD" "$SIG" > ../site/appcast.xml
-  echo "Appcast: site/appcast.xml ($VERSION, build $BUILD)"
+  # The website lives in a separate (private) repo checked out at ../site; without it, print the feed instead.
+  if [[ -d ../site ]]; then
+    python3 make_appcast.py "$VERSION" "$BUILD" "$SIG" > ../site/appcast.xml
+    echo "Appcast: site/appcast.xml ($VERSION, build $BUILD)"
+  else
+    python3 make_appcast.py "$VERSION" "$BUILD" "$SIG"
+  fi
 fi
