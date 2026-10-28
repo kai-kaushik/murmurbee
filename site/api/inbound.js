@@ -8,8 +8,6 @@ const FORWARD_TO = "kaikaushik1995@gmail.com";
 const FROM = "MurmurBee <forward@murmurbee.com>";
 const ADDRESSES = new Set(["privacy@murmurbee.com", "hello@murmurbee.com"]);
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-
 export async function POST(request) {
   const key = process.env.RESEND_API_KEY;
   const secret = process.env.RESEND_WEBHOOK_SECRET;
@@ -40,16 +38,20 @@ export async function POST(request) {
   if (!got.ok) return new Response("could not fetch the message", { status: 502 });
   const email = await got.json();
 
-  const sender = email.headers?.from || email.from || "unknown sender";
-  const note = `Sent to ${to.join(", ")} by ${sender}`;
+  // Plain text only, and the real envelope sender (not the display name the email claims), with the sender's
+  // SPF/DKIM/DMARC results, so a spoofed or phishing email can't pass itself off once it's in Kai's inbox.
+  const auth = email.authentication || {};
+  const checks = ["spf", "dkim", "dmarc"].map((k) => `${k.toUpperCase()} ${auth[k] ?? "unknown"}`).join(", ");
+  const sender = email.from || event.data.from || "unknown sender";
   const body = {
     from: FROM,
     to: [FORWARD_TO],
-    reply_to: [email.from],
-    subject: `[murmurbee.com] ${email.subject || "(no subject)"}`,
-    text: `${note}\n\n${email.text || "(no plain-text body)"}`,
+    reply_to: [sender],
+    subject: `[murmurbee.com, from ${sender}] ${email.subject || "(no subject)"}`.slice(0, 250),
+    text: `Forwarded from ${to.join(", ")}\nSender (envelope): ${sender}\nAuthentication: ${checks}\n` +
+          `Treat links in this message with care: it came from outside.\n\n` +
+          (email.text || "(This message had no plain-text version. Open it in the Resend dashboard to read it.)"),
   };
-  if (email.html) body.html = `<p style="color:#6A5B45;font-size:13px">${esc(note)}</p><hr>${email.html}`;
 
   const sent = await fetch("https://api.resend.com/emails", {
     method: "POST",
