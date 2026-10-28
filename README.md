@@ -65,3 +65,8 @@ MurmurBee builds on open models and software: NVIDIA's Parakeet TDT 0.6B v3 (pos
 Moondream, Core ML by FluidInference; CC BY 4.0), Qwen3.5-0.8B by the Qwen team (Apache 2.0), FluidAudio, MLX Swift,
 Sparkle and Hugging Face's Swift libraries. Full list and licence texts: [murmurbee.com/licenses](https://murmurbee.com/licenses/)
 and [app/Resources/ThirdPartyNotices.txt](app/Resources/ThirdPartyNotices.txt).
+
+## Licence
+The code in this repository is released under the [MIT licence](LICENSE). The MurmurBee name, the bee logo and the
+app icon are not covered by that licence: please don't use them in a way that suggests your project is MurmurBee or
+is endorsed by it. The website, murmurbee.com, lives in a separate repository.

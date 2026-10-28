@@ -33,3 +33,6 @@ bench/RESULTS.md
 *.p12
 *.mobileprovision
 .vercel
+
+# The website (murmurbee.com) and internal docs live in a separate private repo, checked out here as site/
+site/
