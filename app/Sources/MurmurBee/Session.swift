@@ -75,7 +75,9 @@ final class Session {
         func join(_ parts: [String]) -> String {
             parts.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: " ")
         }
-        return Result(raw: join(chunks.map(\.raw)), cleaned: PostEdit.fixSignoff(last.written, appType: context.appType),
+        // Lists are formatted once over the whole text: a chunk can't know a list is coming (PostEditLists.swift).
+        let written = cleanupOn ? PostEdit.formatSpokenList(last.written) : last.written
+        return Result(raw: join(chunks.map(\.raw)), cleaned: PostEdit.fixSignoff(written, appType: context.appType),
                       paths: chunks.map(\.path).joined(separator: ","),
                       vocab: Array(Set(chunks.flatMap(\.vocab))).sorted(), chunks: chunks.count,
                       durationS: Double(total) / Double(Self.sr), asrFinalMs: last.asrMs, cleanFinalMs: last.cleanMs)

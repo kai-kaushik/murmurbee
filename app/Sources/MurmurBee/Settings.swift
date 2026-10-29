@@ -10,7 +10,7 @@ final class Settings {
     private let d = UserDefaults.standard
 
     var holdKey: Hotkey.Key {
-        didSet { d.set(holdKey.rawValue, forKey: "holdKey"); onBarChange() }
+        didSet { d.set(holdKey.rawValue, forKey: "holdKey"); Hotkey.consumedKeyCode.store(holdKey.keyCode, ordering: .relaxed); onBarChange() }
     }
     /// Double-tap the hold key to dictate without holding; tap again to finish.
     var handsFree: Bool {
