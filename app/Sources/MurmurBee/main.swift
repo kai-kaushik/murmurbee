@@ -174,7 +174,7 @@ if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--snapshot" {
 #endif
 
 // A regular app (Dock icon, main window) that also lives in the menu bar and keeps running when its window closes.
-let app = NSApplication.shared
+let app = MurmurBeeApplication.shared
 app.setActivationPolicy(.regular)
 let controller = AppController()
 app.delegate = controller

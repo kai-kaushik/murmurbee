@@ -41,7 +41,6 @@ struct SetupView: View {
     let done: () -> Void
     /// Celebrate as soon as the window opens (setup finished across a restart, e.g. macOS's "Quit & Reopen").
     var celebrateOnAppear = false
-    @State private var tryText = ""
     @State private var confetti = 0
     private let importer = WisprImporter.shared
 
@@ -113,20 +112,6 @@ struct SetupView: View {
             .padding(.horizontal, 14)
             .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Try it").font(.headline)
-                Text("Click in the box, hold **\(settings.holdKey.rawValue)** and say: “Hi, I'm testing this, um, on Tuesday, no, Wednesday.”")
-                    .font(.callout).foregroundStyle(Brand.sand)
-                TextEditor(text: $tryText)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .frame(height: 64)
-                    .padding(8)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Brand.raised))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.border))
-                    .disabled(!(permissions.allGranted && permissions.listening && permissions.modelsReady))
-            }
 
             HStack {
                 Text("Hold to talk").foregroundStyle(Brand.sand)
@@ -236,7 +221,7 @@ struct SettingsRow<Control: View>: View {
     }
 }
 
-private extension View {
+extension View {
     func settingsToggle() -> some View { toggleStyle(.switch).tint(Brand.honeyFill).labelsHidden() }
     func settingsPicker(_ width: CGFloat = 190) -> some View { labelsHidden().pickerStyle(.menu).frame(width: width) }
 }
@@ -280,7 +265,6 @@ struct GeneralTab: View {
     let permissions: Permissions
     @State private var mics = AudioDevices.inputs()
     @State private var appearance = Theme.mode
-    @State private var autoUpdate = Updates.automatic
 
     var body: some View {
         ScrollView {
@@ -329,16 +313,6 @@ struct GeneralTab: View {
                     SettingsRow(title: "Launch at login") {
                         Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin },
                                                                 set: { settings.launchAtLogin = $0 })).settingsToggle()
-                    }
-                }
-
-                SettingsSection(title: "Updates") {
-                    SettingsRow(title: "Check automatically", detail: "Looks for a new version once a day. Updates are signed and verified before they install.", divider: false) {
-                        Toggle("Check automatically", isOn: Binding(get: { autoUpdate }, set: { autoUpdate = $0; Updates.automatic = $0 }))
-                            .settingsToggle()
-                    }
-                    SettingsRow(title: "Check for updates", detail: "You're on MurmurBee \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "").") {
-                        Button("Check now") { Updates.checkNow() }.buttonStyle(HoneyButton())
                     }
                 }
 

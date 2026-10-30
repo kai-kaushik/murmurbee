@@ -20,6 +20,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store = Store()
     private let pill = PillWindow()
     private let hub = HubModel()
+    private let tour = TourModel()
 
     private var ready = false
     private var status = "Loading models…"
@@ -37,6 +38,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.autosaveName = "MurmurBeeStatusItem"  // remembers its spot if you ⌘-drag it
         _ = updater  // start the update checks
+        if let app = NSApp as? MurmurBeeApplication {
+            app.closeSheets = { [hub] in hub.settingsPane = nil; hub.feedbackOpen = false }
+            app.routeQuitEvents()
+        }
         statusItem.button?.image = Brand.menuBarIcon ?? NSImage(systemSymbolName: "waveform", accessibilityDescription: "MurmurBee")
         rebuildMenu()
 
@@ -153,11 +158,13 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: Keys
 
     private func keyDown() {
+        tour.keyHeld = true
         switch keyState {
         case .idle:
             if begin() { keyState = .holding(Date()) }
         case .tapPending:  // second tap of a double-tap: keep recording without holding
             keyState = .latched
+            if tour.handsFree == .waiting { tour.handsFree = .talking }
             briefHint("Tap \(settings.holdKey.rawValue) to finish")
         case .latched:
             keyState = .ignoreUp
@@ -168,6 +175,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func keyUp() {
+        tour.keyHeld = false
         switch keyState {
         case .holding(let since):
             if settings.handsFree && Date().timeIntervalSince(since) < 0.3 {
@@ -202,6 +210,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .idle where session == nil:
             if begin() {
                 keyState = .latched
+                if tour.handsFree == .waiting { tour.handsFree = .talking }
                 briefHint("Click to finish")
             }
         case .latched:
@@ -276,6 +285,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         PersonalTrainer.setPaused(false)
         keyState = .idle
         pill.show(.idle)
+        tour.keyHeld = false
+        if tour.handsFree == .talking { tour.handsFree = .waiting }
     }
 
     static let terminals: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable",
@@ -388,9 +399,24 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
                           self.settings.onboarded = allSet
                           if allSet { UserDefaults.standard.set(true, forKey: "setupCelebrated") }
                           self.windows.close("setup")
-                          if allSet { self.showHub(.history) }
+                          // First time through, the tour comes next; it opens the main window when it ends.
+                          if allSet && !UserDefaults.standard.bool(forKey: "tourShown") { self.showTour() }
+                          else if allSet { self.showHub(.history) }
                       },
                       celebrateOnAppear: celebrate)
+        }
+    }
+
+    @objc private func showTour() {
+        tour.reset()
+        windows.show("tour", title: "Welcome to MurmurBee") {
+            TourView(settings: settings, tour: tour,
+                     edge: Binding(get: { [settings] in settings.barEdge }, set: { [settings] in settings.barEdge = $0 })) { [weak self] in
+                guard let self else { return }
+                UserDefaults.standard.set(true, forKey: "tourShown")
+                self.windows.close("tour")
+                self.showHub(.history)
+            }
         }
     }
 
@@ -436,6 +462,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .separator(),
             item("Settings…", #selector(showSettings), ",", target: self),
             item("Set Up MurmurBee…", #selector(showSetup as () -> Void), target: self),
+            item("Take the Tour…", #selector(showTour), target: self),
             .separator(),
             item("Hide MurmurBee", #selector(NSApplication.hide(_:)), "h"),
             item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", mods: [.command, .option]),
@@ -500,6 +527,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         add(menu, "Open MurmurBee", #selector(openHub))
         add(menu, "Set Up MurmurBee…", #selector(showSetup as () -> Void))
+        add(menu, "Take the Tour…", #selector(showTour))
         let s = add(menu, "Settings…", #selector(showSettings))
         s.keyEquivalent = ","
         let u = NSMenuItem(title: "Check for Updates…", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),

@@ -6,19 +6,21 @@ import SwiftUI
 @Observable
 final class HubModel {
     enum Pane: String, CaseIterable, Identifiable {
-        case history = "Home", dictionary = "Dictionary", model = "Your model", settings = "Settings", privacy = "Privacy"
+        case history = "Home", dictionary = "Dictionary", model = "Your model", updates = "Updates"
+        case settings = "Settings", privacy = "Privacy"
         var id: String { rawValue }
         var icon: String {
             switch self {
             case .history: "house"
             case .dictionary: "character.book.closed"
             case .model: "sparkles"
+            case .updates: "arrow.down.circle"
             case .settings: "gearshape"
             case .privacy: "lock"
             }
         }
     }
-    /// The page in the window: Home or Dictionary.
+    /// The page in the window: Home, Dictionary, Your model or Updates.
     var pane: Pane = .history
     /// Settings opens as a sheet over the window, on General or Privacy.
     var settingsPane: Pane?
@@ -27,7 +29,7 @@ final class HubModel {
 
     func show(_ p: Pane) {
         switch p {
-        case .history, .dictionary, .model: pane = p; settingsPane = nil
+        case .history, .dictionary, .model, .updates: pane = p; settingsPane = nil
         case .settings, .privacy: settingsPane = p
         }
     }
@@ -55,6 +57,7 @@ struct HubView: View {
                 switch model.pane {
                 case .dictionary: DictionaryPane(model: model)
                 case .model: YourModelPane(hub: model)
+                case .updates: UpdatesPane(updates: .shared)
                 default: HomePane(model: model, store: store, settings: settings)
                 }
             }
@@ -110,11 +113,10 @@ struct HubView: View {
             Spacer()
             Rectangle().fill(Brand.border).frame(height: 1).padding(.vertical, 8)
             ThemeToggle()
+            navButton(HubModel.Pane.updates.rawValue, HubModel.Pane.updates.icon, active: model.pane == .updates,
+                      dot: Updates.shared.available != nil) { model.show(.updates) }
             navButton("Settings", "gearshape") { model.show(.settings) }
             navButton("Send feedback", "bubble.left") { model.feedbackOpen = true }
-            navButton("Help", "questionmark.circle") {
-                NSWorkspace.shared.open(URL(string: "https://github.com/kai-kaushik/murmurbee#readme")!)
-            }
         }
         .padding(.horizontal, 12).padding(.bottom, 14)
         .frame(width: 216)
@@ -124,11 +126,14 @@ struct HubView: View {
         navButton(p.rawValue, p.icon, active: model.pane == p) { model.show(p) }
     }
 
-    private func navButton(_ title: String, _ icon: String, active: Bool = false, action: @escaping () -> Void) -> some View {
+    /// `dot`: a honey dot after the title, for something new (an update is ready).
+    private func navButton(_ title: String, _ icon: String, active: Bool = false, dot: Bool = false,
+                           action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon).frame(width: 20)
                 Text(title)
+                if dot { Circle().fill(Brand.honey).frame(width: 7, height: 7).help("A new version is ready") }
             }
             .font(.system(size: 14, weight: active ? .semibold : .medium))
             .foregroundStyle(active ? Brand.linen : Brand.sand)
@@ -708,6 +713,81 @@ private struct TermRow: View {
         .padding(.horizontal, 18).padding(.vertical, 9)
         .background(hover ? Brand.raised.opacity(0.55) : .clear)
         .onHover { hover = $0 }
+    }
+}
+
+// MARK: - Updates
+
+private struct UpdatesPane: View {
+    let updates: Updates
+    @State private var automatic = Updates.automatic
+    @State private var install = Updates.installAutomatically
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                PageHeader(title: "Updates",
+                           subtitle: "Every update is signed by MurmurBee and checked on your Mac before it installs.") { EmptyView() }
+                status
+                SettingsSection(title: "Options") {
+                    SettingsRow(title: "Check automatically", detail: "Looks for a new version once a day.", divider: false) {
+                        Toggle("Check automatically", isOn: Binding(get: { automatic },
+                                                                    set: { automatic = $0; Updates.automatic = $0 }))
+                            .settingsToggle()
+                    }
+                    SettingsRow(title: "Install automatically",
+                                detail: "Downloads new versions in the background and installs them the next time MurmurBee quits.") {
+                        Toggle("Install automatically", isOn: Binding(get: { install },
+                                                                      set: { install = $0; Updates.installAutomatically = $0 }))
+                            .settingsToggle()
+                    }
+                }
+                if !ReleaseNotes.current.isEmpty { notes }
+            }
+            .padding(.horizontal, 36).padding(.top, 26).padding(.bottom, 32)
+        }
+        .scrollIndicators(.never)
+    }
+
+    private var status: some View {
+        HStack(alignment: .center, spacing: 16) {
+            Image(systemName: updates.available == nil ? "checkmark.seal" : "arrow.down.circle.fill")
+                .font(.system(size: 22)).foregroundStyle(Brand.honey).frame(width: 28)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(updates.available.map { "MurmurBee \($0) is ready to install" } ?? "You're up to date")
+                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
+                Text("You have MurmurBee \(Updates.version)." + (updates.lastChecked.map {
+                    " Last checked \($0.formatted(.relative(presentation: .named)))."
+                } ?? ""))
+                    .font(.system(size: 13)).foregroundStyle(Brand.sand)
+            }
+            Spacer(minLength: 12)
+            Button(updates.available.map { "Install \($0)" } ?? "Check for updates") { Updates.checkNow() }
+                .buttonStyle(HoneyButton())
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
+    }
+
+    private var notes: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("What's new in \(Updates.version)").font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
+            ForEach(ReleaseNotes.current, id: \.self) { line in
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Circle().fill(Brand.honey).frame(width: 5, height: 5).alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
+                    Text(line).font(.system(size: 13)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Button("All release notes") {
+                NSWorkspace.shared.open(URL(string: "https://github.com/kai-kaushik/murmurbee/releases")!)
+            }
+            .buttonStyle(.plain).font(.system(size: 13, weight: .medium)).foregroundStyle(Brand.honey).padding(.top, 2)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.border))
     }
 }
 

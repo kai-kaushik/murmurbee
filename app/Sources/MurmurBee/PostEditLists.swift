@@ -36,7 +36,8 @@ extension PostEdit {
         }
         // Items are short instructions: every one but the last fits in one sentence, and each has a few words.
         // Long spoken paragraphs ("Firstly, … . Secondly, …") stay prose.
-        for item in items.dropLast() where item.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Checked after cleanItem, so the "And" of "…restaurant. And thirdly…" doesn't count as a second sentence.
+        for item in items.dropLast() where cleanItem(item)
             .dropLast().range(of: #"[.!?](\s|$)"#, options: .regularExpression) != nil { return text }
         let cleaned = items.map(cleanItem)
         guard cleaned.allSatisfy({ $0.split(separator: " ").count >= 2 && $0.split(separator: " ").count <= 25 }) else { return text }

@@ -20,6 +20,35 @@ enum Snapshots {
                 .frame(width: 920, height: 640), "hub-dictionary", dir)
         save(HubView(model: HubModel(), store: Store(), settings: .shared, permissions: p, deleteHistory: {})
                 .frame(width: 1080, height: 720), "hub-light", dir, light: true)
+        let u = HubModel(); u.pane = .updates
+        Updates.shared.lastChecked = Date().addingTimeInterval(-3 * 3600)
+        save(HubView(model: u, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-updates", dir)
+        save(HubView(model: u, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-updates-light", dir, light: true)
+        Updates.shared.available = "0.1.9"
+        save(HubView(model: u, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-updates-available", dir)
+        Updates.shared.available = nil
+        let tour = TourModel()
+        func tourShot(_ name: String, edge: PillModel.Edge = .bottom, light: Bool = false) {
+            save(TourView(settings: .shared, tour: tour, edge: .constant(edge), animate: false, done: {}), name, dir, light: light)
+        }
+        tour.keyHeld = true
+        tourShot("tour-1-holding")
+        tour.keyHeld = false
+        tour.listText = PostEdit.formatSpokenList(TourView.listSentence)
+        tourShot("tour-1")
+        tourShot("tour-1-light", light: true)
+        tour.step = 1
+        tour.handsFree = .talking
+        tourShot("tour-2-talking")
+        tour.handsFree = .done
+        tour.handsFreeText = "I'm trying hands-free mode. This is nice, I can just talk without holding anything down."
+        tourShot("tour-2-done")
+        tour.step = 2
+        tourShot("tour-3", edge: .left)
+        tourShot("tour-3-light", edge: .left, light: true)
         save(GeneralTab(settings: .shared, permissions: p).frame(width: 600, height: 900).background(Brand.night),
              "settings-light", dir, light: true)
         save(GeneralTab(settings: .shared, permissions: p).frame(width: 600, height: 900).background(Brand.night), "settings-general", dir)
