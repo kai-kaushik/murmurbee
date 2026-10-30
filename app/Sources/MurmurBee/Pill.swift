@@ -57,6 +57,7 @@ struct PillView: View {
         .opacity(model.dragging || (model.state == .idle && !model.showWhenIdle && !model.hovering) ? 0 : 1)
         .animation(.spring(response: 0.32, dampingFraction: 0.78), value: model.state)
         .animation(.spring(response: 0.28, dampingFraction: 0.85), value: model.hovering)
+        .animation(.easeOut(duration: 0.25), value: model.hint)
         .animation(.easeOut(duration: 0.15), value: model.dragging)
     }
 
@@ -64,7 +65,8 @@ struct PillView: View {
 
     private var hoverIdle: Bool { model.state == .idle && model.hovering }
 
-    /// Bottom edge: one horizontal capsule; messages and hints go inside it.
+    /// Bottom edge: one horizontal capsule; messages go inside it. While listening it only ever shows the
+    /// waveform: a hint ("Tap fn to finish") floats above it for a moment instead.
     private var bottomBar: some View {
         Group {
             if model.state == .idle {
@@ -72,7 +74,9 @@ struct PillView: View {
             } else {
                 HStack(spacing: 8) {
                     indicator
-                    if let t = model.text { Text(t).foregroundStyle(.white.opacity(0.88)).lineLimit(1) }
+                    if model.state != .listening, let t = model.text {
+                        Text(t).foregroundStyle(.white.opacity(0.88)).lineLimit(1)
+                    }
                 }
                 .font(.system(size: 12, weight: .medium))
                 .padding(.horizontal, 14)
@@ -110,9 +114,19 @@ struct PillView: View {
         .frame(width: width, height: height)
     }
 
-    /// "Dictate right ⌥" on hover, like Wispr's "Dictate fn".
+    /// "Dictate right ⌥" on hover, like Wispr's "Dictate fn"; while listening, a brief hint above the bar.
     @ViewBuilder private var tooltip: some View {
-        if hoverIdle {
+        if !model.vertical, model.state == .listening, let hint = model.hint {
+            Text(hint)
+                .font(.system(size: 13))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .frame(height: 30)
+                .background(Capsule().fill(Brand.barNight.opacity(0.88))
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)))
+                .fixedSize()
+                .transition(.opacity.combined(with: .offset(y: 4)))
+        } else if hoverIdle {
             (Text("Dictate ") + Text(model.keyName).bold())
                 .font(.system(size: 13))
                 .foregroundStyle(.white)

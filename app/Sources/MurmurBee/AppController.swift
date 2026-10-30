@@ -158,7 +158,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if begin() { keyState = .holding(Date()) }
         case .tapPending:  // second tap of a double-tap: keep recording without holding
             keyState = .latched
-            pill.model.hint = "Tap \(settings.holdKey.rawValue) to finish"
+            briefHint("Tap \(settings.holdKey.rawValue) to finish")
         case .latched:
             keyState = .ignoreUp
             finish()
@@ -187,13 +187,22 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// How to finish a hands-free dictation, shown for a moment; then the bar goes back to the plain waveform.
+    private func briefHint(_ text: String) {
+        pill.model.hint = text
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1500))
+            if pill.model.hint == text { pill.model.hint = nil }
+        }
+    }
+
     /// Clicking the bar starts a hands-free dictation; clicking again finishes it.
     private func pillClicked() {
         switch keyState {
         case .idle where session == nil:
             if begin() {
                 keyState = .latched
-                pill.model.hint = "Click to finish"
+                briefHint("Click to finish")
             }
         case .latched:
             keyState = .idle
