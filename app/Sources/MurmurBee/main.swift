@@ -85,6 +85,19 @@ if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--import-wispr
     RunLoop.main.run()
 }
 
+// Prints the weekly totals report for a history database without sending it:  MurmurBee --totals-check <history.sqlite>
+if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--totals-check" {
+    let store = Store(path: CommandLine.arguments[2])
+    Task { @MainActor in
+        let u = await store.usage(since: Date().addingTimeInterval(-7 * 24 * 3600))
+        print("first dictation:", u.first.map { "\($0)" } ?? "none")
+        let props = WeeklyTotals.properties(u)
+        for k in props.keys.sorted() { print(" ", k, "=", props[k]!) }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 // Installs a cleanup model package the way first run does:  MurmurBee --fetch-model <url> <sha256> [name]
 if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--fetch-model" {
     let a = CommandLine.arguments

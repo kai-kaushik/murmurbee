@@ -7,6 +7,10 @@ enum Snapshots {
     static func render(to dir: URL) {
         _ = NSApplication.shared
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for light in [false, true] {
+            save(TotalsCard(settings: .shared, done: {}).frame(width: 760).padding(20).background(Brand.night),
+                 light ? "totals-card-light" : "totals-card", dir, light: light)
+        }
         let p = Permissions()
         p.refresh(listening: false)
         p.modelStatus = "Loading cleanup model…"

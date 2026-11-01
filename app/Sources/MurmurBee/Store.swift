@@ -155,6 +155,43 @@ actor Store {
         return out
     }
 
+    struct Usage: Sendable {
+        var dictations = 0, words = 0, edited = 0, days = 0
+        var first: Date?
+    }
+
+    /// Counts for the weekly totals, from dictations made in MurmurBee since `since` (imported ones are skipped).
+    /// `first` is the date of the first MurmurBee dictation ever.
+    func usage(since: Date) -> Usage {
+        let iso = ISO8601DateFormatter()
+        var u = Usage()
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        if sqlite3_prepare_v2(db, "SELECT MIN(created_at) FROM dictations WHERE source IS NULL", -1, &stmt, nil) == SQLITE_OK,
+           sqlite3_step(stmt) == SQLITE_ROW, let t = sqlite3_column_text(stmt, 0) {
+            u.first = iso.date(from: String(cString: t))
+        }
+        sqlite3_finalize(stmt)
+        stmt = nil
+        let sql = """
+            SELECT created_at, COALESCE(NULLIF(cleaned_text, ''), asr_text), edited_text IS NOT NULL
+            FROM dictations WHERE source IS NULL AND created_at >= ? AND COALESCE(NULLIF(cleaned_text, ''), asr_text) <> ''
+            """
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return u }
+        sqlite3_bind_text(stmt, 1, iso.string(from: since), -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        var days = Set<DateComponents>()
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let date = sqlite3_column_text(stmt, 0).flatMap { iso.date(from: String(cString: $0)) } ?? since
+            let text = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+            u.dictations += 1
+            u.words += text.split(whereSeparator: \.isWhitespace).count
+            if sqlite3_column_int(stmt, 2) != 0 { u.edited += 1 }
+            days.insert(Calendar.current.dateComponents([.year, .month, .day], from: date))
+        }
+        u.days = days.count
+        return u
+    }
+
     /// Adds dictations imported from Wispr Flow (one transaction per batch); returns how many were new.
     func importDictations(_ rows: [WisprImport.Row], appName: @Sendable (String) -> String) -> Int {
         let sql = """

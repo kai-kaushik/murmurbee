@@ -50,6 +50,11 @@ final class Updates: NSObject, SPUUpdaterDelegate {
 @MainActor
 enum ReleaseNotes {
     static let byVersion: [String: [String]] = [
+        "0.1.10": [
+            "MurmurBee opens when you log in, so it's ready after a restart. Turn it off in Settings, General.",
+            "Learning from your edits is always on. It happens on this Mac, like everything else.",
+            "You can choose to share anonymous weekly word counts, never your words. Off unless you say yes.",
+        ],
         "0.1.9": [
             "Updates has its own page in the sidebar, with what's new in each version.",
             "A short tour after setup: speak a list, go hands-free, move the bar. Find it again in the MurmurBee menu.",

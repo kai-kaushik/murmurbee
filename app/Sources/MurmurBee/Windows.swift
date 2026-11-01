@@ -363,18 +363,17 @@ struct PrivacyTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 SettingsSection(title: "On this Mac") {
-                    SettingsRow(title: "Network", detail: "None. Speech and cleanup run on this Mac; nothing is sent anywhere.", divider: false) {
+                    SettingsRow(title: "Your words", detail: "Never leave this Mac. Speech and cleanup run here.", divider: false) {
                         Image(systemName: "checkmark.shield").foregroundStyle(Brand.honey)
                     }
                     SettingsRow(title: "Audio", detail: "Never kept. Only the text of each dictation is saved.") {
                         Image(systemName: "waveform.slash").foregroundStyle(Brand.honey)
                     }
                 }
-                SettingsSection(title: "Learning") {
-                    SettingsRow(title: "Learn from my edits",
-                                detail: "After pasting, MurmurBee re-reads the field once or twice to see what you corrected, so it gets those words right next time.",
+                SettingsSection(title: "Sharing") {
+                    SettingsRow(title: "Share anonymous word counts", detail: "Weekly totals only, never your words.",
                                 divider: false) {
-                        Toggle("Learn from my edits", isOn: $settings.learnFromEdits).settingsToggle()
+                        Toggle("Share anonymous word counts", isOn: $settings.shareTotals).settingsToggle()
                     }
                 }
                 SettingsSection(title: "Your data") {

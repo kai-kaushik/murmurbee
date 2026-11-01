@@ -222,6 +222,7 @@ private struct HomePane: View {
     @State private var items: [HistoryItem] = []
     @State private var all: [HistoryItem] = []
     @State private var search = ""
+    @State private var askTotals = false
 
     private var firstName: String {
         let n = settings.signName.isEmpty ? NSFullUserName() : settings.signName
@@ -237,6 +238,8 @@ private struct HomePane: View {
 
             if importer.offerOnHome {
                 WisprCard(importer: importer, flash: model.flash).padding(.horizontal, 36).padding(.bottom, 16)
+            } else if askTotals {
+                TotalsCard(settings: settings) { askTotals = false }.padding(.horizontal, 36).padding(.bottom, 16)
             }
 
             if all.isEmpty {
@@ -272,6 +275,7 @@ private struct HomePane: View {
     private func reload() async {
         items = await store.history(search: search)
         if search.isEmpty { all = items } else if all.isEmpty { all = await store.history() }
+        askTotals = await WeeklyTotals.shouldAsk(settings)
     }
 
     private var empty: some View {
@@ -465,6 +469,28 @@ private struct WisprCard: View {
                     importer.start { r in flash("Imported \(r.dictations.formatted()) dictations and \(r.words) words") }
                 }.buttonStyle(HoneyButton())
             }
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.honey.opacity(0.35)))
+    }
+}
+
+/// Asked once on Home, a week after the first dictation: opt in to the weekly totals (see WeeklyTotals).
+struct TotalsCard: View {
+    let settings: Settings
+    let done: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Help me improve MurmurBee?").font(.system(size: 15, weight: .semibold)).foregroundStyle(Brand.linen)
+                Text("Share anonymous word counts once a week. Never what you say.")
+                    .font(.system(size: 13)).foregroundStyle(Brand.sand).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 12)
+            Button("Not now") { settings.shareTotalsAsked = true; done() }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+            Button("Yes") { settings.shareTotals = true; settings.shareTotalsAsked = true; done() }.buttonStyle(HoneyButton())
         }
         .padding(18)
         .background(RoundedRectangle(cornerRadius: 14).fill(Brand.surface))

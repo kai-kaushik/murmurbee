@@ -8,6 +8,8 @@ vendor/
 # Raw outputs that contain dictated text
 bench/compare_recent.md
 bench/**/*.log
+# Real call recordings and their transcripts and notes (M06): other people's voices, never committed
+bench/meetings/m06/
 # Build products and environments
 app/build.noindex/
 bench/asr/.build/

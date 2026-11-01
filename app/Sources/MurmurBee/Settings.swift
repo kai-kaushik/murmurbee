@@ -27,9 +27,6 @@ final class Settings {
     var signName: String {
         didSet { d.set(signName, forKey: "signName") }
     }
-    var learnFromEdits: Bool {
-        didSet { d.set(learnFromEdits, forKey: "learnFromEdits") }
-    }
     /// "auto" (system default, but never a Bluetooth headset mic), "default", or a CoreAudio device UID.
     var microphone: String {
         didSet { d.set(microphone, forKey: "microphone") }
@@ -46,6 +43,14 @@ final class Settings {
     var onboarded: Bool {
         didSet { d.set(onboarded, forKey: "onboarded") }
     }
+    /// Opt-in: send rounded weekly totals (see WeeklyTotals). Off until you say yes.
+    var shareTotals: Bool {
+        didSet { d.set(shareTotals, forKey: "shareTotals"); WeeklyTotals.settingChanged(shareTotals) }
+    }
+    /// Whether Home has asked (yes or not now), so it only asks once.
+    var shareTotalsAsked: Bool {
+        didSet { d.set(shareTotalsAsked, forKey: "shareTotalsAsked") }
+    }
 
     var launchAtLogin: Bool {
         get { SMAppService.mainApp.status == .enabled }
@@ -55,6 +60,13 @@ final class Settings {
         }
     }
     private var launchAtLoginTick = 0  // lets SwiftUI re-read the system status after a change
+
+    /// On by default: the first launch of the installed app adds it to login items, once. Turning it off sticks.
+    func defaultLaunchAtLogin() {
+        guard !d.bool(forKey: "launchAtLoginDefaulted"), Bundle.main.bundleURL.pathExtension == "app" else { return }
+        d.set(true, forKey: "launchAtLoginDefaulted")
+        if SMAppService.mainApp.status != .enabled { launchAtLogin = true }
+    }
 
     /// Settings saved under the app's old identifier (com.kaigen.murmurbee) carry over once.
     private static func migrateDefaults(into d: UserDefaults) {
@@ -72,10 +84,11 @@ final class Settings {
         showBarWhenIdle = d.object(forKey: "showBarWhenIdle") as? Bool ?? true
         handsFree = d.object(forKey: "handsFree") as? Bool ?? true
         cleanupOn = d.object(forKey: "cleanupOn") as? Bool ?? true
-        learnFromEdits = d.object(forKey: "learnFromEdits") as? Bool ?? true
         playSounds = d.object(forKey: "playSounds") as? Bool ?? true
         signName = d.string(forKey: "signName") ?? ""
         microphone = d.string(forKey: "microphone") ?? "auto"
         onboarded = d.bool(forKey: "onboarded")
+        shareTotals = d.bool(forKey: "shareTotals")
+        shareTotalsAsked = d.bool(forKey: "shareTotalsAsked")
     }
 }

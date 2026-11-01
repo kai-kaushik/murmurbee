@@ -38,6 +38,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.autosaveName = "MurmurBeeStatusItem"  // remembers its spot if you ⌘-drag it
         _ = updater  // start the update checks
+        settings.defaultLaunchAtLogin()
         if let app = NSApp as? MurmurBeeApplication {
             app.closeSheets = { [hub] in hub.settingsPane = nil; hub.feedbackOpen = false }
             app.routeQuitEvents()
@@ -72,6 +73,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         PersonalTrainer.shared.store = store
         PersonalTrainer.shared.userName = settings.signName.isEmpty ? NSFullUserName() : settings.signName
         PersonalTrainer.shared.refresh()
+        WeeklyTotals.start(store: store)
         // A newly trained personal model goes live straight away.
         NotificationCenter.default.addObserver(forName: .personalModelInstalled, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -306,7 +308,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func record(_ r: Session.Result, context: ContextSnapshot, totalMs: Double, outcome: Inserter.Outcome) {
         if outcome.method == .clipboardOnly { pill.flash("Couldn't paste here. Press ⌘V", seconds: 2.5) }
         // No edit capture in terminals at all.
-        let learn = settings.learnFromEdits && !Self.terminals.contains(context.bundleId)
+        let learn = !Self.terminals.contains(context.bundleId)
         Task {
             var rec = DictationRecord()
             rec.context = context

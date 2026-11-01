@@ -2,8 +2,7 @@ import AppKit
 import Foundation
 import SwiftUI
 
-/// "Send feedback": the only thing the app ever sends over the network on its own (apart from model downloads), and
-/// only when you press Send. It carries exactly what you typed, an optional email, and the app and macOS versions.
+/// "Send feedback": sent only when you press Send (the weekly totals, if you opt in, use the same endpoint). It carries exactly what you typed, an optional email, and the app and macOS versions.
 /// No dictations, no history, no device identifiers: each message gets a fresh random id.
 enum Feedback {
     /// The MurmurBee PostHog project. Project keys are write-only and public by design.
