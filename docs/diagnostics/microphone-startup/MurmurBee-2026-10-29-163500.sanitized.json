@@ -1,0 +1,32 @@
+{
+  "format": "sanitized crash excerpt; selected fields only",
+  "source_report": "MurmurBee-2026-10-29-163500.ips",
+  "timestamp": "2026-10-29 16:35:00.00 +0530",
+  "app_version": "0.1.6",
+  "build_version": "7",
+  "os_version": "macOS 26.5 (25F71)",
+  "exception": {
+    "type": "EXC_BREAKPOINT",
+    "signal": "SIGKILL"
+  },
+  "termination": {
+    "namespace": "FOUNDATION",
+    "code": 1
+  },
+  "faulting_queue": "com.apple.main-thread",
+  "top_frames": [
+    "_os_unfair_lock_recursive_abort",
+    "_os_unfair_lock_lock_slow",
+    "Session.finish()",
+    "closure #1 in AppController.finish()",
+    "<deduplicated_symbol>",
+    "<deduplicated_symbol>"
+  ],
+  "application_specific_information": {
+    "libsystem_platform.dylib": [
+      "BUG IN CLIENT OF LIBPLATFORM: Trying to recursively lock an os_unfair_lock",
+      "Abort Cause 259"
+    ]
+  },
+  "scope_note": "Historical v0.1.6 incident. Not reproduced against the final patch; no claim that this change fixes this crash."
+}

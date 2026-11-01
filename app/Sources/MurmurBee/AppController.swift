@@ -3,9 +3,11 @@ import AVFoundation
 import ApplicationServices
 import Sparkle
 import SwiftUI
+import OSLog
 
 @MainActor
 final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private static let captureLogger = Logger(subsystem: "com.murmurbee.app", category: "CaptureTiming")
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     /// Sparkle: checks murmurbee.com/appcast.xml in the background and offers signed updates (see Updates).
     private var updater: SPUStandardUpdaterController { Updates.controller }
@@ -158,10 +160,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: Keys
 
     private func keyDown() {
+        Self.captureLogger.info("Hold key received on main thread")
         tour.keyHeld = true
         switch keyState {
         case .idle:
-            if begin() { keyState = .holding(Date()) }
+            let pressed = Date()
+            if begin() { keyState = .holding(pressed) }
         case .tapPending:  // second tap of a double-tap: keep recording without holding
             keyState = .latched
             if tour.handsFree == .waiting { tour.handsFree = .talking }
@@ -228,20 +232,37 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !ready { pill.flash("Still loading models…") }
             return false
         }
+        let contextStarted = ProcessInfo.processInfo.systemUptime
         context = ContextSnapshot.capture()
+        let contextMs = (ProcessInfo.processInfo.systemUptime - contextStarted) * 1000
+        Self.captureLogger.info("Context captured in \(contextMs, privacy: .public) ms")
+        if context.captureUnavailable { pill.flash("Input field is not responding; try again"); return false }
         if context.isSecureField { pill.flash("Password field, not recording"); return false }
         let s = Session(recorder: recorder, transcriber: transcriber, cleaner: cleaner,
                         context: context, cleanupOn: settings.cleanupOn)
         s.onLevel = { [weak self] in self?.pill.model.level = $0 }
+        s.onCaptureStatus = { [weak self, weak s] status in
+            guard let self, let s, self.session === s else { return }
+            switch status {
+            case .idle: break
+            case .starting:
+                self.pill.show(.starting)
+            case .recording:
+                self.pill.show(.listening)
+                Sounds.play(.start)
+            case .failed(let message):
+                self.cancel()
+                self.pill.flash(message)
+            }
+        }
         let pid = context.pid
         s.screenNames = Task.detached { Vocabulary.screenNames(pid: pid) }
         do {
-            try s.start(device: AudioDevices.resolve(settings.microphone))
+            try s.start(microphone: settings.microphone)
             session = s
             PersonalTrainer.setPaused(true)  // personal training waits while you dictate
             pill.model.hint = nil
-            pill.show(.listening)
-            Sounds.play(.start)
+            pill.show(.starting)
             return true
         } catch {
             pill.flash("Microphone unavailable")

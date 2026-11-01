@@ -1,0 +1,81 @@
+{
+  "format": "sanitized validation evidence",
+  "recorded_on": "2026-10-31",
+  "base_commit": "51885b7",
+  "app_version": "0.1.9",
+  "platform": "Apple Silicon; macOS 26.5 (25F71)",
+  "hardware_runs": [
+    {
+      "route": "Automatic",
+      "attempt": 1,
+      "first_buffer_ms": 209,
+      "readiness_ms": 712,
+      "samples": 99043,
+      "longest_gap_ms": 209
+    },
+    {
+      "route": "Automatic",
+      "attempt": 2,
+      "first_buffer_ms": 184,
+      "readiness_ms": 686,
+      "samples": 99043,
+      "longest_gap_ms": 184
+    },
+    {
+      "route": "Built-in",
+      "attempt": 1,
+      "first_buffer_ms": 185,
+      "readiness_ms": 688,
+      "samples": 99043,
+      "longest_gap_ms": 185
+    },
+    {
+      "route": "Built-in",
+      "attempt": 2,
+      "first_buffer_ms": 185,
+      "readiness_ms": 662,
+      "samples": 100675,
+      "longest_gap_ms": 185
+    }
+  ],
+  "stop_check": "captured sample count remained unchanged after stop",
+  "cancellation_check": "immediate cancellation returned idle with zero samples",
+  "hardware_probe_result": "PASS",
+  "deterministic_checks": [
+    "PASS: an engine with no audio is not ready",
+    "PASS: empty callbacks do not count as captured audio",
+    "PASS: a brief startup burst does not announce readiness",
+    "PASS: sustained audio becomes ready",
+    "PASS: stalled buffers revoke readiness even if the engine runs",
+    "PASS: a sustained stall reaches a bounded failure",
+    "PASS: a microphone that never delivers audio times out",
+    "PASS: route changes revoke readiness",
+    "PASS: capture can become ready after reconfiguration",
+    "PASS: Automatic prefers built-in input when the default is Bluetooth",
+    "PASS: Automatic follows a USB default",
+    "PASS: Automatic falls back to the default without a built-in mic",
+    "PASS: System default does not override the selected system device",
+    "PASS: An explicitly selected microphone resolves by UID",
+    "PASS: A disconnected selected microphone falls back to the system default"
+  ],
+  "live_confirmation": "User confirmed opening-word dictations work on Automatic on 2026-11-01. This is a user report, not an automated transcription-accuracy score.",
+  "build_validation": [
+    "SwiftPM release build passed using pinned dependencies and the installed release Metal shader bundle",
+    "codesign --verify --deep --strict passed for the locally signed app",
+    "git diff --check passed"
+  ],
+  "limitations": [
+    "The original Bluetooth failures and final Automatic/built-in measurements use different routes; they are not a controlled speedup benchmark.",
+    "Bluetooth-headphone use was manually validated by the user; no new instrumented Bluetooth cold-start timing or physical USB validation was collected.",
+    "The standard clean Xcode/Metal build was not run on this machine.",
+    "Command-line --selftest is DEBUG-only and was not exercised as a release model selftest.",
+    "Existing Swift concurrency warnings in the AVAudioConverter input callback remain."
+  ],
+  "bluetooth_user_validation": {
+    "source": "user report",
+    "reported_on": "2026-11-01",
+    "result": "User tested dictation while using Bluetooth headphones and reported that it works better.",
+    "timing_data": "No new instrumented Bluetooth startup measurements were collected.",
+    "input_route": "The specific microphone route used in the manual test was not recorded."
+  }
+}

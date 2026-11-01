@@ -10,7 +10,7 @@ import SwiftUI
 @MainActor
 @Observable
 final class PillModel {
-    enum State: Equatable { case idle, listening, finishing, message(String) }
+    enum State: Equatable { case idle, starting, listening, finishing, message(String) }
     enum Edge: String, CaseIterable { case bottom, left, right }
     var state: State = .idle
     var level: Float = 0
@@ -30,6 +30,7 @@ final class PillModel {
         case .message(let t): t
         case .listening: hint
         case .idle: nil
+        case .starting: "Starting microphone…"
         case .finishing: nil
         }
     }
@@ -160,6 +161,8 @@ struct PillView: View {
 
     @ViewBuilder private var indicator: some View {
         switch model.state {
+        case .starting:
+            ProgressView().controlSize(.small)
         case .listening:
             if model.vertical {
                 VStack(spacing: 8) { dot; Bars(level: model.level, vertical: true) }

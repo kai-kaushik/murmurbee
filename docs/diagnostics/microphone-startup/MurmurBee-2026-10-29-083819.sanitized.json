@@ -1,0 +1,28 @@
+{
+  "format": "sanitized crash excerpt; selected fields only",
+  "source_report": "MurmurBee-2026-10-29-083819.ips",
+  "timestamp": "2026-10-29 08:38:19.00 +0530",
+  "app_version": "0.1.6",
+  "build_version": "7",
+  "os_version": "macOS 26.5 (25F71)",
+  "exception": {
+    "type": "EXC_BREAKPOINT",
+    "signal": "SIGTRAP"
+  },
+  "termination": {
+    "namespace": "SIGNAL",
+    "code": 5,
+    "indicator": "Trace/BPT trap: 5"
+  },
+  "faulting_queue": "com.apple.root.default-qos.cooperative",
+  "top_frames": [
+    "_dispatch_assert_queue_fail",
+    "dispatch_assert_queue$V2.cold.1",
+    "dispatch_assert_queue",
+    "_swift_task_checkIsolatedSwift",
+    "swift_task_isCurrentExecutorWithFlagsImpl(swift::SerialExecutorRef, swift::swift_task_is_current_executor_flag)",
+    "closure #1 in closure #1 in HomePane.list.getter"
+  ],
+  "application_specific_information": null,
+  "scope_note": "Historical v0.1.6 incident. Not reproduced against the final patch; no claim that this change fixes this crash."
+}

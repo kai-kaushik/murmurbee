@@ -46,12 +46,15 @@ enum AudioDevices {
 
     /// The device to record from for a setting value ("auto", "default" or a device UID). nil = system default.
     static func resolve(_ setting: String) -> AudioDeviceID? {
-        let all = inputs()
+        resolve(setting, inputs: inputs(), defaultInput: systemDefaultInput())
+    }
+
+    static func resolve(_ setting: String, inputs all: [Device], defaultInput: AudioDeviceID?) -> AudioDeviceID? {
         switch setting {
         case "default":
             return nil
         case "auto":
-            guard let def = systemDefaultInput(), let d = all.first(where: { $0.id == def }), d.isBluetooth
+            guard let def = defaultInput, let d = all.first(where: { $0.id == def }), d.isBluetooth
             else { return nil }
             return all.first(where: \.isBuiltIn)?.id
         default:
