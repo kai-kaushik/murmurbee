@@ -25,6 +25,18 @@ open "build.noindex/MurmurBee.app"
 The cleanup model is not inside the DMG: it lives in `~/Library/Application Support/MurmurBee/models/`.
 Shipping to other Macs needs a model download step, plus Developer ID signing and notarization.
 
+## Microphone regression checks
+
+Run `./test_capture.sh` with the Command Line Tools to check capture readiness, bounded startup and stall
+timeouts, and Automatic/device-UID selection. These checks do not open the microphone.
+
+For a hardware check, run `./test_capture.sh --hardware`, then open `build.noindex/CaptureProbe.app`.
+The probe requests microphone
+access and checks Automatic, built-in, and any connected Bluetooth input across repeated recordings. It also
+checks that stopping and immediate cancellation stop collecting samples. Only timings and sample counts are
+written to `/tmp/murmurbee-startup-probe.log`; no audio is saved. USB selection is covered by the deterministic
+checks; testing a physical USB microphone requires one to be connected.
+
 ## Permissions (first launch)
 | Permission | Why |
 |---|---|

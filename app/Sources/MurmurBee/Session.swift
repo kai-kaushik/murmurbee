@@ -34,6 +34,7 @@ final class Session {
     /// On-screen names, gathered off the main thread after key-down; awaited by the first cleanup.
     var screenNames: Task<[String], Never> = Task { [] }
     var onLevel: (Float) -> Void = { _ in }
+    var onCaptureStatus: (Recorder.Status) -> Void = { _ in }
 
     private static let sr = Int(Recorder.sampleRate)
     private static let frame = sr * 30 / 1000  // 30 ms analysis frames
@@ -46,12 +47,19 @@ final class Session {
         self.cleanupOn = cleanupOn
     }
 
-    func start(device: AudioDeviceID? = nil) throws {
-        try recorder.start(device: device)
+    func start(microphone: String = "auto") throws {
+        try recorder.start(selection: microphone)
         poller = Task { [weak self] in
+            var previous: Recorder.Status?
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(150))
                 guard let self else { return }
+                let status = self.recorder.status
+                if status != previous {
+                    previous = status
+                    self.onCaptureStatus(status)
+                }
+                if case .failed = status { return }
                 self.onLevel(self.recorder.currentLevel)
                 self.maybeCut()
             }
