@@ -34,6 +34,32 @@ enum Snapshots {
         save(HubView(model: u, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
                 .frame(width: 920, height: 640), "hub-updates-available", dir)
         Updates.shared.available = nil
+        let sample = Meeting(id: 2, date: Date().addingTimeInterval(-3600), title: "Call on Zoom", durationS: 1920, status: .ready,
+                             typed: "ship date?\nask about pricing", transcript: "[00:04] Sam: Shall we start with the launch date?\n[00:09] Speaker 2: Yes, the ninth still works for us.",
+                             notes: "## Summary\nSam and a partner agreed the launch date and pricing.\n\n## Notes\n- Sam asked whether the **ninth** still works.\n- Speaker 2 confirmed it does.\n\n## Action items\n- Sam will send the pricing sheet.")
+        let older = Meeting(id: 1, date: Date().addingTimeInterval(-90000), title: "Call on Google Chrome", durationS: 600, status: .failed, problem: "No speech was heard in this recording.")
+        let meetings = HubModel(); meetings.pane = .meetings
+        MeetingController.shared.preview([sample, older], selected: 2)
+        for light in [false, true] {
+            save(HubView(model: meetings, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                    .frame(width: 920, height: 640), light ? "hub-meetings-light" : "hub-meetings", dir, light: light)
+        }
+        let live = Meeting(id: 3, date: Date(), title: "Call on Zoom", status: .recording, typed: "ask about the ninth")
+        MeetingController.shared.preview([live, sample], selected: 3, recording: 3)
+        save(HubView(model: meetings, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-meetings-recording", dir)
+        save(MeetingBarView(meetings: .shared).padding(20).background(Color.gray), "meeting-bar", dir)
+        let busy = Meeting(id: 4, date: Date(), title: "Meeting", durationS: 300, status: .processing, transcript: "")
+        MeetingController.shared.preview([busy], selected: 4, progress: [4: "Working out who said what…"])
+        save(HubView(model: meetings, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-meetings-busy", dir)
+        Settings.shared.notesModelAsked = false
+        MeetingController.shared.preview([sample], selected: 2)
+        save(HubView(model: meetings, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-meetings-model-choice", dir)
+        MeetingController.shared.preview([], selected: nil)
+        save(HubView(model: meetings, store: Store(), settings: .shared, permissions: p, deleteHistory: {})
+                .frame(width: 920, height: 640), "hub-meetings-empty", dir)
         let tour = TourModel()
         func tourShot(_ name: String, edge: PillModel.Edge = .bottom, light: Bool = false) {
             save(TourView(settings: .shared, tour: tour, edge: .constant(edge), animate: false, done: {}), name, dir, light: light)

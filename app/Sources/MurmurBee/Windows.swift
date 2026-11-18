@@ -30,6 +30,7 @@ enum SystemPane {
     static let accessibility = "Privacy_Accessibility"
     static let inputMonitoring = "Privacy_ListenEvent"
     static let microphone = "Privacy_Microphone"
+    static let audioCapture = "Privacy_AudioCapture"
 }
 
 // MARK: - First-run setup
@@ -301,6 +302,23 @@ struct GeneralTab: View {
                     }
                 }
 
+                SettingsSection(title: "Meetings") {
+                    SettingsRow(title: "Offer to take notes on calls", detail: "Asks when another app has been using your mic for a few seconds.", divider: false) {
+                        Toggle("Offer to take notes on calls", isOn: $settings.offerMeetingNotes).settingsToggle()
+                    }
+                    SettingsRow(title: "Call audio", detail: "macOS asks the first time. To hear other people, MurmurBee needs System Audio Recording.") {
+                        Button("Open Settings") { SystemPane.open(SystemPane.audioCapture) }
+                    }
+                    if ModelStore.canRunAccurateNotes {
+                        SettingsRow(title: "Notes model", detail: MeetingController.shared.modelProgress
+                                    ?? "Accurate makes fewer mistakes but writes shorter notes.") {
+                            ChoiceMenu(selection: Binding(get: { settings.accurateNotes },
+                                                          set: { MeetingController.shared.chooseNotesModel(accurate: $0) }),
+                                       options: [("Standard", false), ("Accurate", true)], width: 130)
+                        }
+                    }
+                }
+
                 SettingsSection(title: "System") {
                     SettingsRow(title: "Microphone", detail: "Automatic avoids Bluetooth headset mics, which sound worse.", divider: false) {
                         ChoiceMenu(selection: $settings.microphone,
@@ -366,7 +384,7 @@ struct PrivacyTab: View {
                     SettingsRow(title: "Your words", detail: "Never leave this Mac. Speech and cleanup run here.", divider: false) {
                         Image(systemName: "checkmark.shield").foregroundStyle(Brand.honey)
                     }
-                    SettingsRow(title: "Audio", detail: "Never kept. Only the text of each dictation is saved.") {
+                    SettingsRow(title: "Audio", detail: "Dictation audio is never kept. Meeting audio is deleted as soon as its transcript is made.") {
                         Image(systemName: "waveform.slash").foregroundStyle(Brand.honey)
                     }
                 }

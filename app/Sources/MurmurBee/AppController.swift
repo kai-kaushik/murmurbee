@@ -74,6 +74,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         PersonalTrainer.shared.userName = settings.signName.isEmpty ? NSFullUserName() : settings.signName
         PersonalTrainer.shared.refresh()
         WeeklyTotals.start(store: store)
+        let meetings = MeetingController.shared
+        meetings.microphone = { [settings] in settings.microphone }
+        meetings.openMeetings = { [weak self] in self?.showHub(.meetings) }
+        meetings.flash = { [weak self] in self?.pill.flash($0) }
+        meetings.onChange = { [weak self] in self?.rebuildMenu() }
+        meetings.start(store: store)
         // A newly trained personal model goes live straight away.
         NotificationCenter.default.addObserver(forName: .personalModelInstalled, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -147,6 +153,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !flag { showHub(.history) }
         return true
     }
+
+    func applicationWillTerminate(_ notification: Notification) { MeetingController.shared.stopForQuit() }
 
     /// Closing the window keeps MurmurBee listening in the menu bar; quit from the Dock or menu.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -424,6 +432,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func showSettings() { showHub(.settings) }
     @objc private func openHub() { showHub(.history) }
+    @objc private func toggleMeeting() {
+        let meetings = MeetingController.shared
+        if meetings.phase == .recording { meetings.stop() } else { meetings.startRecording() }
+    }
 
     private func showHub(_ pane: HubModel.Pane) {
         hub.show(pane)
@@ -527,6 +539,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        add(menu, MeetingController.shared.phase == .recording ? "Stop Meeting Notes" : "Start Meeting Notes", #selector(toggleMeeting))
         add(menu, "Open MurmurBee", #selector(openHub))
         add(menu, "Set Up MurmurBee…", #selector(showSetup as () -> Void))
         add(menu, "Take the Tour…", #selector(showTour))

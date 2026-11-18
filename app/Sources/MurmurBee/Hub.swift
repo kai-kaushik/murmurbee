@@ -6,12 +6,13 @@ import SwiftUI
 @Observable
 final class HubModel {
     enum Pane: String, CaseIterable, Identifiable {
-        case history = "Home", dictionary = "Dictionary", model = "Your model", updates = "Updates"
+        case history = "Home", meetings = "Meetings", dictionary = "Dictionary", model = "Your model", updates = "Updates"
         case settings = "Settings", privacy = "Privacy"
         var id: String { rawValue }
         var icon: String {
             switch self {
             case .history: "house"
+            case .meetings: "person.2"
             case .dictionary: "character.book.closed"
             case .model: "sparkles"
             case .updates: "arrow.down.circle"
@@ -20,7 +21,7 @@ final class HubModel {
             }
         }
     }
-    /// The page in the window: Home, Dictionary, Your model or Updates.
+    /// The page in the window: Home, Meetings, Dictionary, Your model or Updates.
     var pane: Pane = .history
     /// Settings opens as a sheet over the window, on General or Privacy.
     var settingsPane: Pane?
@@ -29,7 +30,7 @@ final class HubModel {
 
     func show(_ p: Pane) {
         switch p {
-        case .history, .dictionary, .model, .updates: pane = p; settingsPane = nil
+        case .history, .meetings, .dictionary, .model, .updates: pane = p; settingsPane = nil
         case .settings, .privacy: settingsPane = p
         }
     }
@@ -55,6 +56,7 @@ struct HubView: View {
             sidebar
             Group {
                 switch model.pane {
+                case .meetings: MeetingsPane(meetings: .shared, flash: model.flash)
                 case .dictionary: DictionaryPane(model: model)
                 case .model: YourModelPane(hub: model)
                 case .updates: UpdatesPane(updates: .shared)
@@ -108,6 +110,7 @@ struct HubView: View {
             }
             .padding(.horizontal, 8).padding(.top, 44).padding(.bottom, 16)  // below the traffic lights
             navItem(.history)
+            navItem(.meetings)
             navItem(.dictionary)
             navItem(.model)
             Spacer()
@@ -168,7 +171,7 @@ private struct ThemeToggle: View {
 
 // MARK: - Page shell
 
-private struct PageHeader<Trailing: View>: View {
+struct PageHeader<Trailing: View>: View {
     let title: String
     var subtitle: String?
     @ViewBuilder var trailing: Trailing

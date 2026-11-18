@@ -10,10 +10,13 @@ Speech recognition and cleanup both run on your Mac. No account, no server, noth
 - **Fast.** On a MacBook Air M4, the median time from releasing the key to text appearing was 0.31 s across 19 real
   dictations (Wispr Flow: 0.65 s median on the same Mac). Speech is transcribed in chunks while you talk, so long
   dictations don't wait at the end.
-- **Private.** Audio is never stored or sent anywhere. Only the text history is kept, locally, and you can delete it in one click.
+- **Private.** Nothing you say is ever sent anywhere. Dictation audio is never stored, and meeting audio is deleted as soon as its transcript is made. Only the text is kept, locally, and you can delete it.
 - **Writes like you meant it.** Removes fillers, follows self-corrections ("Tuesday, sorry, Wednesday"), formats lists,
   emails and sign-offs, and spells names right using your dictionary and what's on screen.
 - **Learns.** Fix a word after it's pasted and MurmurBee adds it to your dictionary.
+- **Meeting notes.** Join a call and MurmurBee offers to take notes, with no bot in the call. Afterwards it writes a
+  transcript that knows who said what, and notes with a summary, action items and decisions, all on your Mac. Type
+  during the call and it looks for what you typed.
 
 ## How it works
 1. **Speech:** NVIDIA Parakeet TDT 0.6B via [FluidAudio](https://github.com/FluidInference/FluidAudio) on the Apple Neural Engine.
@@ -21,6 +24,10 @@ Speech recognition and cleanup both run on your Mac. No account, no server, noth
    It sees the app you're in, nearby text, your selection and your dictionary, and is guarded by checks that stop it
    inventing, dropping or repeating content.
 3. **Paste:** clipboard plus ⌘V at the cursor, verified through Accessibility, with your previous clipboard restored.
+4. **Meetings:** your mic and the Mac's call audio (a Core Audio process tap) are recorded separately, transcribed by
+   Parakeet, split into speakers by FluidAudio's offline diarizer, and turned into notes by Qwen3.5 4B, or Gemma 4
+   26B on Macs with 32 GB or more. The experiments behind every choice are in
+   [docs/MEETING-EXPERIMENTS.md](docs/MEETING-EXPERIMENTS.md).
 
 How it was built, with the models, experiments and results: [How I built MurmurBee](https://murmurbee.com/blog/how-i-built-murmurbee/).
 

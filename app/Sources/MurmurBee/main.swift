@@ -1,5 +1,7 @@
+import AVFoundation
 import AppKit
 import FluidAudio
+import MLX
 
 final class TimeBox: @unchecked Sendable {
     private var start: Date?
@@ -155,6 +157,132 @@ if CommandLine.arguments.count >= 6, CommandLine.arguments[1] == "--clean-text" 
         let final = PostEdit.fixSignoff(PostEdit.snapNames(out, vocab: vocab), appType: a[3])
         print("[\(path.rawValue)] \(final)")
         exit(0)
+    }
+    RunLoop.main.run()
+}
+
+// Feeds a file through a recorder track as a device would, in 4,096-frame buffers starting `offset` seconds in, so
+// format conversion and alignment can be checked without a call:  MurmurBee --track-test <in.wav> <out.wav> <offset>
+if CommandLine.arguments.count >= 5, CommandLine.arguments[1] == "--track-test" {
+    let a = CommandLine.arguments
+    do {
+        let source = try AVAudioFile(forReading: URL(fileURLWithPath: a[2]))
+        let t0 = AVAudioTime.seconds(forHostTime: mach_absolute_time())
+        let track = try MeetingRecorder.Track(URL(fileURLWithPath: a[3]), start: t0)
+        var at = t0 + (Double(a[4]) ?? 0)
+        let buffer = AVAudioPCMBuffer(pcmFormat: source.processingFormat, frameCapacity: 4096)!
+        while source.framePosition < source.length {
+            try source.read(into: buffer, frameCount: 4096)
+            track.write(buffer, hostTime: AVAudioTime.hostTime(forSeconds: at))
+            at += Double(buffer.frameLength) / source.processingFormat.sampleRate
+        }
+        track.close()
+        let out = try AVAudioFile(forReading: URL(fileURLWithPath: a[3]))
+        print(String(format: "in %.2fs at %.0f Hz, %d ch; out %.2fs at %.0f Hz, heard: %@", Double(source.length) / source.fileFormat.sampleRate,
+                     source.fileFormat.sampleRate, source.fileFormat.channelCount, Double(out.length) / out.fileFormat.sampleRate,
+                     out.fileFormat.sampleRate, track.heard == nil ? "no" : "yes"))
+        exit(0)
+    } catch { print("failed: \(error)"); exit(1) }
+}
+
+// Downloads a model package in parts into a folder of your choosing, as first use of meetings does:
+//   MurmurBee --fetch-parts <base url> <sha256> <parts> <folder>
+if CommandLine.arguments.count >= 6, CommandLine.arguments[1] == "--fetch-parts" {
+    let a = CommandLine.arguments
+    let remote = ModelStore.Remote(name: "fetch-test", url: URL(string: a[2])!, sha256: a[3], parts: Int(a[4]) ?? 1)
+    Task {
+        do {
+            let dir = try await ModelStore.download(remote, into: URL(fileURLWithPath: a[5])) { _ in }
+            print("installed \(dir.path)")
+            exit(0)
+        } catch { print("failed: \(error.localizedDescription)"); exit(1) }
+    }
+    RunLoop.main.run()
+}
+
+// Runs a recording through the whole meeting pipeline, as the app does after a call:
+//   MurmurBee --meeting-test <dir with mic.wav and call.wav> <notes model dir> [typed notes file]
+if CommandLine.arguments.count >= 4, CommandLine.arguments[1] == "--meeting-test" {
+    let a = CommandLine.arguments
+    Task {
+        do {
+            var t = Date()
+            let r = try await MeetingPipeline.transcribe(dir: URL(fileURLWithPath: a[2])) { print($0) }
+            print(String(format: "transcript %.1fs: mic %d words, %d kept, call %d words, %d speakers, you %@, vocab %d",
+                         Date().timeIntervalSince(t), r.micWords, r.micKept, r.callWords, r.speakers, r.you ?? "-", r.vocab.count))
+            let typed = a.count > 4 ? (try String(contentsOfFile: a[4], encoding: .utf8)) : ""
+            try r.text.write(toFile: a[2] + "/app-transcript.txt", atomically: true, encoding: .utf8)
+            t = Date()
+            let notes = try await MeetingPipeline.writeNotes(prompt: MeetingPrompt.notes(you: r.you, vocab: r.vocab, typed: typed, transcript: r.text),
+                                                             model: URL(fileURLWithPath: a[3]))
+            try notes.write(toFile: a[2] + "/app-notes.md", atomically: true, encoding: .utf8)
+            print(String(format: "notes %.1fs, %d words", Date().timeIntervalSince(t), notes.split(whereSeparator: \.isWhitespace).count))
+            exit(0)
+        } catch { print("failed: \(error)"); exit(1) }
+    }
+    RunLoop.main.run()
+}
+
+// Downloads the small files of the accurate notes model the way the app downloads all of them (Hugging Face, pinned
+// commit, hash per file), into a folder of your choosing:  MurmurBee --fetch-pinned-test <folder>
+if CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "--fetch-pinned-test" {
+    let full = ModelStore.accurateNotes
+    let small = ModelStore.PinnedRepo(name: "pinned-test", repo: full.repo, revision: full.revision,
+                                      files: full.files.filter { $0.value.1 < 50_000_000 })
+    Task {
+        do {
+            let dir = try await ModelStore.download(small, into: URL(fileURLWithPath: CommandLine.arguments[2])) { _ in }
+            print("installed \(small.files.count) files in \(dir.path)")
+            var bad = small
+            bad = ModelStore.PinnedRepo(name: "pinned-bad", repo: full.repo, revision: full.revision,
+                                        files: ["config.json": (String(repeating: "0", count: 64), 12180)])
+            do { _ = try await ModelStore.download(bad, into: URL(fileURLWithPath: CommandLine.arguments[2])) { _ in }; print("bad hash accepted") }
+            catch { print("bad hash refused: \(error.localizedDescription)") }
+            exit(0)
+        } catch { print("failed: \(error.localizedDescription)"); exit(1) }
+    }
+    RunLoop.main.run()
+}
+
+// Checks the rules for stopping by itself on a few made-up moments:  MurmurBee --autostop-check
+if CommandLine.arguments.count >= 2, CommandLine.arguments[1] == "--autostop-check" {
+    let cases: [(String, AutoStop.State, Bool)] = [
+        ("mid-call, both talking", .init(elapsed: 600, sawCallApp: true, sinceCallApp: 1, sinceCallSound: 2, sinceMicSound: 1), false),
+        ("mid-call, long pause", .init(elapsed: 600, sawCallApp: true, sinceCallApp: 1, sinceCallSound: 60, sinceMicSound: 60), false),
+        ("call app gone, others quiet 16 s", .init(elapsed: 600, sawCallApp: true, sinceCallApp: 16, sinceCallSound: 16, sinceMicSound: 3), true),
+        ("call app gone, music still playing", .init(elapsed: 600, sawCallApp: true, sinceCallApp: 40, sinceCallSound: 0, sinceMicSound: 30), false),
+        ("call app gone for 2 min, music playing", .init(elapsed: 600, sawCallApp: true, sinceCallApp: 120, sinceCallSound: 0, sinceMicSound: 30), true),
+        ("app still holds mic, 3 min of silence", .init(elapsed: 900, sawCallApp: true, sinceCallApp: 0, sinceCallSound: 200, sinceMicSound: 190), true),
+        ("in person, you presenting", .init(elapsed: 900, sawCallApp: false, sinceCallApp: 900, sinceCallSound: 900, sinceMicSound: 2), false),
+        ("in person, room empty 3 min", .init(elapsed: 900, sawCallApp: false, sinceCallApp: 900, sinceCallSound: 900, sinceMicSound: 185), true),
+    ]
+    var ok = true
+    for (name, state, stops) in cases {
+        let r = AutoStop.reason(state)
+        ok = ok && (r != nil) == stops
+        print((r != nil) == stops ? "ok  " : "FAIL", name, "->", r ?? "keeps recording")
+    }
+    exit(ok ? 0 : 1)
+}
+
+// Writes notes for a transcript file, without any audio:
+//   MurmurBee --notes-test <transcript> <notes model dir> <out> [typed notes file] [your name] [spellings, ;-separated]
+if CommandLine.arguments.count >= 5, CommandLine.arguments[1] == "--notes-test" {
+    let a = CommandLine.arguments
+    Task {
+        do {
+            let t = Date()
+            let typed = a.count > 5 && !a[5].isEmpty ? (try String(contentsOfFile: a[5], encoding: .utf8)) : ""
+            let you = a.count > 6 ? a[6] : nil
+            let vocab = a.count > 7 ? a[7].components(separatedBy: "; ") : []
+            let prompt = MeetingPrompt.notes(you: you, vocab: vocab, typed: typed, transcript: try String(contentsOfFile: a[2], encoding: .utf8))
+            let notes = try await MeetingPipeline.writeNotes(prompt: prompt, model: URL(fileURLWithPath: a[3]))
+            try notes.write(toFile: a[4], atomically: true, encoding: .utf8)
+            print(String(format: "notes %.1fs, %d words, memory left in use %.2f GB", Date().timeIntervalSince(t),
+                         notes.split(whereSeparator: \.isWhitespace).count,
+                         Double(Memory.activeMemory + Memory.cacheMemory) / 1e9))
+            exit(0)
+        } catch { print("failed: \(error)"); exit(1) }
     }
     RunLoop.main.run()
 }

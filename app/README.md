@@ -9,7 +9,7 @@ A menu-bar dictation app: hold the key, speak, release, and cleaned text is past
   Accessibility, then to leaving the text on the clipboard. The previous clipboard is restored
 - **History:** `~/Library/Application Support/MurmurBee/history.sqlite`
   - stores text, context (app, window, text before the cursor) and latencies
-  - no audio is kept
+  - no dictation audio is kept
 
 ## Build and run
 ```bash

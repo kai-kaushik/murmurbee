@@ -38,3 +38,7 @@ bench/RESULTS.md
 
 # The website (murmurbee.com) and internal docs live in a separate private repo, checked out here as site/
 site/
+
+# Meeting benchmark build products and outputs (recordings, transcripts, notes)
+scripts/meetings/MeetBench/.build*/
+bench/meetings/

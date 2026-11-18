@@ -40,14 +40,15 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>MurmurBee</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.10</string>
-  <key>CFBundleVersion</key><string>11</string>
+  <key>CFBundleShortVersionString</key><string>0.1.11</string>
+  <key>CFBundleVersion</key><string>12</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
   <key>SUFeedURL</key><string>https://murmurbee.com/appcast.xml</string>
   <key>SUPublicEDKey</key><string>RefVcQGGvefHH5JAxg5BFPRGZD1Z4A4YHtBG03PEKfA=</string>
   <key>SUEnableAutomaticChecks</key><true/>
   <key>SUScheduledCheckInterval</key><integer>86400</integer>
-  <key>NSMicrophoneUsageDescription</key><string>MurmurBee listens while you hold the dictation key and transcribes on this Mac.</string>
+  <key>NSMicrophoneUsageDescription</key><string>MurmurBee listens while you dictate or take meeting notes, and transcribes on this Mac.</string>
+  <key>NSAudioCaptureUsageDescription</key><string>MurmurBee records call audio when you take meeting notes, so it can hear the other people. It transcribes on this Mac.</string>
 </dict></plist>
 PLIST
 

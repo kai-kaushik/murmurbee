@@ -13,6 +13,17 @@ Source: https://huggingface.co/FluidInference/parakeet-ultra-coreml
 MurmurBee cleanup model: a LoRA fine-tune (modified) of Qwen3.5-0.8B by the Qwen team, Alibaba Cloud.
 Licence: Apache License 2.0. Base model: https://huggingface.co/Qwen/Qwen3.5-0.8B
 
+MurmurBee notes model: Qwen3.5-4B by the Qwen team, Alibaba Cloud, quantised to 4 bits for MLX by mlx-community.
+Licence: Apache License 2.0. Source: https://huggingface.co/Qwen/Qwen3.5-4B
+
+MurmurBee accurate notes model (optional, Macs with 32 GB or more): Gemma 4 26B A4B by Google DeepMind, quantised to 4 bits
+for MLX by mlx-community. Licence: Apache License 2.0. Source: https://huggingface.co/mlx-community/gemma-4-26b-a4b-it-4bit
+
+Speaker models for meeting transcripts: pyannote speaker-diarization-community-1 by pyannoteAI, converted to Core ML by
+FluidInference.
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/
+Source: https://huggingface.co/FluidInference/speaker-diarization-coreml
+
 SOFTWARE
 
 ------------------------------------------------------------------------

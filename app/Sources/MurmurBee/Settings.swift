@@ -39,6 +39,17 @@ final class Settings {
         didSet { d.set(showBarWhenIdle, forKey: "showBarWhenIdle"); onBarChange() }
     }
     @ObservationIgnored var onBarChange: () -> Void = {}
+    /// Meeting notes from the bigger model (only offered on Macs that can run it), and whether the choice was made.
+    var accurateNotes: Bool {
+        didSet { d.set(accurateNotes, forKey: "accurateNotes") }
+    }
+    var notesModelAsked: Bool {
+        didSet { d.set(notesModelAsked, forKey: "notesModelAsked") }
+    }
+    /// Offer to take notes when another app starts using the mic for a while.
+    var offerMeetingNotes: Bool {
+        didSet { d.set(offerMeetingNotes, forKey: "offerMeetingNotes") }
+    }
 
     var onboarded: Bool {
         didSet { d.set(onboarded, forKey: "onboarded") }
@@ -87,6 +98,9 @@ final class Settings {
         playSounds = d.object(forKey: "playSounds") as? Bool ?? true
         signName = d.string(forKey: "signName") ?? ""
         microphone = d.string(forKey: "microphone") ?? "auto"
+        offerMeetingNotes = d.object(forKey: "offerMeetingNotes") as? Bool ?? true
+        accurateNotes = d.bool(forKey: "accurateNotes")
+        notesModelAsked = d.bool(forKey: "notesModelAsked")
         onboarded = d.bool(forKey: "onboarded")
         shareTotals = d.bool(forKey: "shareTotals")
         shareTotalsAsked = d.bool(forKey: "shareTotalsAsked")

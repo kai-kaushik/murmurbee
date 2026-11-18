@@ -31,6 +31,34 @@ struct HistoryItem: Identifiable, Hashable, Sendable {
     var words: Int { text.split(whereSeparator: \.isWhitespace).count }
 }
 
+/// One recorded meeting. The audio lives in a folder of its own only until the transcript is made.
+struct Meeting: Identifiable, Hashable, Sendable {
+    enum Status: String, Sendable { case recording, processing, ready, failed }
+    let id: Int64
+    var date = Date()
+    var title = ""
+    var durationS = 0.0
+    var status = Status.recording
+    /// What you typed during the call.
+    var typed = ""
+    var transcript = ""
+    var notes = ""
+    /// Why the last attempt failed.
+    var problem = ""
+    /// The name on your lines in the transcript; empty when nobody's voice is known (an in-person meeting).
+    var you = ""
+    /// Spellings given to the notes model, separated by "; ".
+    var vocab = ""
+
+    /// The notes to read and copy: the model's, then what you typed, word for word.
+    var fullNotes: String {
+        let lines = typed.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard !lines.isEmpty else { return notes }
+        let own = "## Your notes\n" + lines.map { "- \($0)" }.joined(separator: "\n")
+        return notes.isEmpty ? own : notes + "\n\n" + own
+    }
+}
+
 extension Notification.Name {
     /// Posted on the main thread after a dictation is saved or history is deleted.
     static let historyChanged = Notification.Name("MurmurBeeHistoryChanged")
@@ -69,6 +97,11 @@ actor Store {
                     "source TEXT", "import_id TEXT", "url TEXT"] {
             sqlite3_exec(db, "ALTER TABLE dictations ADD COLUMN \(col)", nil, nil, nil)
         }
+        sqlite3_exec(db, """
+            CREATE TABLE IF NOT EXISTS meetings (
+              id INTEGER PRIMARY KEY, created_at TEXT, title TEXT, duration_s REAL, status TEXT, typed TEXT,
+              transcript TEXT, notes TEXT, problem TEXT, you TEXT, vocab TEXT);
+            """, nil, nil, nil)
         // Imported rows (e.g. from Wispr Flow) carry their original id, so importing twice adds nothing.
         sqlite3_exec(db, "CREATE UNIQUE INDEX IF NOT EXISTS dictations_import_id ON dictations(import_id)", nil, nil, nil)
     }
@@ -230,6 +263,63 @@ actor Store {
 
     func deleteAll() {
         sqlite3_exec(db, "DELETE FROM dictations; VACUUM; PRAGMA wal_checkpoint(TRUNCATE);", nil, nil, nil)
+    }
+
+    // MARK: Meetings
+
+    func addMeeting(title: String, date: Date) -> Int64 {
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "INSERT INTO meetings (created_at, title, status) VALUES (?, ?, 'recording')", -1,
+                                 &stmt, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(stmt) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        sqlite3_bind_text(stmt, 1, ISO8601DateFormatter().string(from: date), -1, transient)
+        sqlite3_bind_text(stmt, 2, title, -1, transient)
+        sqlite3_step(stmt)
+        return sqlite3_last_insert_rowid(db)
+    }
+
+    func saveMeeting(_ m: Meeting) {
+        let sql = """
+            UPDATE meetings SET title = ?, duration_s = ?, status = ?, typed = ?, transcript = ?, notes = ?, problem = ?,
+              you = ?, vocab = ? WHERE id = ?
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
+        defer { sqlite3_finalize(stmt) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        sqlite3_bind_text(stmt, 1, m.title, -1, transient)
+        sqlite3_bind_double(stmt, 2, m.durationS)
+        for (i, t) in [m.status.rawValue, m.typed, m.transcript, m.notes, m.problem, m.you, m.vocab].enumerated() {
+            sqlite3_bind_text(stmt, Int32(3 + i), t, -1, transient)
+        }
+        sqlite3_bind_int64(stmt, 10, m.id)
+        sqlite3_step(stmt)
+    }
+
+    /// Newest first.
+    func meetings() -> [Meeting] {
+        let sql = """
+            SELECT id, created_at, title, duration_s, status, typed, transcript, notes, problem, you, vocab
+            FROM meetings ORDER BY id DESC
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+        let iso = ISO8601DateFormatter()
+        func text(_ i: Int32) -> String { sqlite3_column_text(stmt, i).map { String(cString: $0) } ?? "" }
+        var out: [Meeting] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            out.append(Meeting(id: sqlite3_column_int64(stmt, 0), date: iso.date(from: text(1)) ?? .distantPast, title: text(2),
+                               durationS: sqlite3_column_double(stmt, 3), status: Meeting.Status(rawValue: text(4)) ?? .failed,
+                               typed: text(5), transcript: text(6), notes: text(7), problem: text(8), you: text(9),
+                               vocab: text(10)))
+        }
+        return out
+    }
+
+    func deleteMeeting(_ id: Int64) {
+        sqlite3_exec(db, "DELETE FROM meetings WHERE id = \(id); PRAGMA wal_checkpoint(TRUNCATE);", nil, nil, nil)
     }
 
     /// Edit capture: the field's contents some time after the paste (diffed offline by scripts/learn.py).
