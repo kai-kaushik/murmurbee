@@ -254,8 +254,12 @@ struct NotesText: View {
         }
     }
 
+    /// Bold and italic only. The notes model writes from what people said on the call, so a link in its output could
+    /// point anywhere (another app's URL scheme, a file); links are shown as plain text and can't be clicked.
     private func inline(_ s: String) -> some View {
-        Text((try? AttributedString(markdown: s)) ?? AttributedString(s))
+        var text = (try? AttributedString(markdown: s)) ?? AttributedString(s)
+        for run in text.runs where run.link != nil { text[run.range].link = nil }
+        return Text(text)
             .font(.system(size: 14)).foregroundStyle(Brand.linen).lineSpacing(3)
             .fixedSize(horizontal: false, vertical: true)
     }
