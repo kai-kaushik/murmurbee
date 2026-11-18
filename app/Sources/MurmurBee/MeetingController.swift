@@ -228,6 +228,27 @@ final class MeetingController {
         Task { await updated(id) { $0.title = title } }
     }
 
+    /// Gives a speaker a name everywhere in one meeting: their lines in the transcript, and mentions in the notes.
+    func renameSpeaker(_ old: String, to new: String, id: Int64) {
+        let name = new.components(separatedBy: CharacterSet(charactersIn: ":[]").union(.newlines)).joined()
+            .trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != old else { return }
+        let mention = try? NSRegularExpression(pattern: "\\b\(NSRegularExpression.escapedPattern(for: old))\\b")
+        Task {
+            await updated(id) { m in
+                m.transcript = m.transcript.components(separatedBy: "\n").map { line in
+                    guard let close = line.firstIndex(of: "]"), line[line.index(after: close)...].hasPrefix(" \(old):") else { return line }
+                    return String(line[...close]) + " \(name):" + line[line.index(close, offsetBy: old.count + 3)...]
+                }.joined(separator: "\n")
+                if let mention {
+                    m.notes = mention.stringByReplacingMatches(in: m.notes, range: NSRange(m.notes.startIndex..., in: m.notes),
+                                                               withTemplate: NSRegularExpression.escapedTemplate(for: name))
+                }
+                if m.you == old { m.you = name }
+            }
+        }
+    }
+
     func delete(_ id: Int64) {
         guard id != currentID else { return }
         queue.removeAll { $0 == id }

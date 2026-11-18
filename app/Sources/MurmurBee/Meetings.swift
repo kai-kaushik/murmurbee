@@ -110,6 +110,9 @@ private struct MeetingDetail: View {
     @State private var title = ""
     @State private var typed = ""
     @State private var confirming = false
+    /// The speaker being renamed, and the name being typed.
+    @State private var renaming: String?
+    @State private var newName = ""
 
     private var recording: Bool { meeting.id == meetings.currentID }
     private var busy: Bool { meeting.status == .processing }
@@ -137,6 +140,16 @@ private struct MeetingDetail: View {
         } message: {
             Text("This removes its notes and transcript from this Mac.")
         }
+        .alert("Rename \(renaming ?? "")", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }) {
+            TextField("Name", text: $newName)
+            Button("Rename") {
+                if let old = renaming { meetings.renameSpeaker(old, to: newName, id: meeting.id) }
+                renaming = nil
+            }
+            Button("Cancel", role: .cancel) { renaming = nil }
+        } message: {
+            Text("Changes the name in this meeting's transcript and notes.")
+        }
     }
 
     private var header: some View {
@@ -149,23 +162,31 @@ private struct MeetingDetail: View {
             }
             Spacer(minLength: 8)
             if !recording {
-                if !meeting.notes.isEmpty {
-                    Button("Copy") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(meeting.fullNotes, forType: .string)
-                        flash("Notes copied")
+                // Only what fits the tab that's showing. Copy takes all of it, so a long transcript needn't be selected by hand.
+                if tab == .transcript {
+                    if !meeting.transcript.isEmpty { copyButton("Copy transcript", meeting.transcript, "Transcript copied") }
+                } else {
+                    if !meeting.notes.isEmpty { copyButton("Copy notes", meeting.fullNotes, "Notes copied") }
+                    if !meeting.transcript.isEmpty, !busy {
+                        Button("Rewrite notes") { meetings.retry(meeting.id) }.buttonStyle(.plain).foregroundStyle(Brand.sand)
                     }
-                    .buttonStyle(.plain).foregroundStyle(Brand.sand)
-                }
-                if !meeting.transcript.isEmpty, !busy {
-                    Button("Rewrite notes") { meetings.retry(meeting.id) }.buttonStyle(.plain).foregroundStyle(Brand.sand)
                 }
                 if !busy {
-                    Button("Delete") { confirming = true }.buttonStyle(.plain).foregroundStyle(Brand.sand)
+                    Button { confirming = true } label: { Image(systemName: "trash") }
+                        .buttonStyle(.plain).foregroundStyle(Brand.sand).help("Delete meeting")
                 }
             }
         }
         .font(.system(size: 13))
+    }
+
+    private func copyButton(_ label: String, _ text: String, _ done: String) -> some View {
+        Button(label) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            flash(done)
+        }
+        .buttonStyle(.plain).foregroundStyle(Brand.sand)
     }
 
     private var subtitle: String {
@@ -217,7 +238,8 @@ private struct MeetingDetail: View {
                 Group {
                     switch tab {
                     case .notes: NotesText(markdown: meeting.fullNotes)
-                    case .transcript: TranscriptText(text: meeting.transcript)
+                    case .transcript:
+                        TranscriptText(text: meeting.transcript) { speaker in newName = speaker; renaming = speaker }
                     }
                 }
                 .textSelection(.enabled)
@@ -266,17 +288,25 @@ struct NotesText: View {
 }
 
 /// Transcript lines, "[mm:ss] Speaker: text", with the time and speaker quieter than the words.
+/// Click a speaker's name to rename them.
 private struct TranscriptText: View {
     let text: String
+    let rename: (String) -> Void
 
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 9) {
             ForEach(Array(text.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in
                 let parts = line.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
                 if parts.count == 3 {
+                    let speaker = parts[1].split(separator: "]").last.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("\(parts[1].split(separator: "]").last.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? "")  \(parts[0].dropFirst()):\(parts[1].prefix(2))")
-                            .font(.system(size: 11.5, weight: .medium)).foregroundStyle(Brand.sand)
+                        HStack(spacing: 8) {
+                            Button(speaker) { rename(speaker) }
+                                .buttonStyle(.plain).help("Rename \(speaker)")
+                                .onHover { inside in if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
+                            Text("\(parts[0].dropFirst()):\(parts[1].prefix(2))")
+                        }
+                        .font(.system(size: 11.5, weight: .medium)).foregroundStyle(Brand.sand)
                         Text(parts[2].trimmingCharacters(in: .whitespaces)).font(.system(size: 13.5)).foregroundStyle(Brand.linen)
                     }
                 } else {

@@ -50,6 +50,17 @@ final class Updates: NSObject, SPUUpdaterDelegate {
 @MainActor
 enum ReleaseNotes {
     static let byVersion: [String: [String]] = [
+        "0.1.12": [
+            "Copy a meeting's whole transcript in one click from the Transcript tab.",
+            "Click a speaker's name in the transcript to rename them. The notes pick up the new name too.",
+            "Each tab shows only its own actions, and Delete is now a trash icon.",
+            "Links in meeting notes show as plain text, so nothing from a call can be opened by a click.",
+        ],
+        "0.1.11": [
+            "Meeting notes, all on your Mac. MurmurBee offers to take notes when a call starts, and no bot joins.",
+            "It works out who said what, then writes a summary, action items and decisions. The recording is deleted once the transcript is made.",
+            "Anything you type during the call is kept word for word under Your notes.",
+        ],
         "0.1.10": [
             "MurmurBee opens when you log in, so it's ready after a restart. Turn it off in Settings, General.",
             "Learning from your edits is always on. It happens on this Mac, like everything else.",
